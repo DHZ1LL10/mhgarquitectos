@@ -525,6 +525,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 .proj-item--wide { grid-column: span 2; }
+.proj-item--tall { grid-row: span 2; }
 
 .proj-item img {
   width: 100%; height: 100%;
