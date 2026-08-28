@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────
-   MHG Arquitectos — Script
+   MHG Arquitectos — Script (v2 — post-audit)
 ───────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,11 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── Navbar scroll behaviour ──────── */
   const navbar = document.getElementById('navbar');
   const onScroll = () => {
-    if (window.scrollY > 40) {
-      navbar.classList.add('scrolled');
-    } else {
-      navbar.classList.remove('scrolled');
-    }
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
@@ -22,15 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toggle.addEventListener('click', () => {
     const open = menu.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', open);
+    toggle.setAttribute('aria-expanded', String(open));
     toggle.classList.toggle('is-open', open);
   });
 
-  /* Close menu when a nav link is clicked */
   menu.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
       menu.classList.remove('open');
       toggle.classList.remove('is-open');
+      toggle.setAttribute('aria-expanded', 'false');
     });
   });
 
@@ -41,22 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   reveals.forEach(el => el.classList.add('reveal'));
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        // Staggered delay for grid items
         const siblings = Array.from(entry.target.parentElement.children);
         const idx = siblings.indexOf(entry.target);
         const delay = Math.min(idx * 80, 400);
-        setTimeout(() => {
-          entry.target.classList.add('visible');
-        }, delay);
-        observer.unobserve(entry.target);
+        setTimeout(() => entry.target.classList.add('visible'), delay);
+        revealObserver.unobserve(entry.target);
       }
     });
   }, { threshold: 0.12 });
 
-  reveals.forEach(el => observer.observe(el));
+  reveals.forEach(el => revealObserver.observe(el));
 
   /* ── Smooth scroll for anchor links ── */
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -88,21 +81,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sections.forEach(s => sectionObserver.observe(s));
 
-  /* ── Hamburger animation ──────────── */
-  const style = document.createElement('style');
-  style.textContent = `
-    .nav-toggle.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-    .nav-toggle.is-open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-    .nav-toggle.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-    .nav-link.active { color: var(--green) !important; }
-  `;
-  document.head.appendChild(style);
+  /* ── Lazy Map (load only when near viewport) ─── */
+  const mapWrap = document.getElementById('map-wrap');
+  if (mapWrap) {
+    const iframe = mapWrap.querySelector('iframe');
+    if (iframe) {
+      // Show placeholder first
+      const placeholder = document.createElement('div');
+      placeholder.className = 'map-placeholder';
+      placeholder.innerHTML = `
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>Fortín de las Flores, Veracruz</span>
+        <small style="font-size:.8rem;opacity:.7">Clic para cargar el mapa</small>
+      `;
+      mapWrap.replaceChild(placeholder, iframe);
 
-  /* ── Gallery lightbox (basic) ─────── */
-  const galleryItems = document.querySelectorAll('.gallery-item');
+      const loadMap = () => {
+        iframe.src = iframe.getAttribute('data-src') || iframe.src;
+        mapWrap.replaceChild(iframe, placeholder);
+      };
+
+      // Load on click or when 200px away from viewport
+      placeholder.addEventListener('click', loadMap);
+
+      const mapObserver = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          loadMap();
+          mapObserver.disconnect();
+        }
+      }, { rootMargin: '200px' });
+
+      mapObserver.observe(mapWrap);
+    }
+  }
+
+  /* ── Gallery lightbox with prev/next ─── */
+  const galleryItems = Array.from(document.querySelectorAll('.gallery-item'));
+  let currentIdx = 0;
 
   const lightbox = document.createElement('div');
   lightbox.id = 'lightbox';
+  lightbox.setAttribute('role', 'dialog');
+  lightbox.setAttribute('aria-label', 'Galería ampliada');
   lightbox.style.cssText = `
     display:none; position:fixed; inset:0; z-index:9999;
     background:rgba(0,0,0,.93); align-items:center;
@@ -110,14 +133,17 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
 
   const lbImg = document.createElement('img');
+  lbImg.alt = 'Proyecto MHG Arquitectos ampliado';
   lbImg.style.cssText = `
-    max-width:92vw; max-height:90vh; object-fit:contain;
-    border-radius:8px; box-shadow: 0 20px 60px rgba(0,0,0,.8);
-    animation: lbIn .25s ease;
+    max-width:88vw; max-height:88vh; object-fit:contain;
+    border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.8);
+    animation:lbIn .25s ease; cursor:default;
   `;
+  lbImg.addEventListener('click', e => e.stopPropagation());
 
   const lbClose = document.createElement('button');
   lbClose.innerHTML = '&times;';
+  lbClose.setAttribute('aria-label', 'Cerrar');
   lbClose.style.cssText = `
     position:absolute; top:20px; right:28px;
     background:none; border:none; color:#fff;
@@ -127,29 +153,82 @@ document.addEventListener('DOMContentLoaded', () => {
   lbClose.onmouseenter = () => lbClose.style.opacity = '1';
   lbClose.onmouseleave = () => lbClose.style.opacity = '.7';
 
+  const lbPrev = document.createElement('button');
+  lbPrev.className = 'lb-nav lb-prev';
+  lbPrev.setAttribute('aria-label', 'Anterior');
+  lbPrev.innerHTML = '&#8249;';
+
+  const lbNext = document.createElement('button');
+  lbNext.className = 'lb-nav lb-next';
+  lbNext.setAttribute('aria-label', 'Siguiente');
+  lbNext.innerHTML = '&#8250;';
+
   lightbox.appendChild(lbImg);
   lightbox.appendChild(lbClose);
+  lightbox.appendChild(lbPrev);
+  lightbox.appendChild(lbNext);
   document.body.appendChild(lightbox);
 
+  // Lightbox animation keyframe
   const lbStyle = document.createElement('style');
   lbStyle.textContent = `@keyframes lbIn { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }`;
   document.head.appendChild(lbStyle);
 
-  galleryItems.forEach(item => {
+  const showImage = (idx) => {
+    currentIdx = (idx + galleryItems.length) % galleryItems.length;
+    lbImg.src = galleryItems[currentIdx].querySelector('img').src;
+    lbImg.alt = galleryItems[currentIdx].querySelector('img').alt || 'Proyecto MHG';
+    lbImg.style.animation = 'none';
+    requestAnimationFrame(() => { lbImg.style.animation = 'lbIn .25s ease'; });
+  };
+
+  galleryItems.forEach((item, i) => {
     item.addEventListener('click', () => {
-      const src = item.querySelector('img').src;
-      lbImg.src = src;
+      showImage(i);
       lightbox.style.display = 'flex';
       document.body.style.overflow = 'hidden';
     });
   });
 
+  lbPrev.addEventListener('click', (e) => { e.stopPropagation(); showImage(currentIdx - 1); });
+  lbNext.addEventListener('click', (e) => { e.stopPropagation(); showImage(currentIdx + 1); });
+
   const closeLb = () => {
     lightbox.style.display = 'none';
     document.body.style.overflow = '';
   };
+
   lightbox.addEventListener('click', closeLb);
   lbClose.addEventListener('click', e => { e.stopPropagation(); closeLb(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLb();
+    if (lightbox.style.display === 'flex') {
+      if (e.key === 'ArrowLeft') showImage(currentIdx - 1);
+      if (e.key === 'ArrowRight') showImage(currentIdx + 1);
+    }
+  });
+
+  /* ── Animated counter (badge) ──────── */
+  const counters = document.querySelectorAll('.counter[data-target]');
+  if (counters.length) {
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.getAttribute('data-target'), 10);
+          const duration = 1400;
+          const step = target / (duration / 16);
+          let current = 0;
+          const timer = setInterval(() => {
+            current = Math.min(current + step, target);
+            el.textContent = '+' + Math.round(current).toLocaleString('es-MX');
+            if (current >= target) clearInterval(timer);
+          }, 16);
+          counterObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(c => counterObserver.observe(c));
+  }
 
 });
