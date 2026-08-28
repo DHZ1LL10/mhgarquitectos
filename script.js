@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── Project category tabs ────────── */
   const tabs = document.querySelectorAll('.proj-tab');
-  const grids = document.querySelectorAll('.proj-grid');
+  const panels = document.querySelectorAll('.proj-panel');
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -43,13 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
 
-      grids.forEach(g => {
-        const isTarget = g.id === 'cat-' + cat;
-        g.classList.toggle('active', isTarget);
+      panels.forEach(p => {
+        const isTarget = p.id === 'cat-' + cat;
+        p.classList.toggle('active', isTarget);
         if (isTarget) {
-          g.removeAttribute('hidden');
+          p.removeAttribute('hidden');
         } else {
-          g.setAttribute('hidden', '');
+          p.setAttribute('hidden', '');
         }
       });
     });
