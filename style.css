@@ -1120,3 +1120,172 @@ a { text-decoration: none; color: inherit; }
   .proj-tab { padding: 7px 14px; font-size: .72rem; }
   .trust-badge-card { position: static; margin-top: 16px; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   OLED UPGRADE — PURE BLACK BASE
+   Optimizado para pantallas OLED / AMOLED y sala
+═══════════════════════════════════════════════════════ */
+
+/* Override body to deep black */
+body {
+  background: #000000 !important;
+  color: #f0f0f0 !important;
+}
+
+/* Navbar gets true black */
+.navbar {
+  background: rgba(0, 0, 0, 0.92) !important;
+  border-bottom-color: rgba(255,255,255,0.06) !important;
+}
+
+/* Hero overlay: deeper */
+.hero-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.35) 0%,
+    rgba(0,0,0,0.65) 100%
+  ) !important;
+}
+
+/* Sections: pure black base */
+.services,
+.section,
+.trust-section,
+.branches-section,
+.contact-section {
+  background: #000000 !important;
+}
+
+/* Service rows: OLED cards */
+.service-row {
+  border-color: rgba(255,255,255,0.06) !important;
+  background: transparent !important;
+}
+.service-row:hover {
+  background: rgba(26,79,46,0.06) !important;
+}
+
+/* LED GLOW on service CTA */
+.service-cta {
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-body) !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  border: none !important;
+}
+.service-cta::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(46,204,113,0.08), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.service-cta:hover::before { transform: translateX(100%); }
+
+/* section labels: green glow */
+.section-label {
+  color: #2ecc71 !important;
+  text-shadow: 0 0 20px rgba(46,204,113,0.4) !important;
+}
+
+/* Section titles on dark bg */
+.section-title { color: #f0f0f0 !important; }
+.section-desc  { color: #888888 !important; }
+
+/* Service titles */
+.service-num   { color: rgba(46,204,113,0.3) !important; }
+.service-title { color: #f0f0f0 !important; }
+.service-desc  { color: #777777 !important; }
+
+/* Trust section */
+.trust-section { background: #050505 !important; }
+.trust-content .section-title,
+.trust-text strong { color: #f0f0f0 !important; }
+.trust-text { color: #888888 !important; }
+.trust-stat-num { color: #2ecc71 !important; text-shadow: 0 0 20px rgba(46,204,113,0.3) !important; }
+.trust-stat-label { color: #666 !important; }
+.trust-badge-card { background: rgba(10,10,10,0.95) !important; border-color: rgba(255,255,255,0.08) !important; }
+
+/* Project tabs */
+.proj-tabs { background: rgba(10,10,10,0.8) !important; border-color: rgba(255,255,255,0.06) !important; }
+.proj-tab { color: #666 !important; }
+.proj-tab.active, .proj-tab:hover { color: #f0f0f0 !important; }
+.proj-cta-card { background: rgba(10,10,10,0.9) !important; border-color: rgba(255,255,255,0.06) !important; color: #888 !important; }
+
+/* Branch cards */
+.branch-card { background: #0a0a0a !important; border-color: rgba(255,255,255,0.06) !important; }
+.branch-card--main { border-color: rgba(46,204,113,0.2) !important; }
+.branch-city { color: #f0f0f0 !important; }
+.branch-address, .branch-phone, .branch-note { color: #666 !important; }
+
+/* Contact section */
+.contact-section { background: #000 !important; }
+.contact-card { background: #0a0a0a !important; border-color: rgba(255,255,255,0.06) !important; }
+.contact-label { color: #555 !important; }
+.contact-value { color: #f0f0f0 !important; }
+.social-label { color: #555 !important; }
+.social-btn { background: #0f0f0f !important; border-color: rgba(255,255,255,0.06) !important; color: #888 !important; }
+.social-btn:hover { border-color: rgba(46,204,113,0.4) !important; color: #2ecc71 !important; }
+
+/* Footer: pure black */
+.footer { background: #000000 !important; border-top-color: rgba(255,255,255,0.05) !important; }
+.footer-name { color: #f0f0f0 !important; }
+.footer-loc, .footer-slogan, .footer-copy { color: #555 !important; }
+.footer-email { color: #2ecc71 !important; }
+.footer-nav a { color: #666 !important; }
+.footer-nav a:hover { color: #2ecc71 !important; }
+.footer-social a { color: #555 !important; }
+.footer-social a:hover { color: #2ecc71 !important; }
+
+/* Map placeholders */
+.map-placeholder { background: #0a0a0a !important; border-color: rgba(255,255,255,0.05) !important; color: #444 !important; }
+
+/* ═══════════════════════════════════════════════════════
+   LED AMBIENT EFFECTS
+═══════════════════════════════════════════════════════ */
+
+/* Pulse glow on WhatsApp float */
+.wa-float {
+  box-shadow:
+    0 0 0 0 rgba(37,211,102,0),
+    0 8px 32px rgba(37,211,102,0.4) !important;
+  animation: wa-led-pulse 2.5s ease-in-out infinite !important;
+}
+@keyframes wa-led-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(37,211,102,0.4), 0 8px 32px rgba(37,211,102,0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(37,211,102,0), 0 8px 40px rgba(37,211,102,0.5);
+  }
+}
+
+/* LED glow on primary buttons */
+.btn-primary {
+  box-shadow: 0 0 0 0 rgba(26,79,46,0) !important;
+  transition: all 0.3s ease !important;
+}
+.btn-primary:hover {
+  box-shadow:
+    0 0 16px rgba(46,204,113,0.3),
+    0 4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* LED border glow on service rows */
+@keyframes led-border-breath {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: inset 0 0 0 1px rgba(46,204,113,0.1); }
+}
+.service-row { animation: led-border-breath 4s ease-in-out infinite; }
+.service-row:hover { animation: none; }
+
+/* Hero gradient LED strip at bottom */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #1a4f2e 30%, #2ecc71 50%, #1a4f2e 70%, transparent 100%);
+  opacity: 0.6;
+}

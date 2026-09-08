@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customizador de Cocina | MHG Arquitectos</title>
+  <meta name="description" content="Diseña tu cocina integral a medida con MHG Arquitectos. Selecciona módulos, materiales, colores y agenda tu levantamiento." />
+  <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════
+       OLED BASE + DESIGN TOKENS
+    ═══════════════════════════════════════════ */
+    :root {
+      --green:       #2ecc71;
+      --green-dim:   #1a7a43;
+      --green-glow:  rgba(46,204,113,0.25);
+      --gold:        #c9a84c;
+      --gold-glow:   rgba(201,168,76,0.2);
+      --bg:          #000000;
+      --bg-1:        #0a0a0a;
+      --bg-2:        #111111;
+      --bg-3:        #1a1a1a;
+      --bg-4:        #222222;
+      --border:      rgba(255,255,255,0.07);
+      --border-act:  rgba(46,204,113,0.4);
+      --text:        #f0f0f0;
+      --text-dim:    #888888;
+      --text-faint:  #444444;
+      --font-serif:  'Cormorant Garamond', Georgia, serif;
+      --font-sans:   'Inter', system-ui, sans-serif;
+      --radius:      12px;
+      --radius-lg:   20px;
+      --trans:       0.25s cubic-bezier(.4,0,.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ═══════════════════════════════════════════
+       NAVBAR
+    ═══════════════════════════════════════════ */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: var(--text);
+    }
+    .nav-logo img {
+      width: 38px; height: 38px; border-radius: 8px; object-fit: cover;
+      border: 1px solid var(--border-act);
+    }
+    .nav-logo-text { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500; }
+    .nav-logo-text .accent { color: var(--green); }
+    .nav-back {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--text-dim); text-decoration: none; font-size: 0.85rem;
+      transition: color var(--trans);
+    }
+    .nav-back:hover { color: var(--green); }
+    .nav-back svg { flex-shrink: 0; }
+
+    /* ═══════════════════════════════════════════
+       HERO BANNER
+    ═══════════════════════════════════════════ */
+    .cust-hero {
+      padding: 56px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cust-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(46,204,113,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(46,204,113,0.1);
+      border: 1px solid var(--border-act);
+      border-radius: 100px;
+      padding: 4px 16px;
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+      color: var(--green); text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .cust-hero h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 400; line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .cust-hero h1 em { color: var(--green); font-style: italic; }
+    .cust-hero p {
+      color: var(--text-dim); font-size: 1rem; max-width: 520px; margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════
+       PROGRESS BAR
+    ═══════════════════════════════════════════ */
+    .progress-wrap {
+      padding: 0 24px 32px;
+      max-width: 900px; margin: 0 auto;
+    }
+    .progress-steps {
+      display: flex; align-items: center; gap: 0;
+      position: relative;
+    }
+    .progress-steps::before {
+      content: '';
+      position: absolute; top: 16px; left: 16px; right: 16px; height: 2px;
+      background: var(--bg-3);
+      z-index: 0;
+    }
+    .progress-fill {
+      position: absolute; top: 16px; left: 16px; height: 2px;
+      background: linear-gradient(90deg, var(--green-dim), var(--green));
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+      z-index: 1;
+    }
+    .progress-step {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      flex: 1; position: relative; z-index: 2;
+    }
+    .step-dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg-3); border: 2px solid var(--bg-4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 600; color: var(--text-faint);
+      transition: all var(--trans);
+    }
+    .progress-step.done .step-dot {
+      background: var(--green-dim); border-color: var(--green);
+      color: white;
+    }
+    .progress-step.active .step-dot {
+      background: var(--green); border-color: var(--green);
+      color: black; font-weight: 700;
+      box-shadow: 0 0 0 4px var(--green-glow), 0 0 16px var(--green-glow);
+    }
+    .step-label {
+      font-size: 0.65rem; font-weight: 500; color: var(--text-faint);
+      text-align: center; white-space: nowrap; letter-spacing: 0.05em;
+    }
+    .progress-step.active .step-label { color: var(--green); }
+    .progress-step.done .step-label { color: var(--text-dim); }
+
+    /* ═══════════════════════════════════════════
+       MAIN LAYOUT
+    ═══════════════════════════════════════════ */
+    .cust-main {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 24px 80px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .cust-main { grid-template-columns: 1fr; }
+      .cust-sidebar { order: -1; }
+    }
+
+    /* ═══════════════════════════════════════════
+       STEP PANELS
+    ═══════════════════════════════════════════ */
+    .step-panel {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .step-panel.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .step-title {
+      font-family: var(--font-serif); font-size: 1.8rem; font-weight: 400;
+      margin-bottom: 6px; line-height: 1.2;
+    }
+    .step-title em { color: var(--green); font-style: italic; }
+    .step-subtitle {
+      color: var(--text-dim); font-size: 0.9rem; margin-bottom: 28px;
+    }
+
+    /* ═══════════════════════════════════════════
+       OPTION CARDS (radio-style)
+    ═══════════════════════════════════════════ */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .options-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .options-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .opt-card {
+      background: var(--bg-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 14px;
+      cursor: pointer;
+      transition: all var(--trans);
+      position: relative;
+      user-select: none;
+      text-align: center;
+    }
+    .opt-card:hover {
+      border-color: rgba(46,204,113,0.3);
+      background: var(--bg-3);
+      transform: translateY(-1px);
+    }
+    .opt-card.selected {
+      border-color: var(--green);
+      background: rgba(46,204,113,0.06);
+      box-shadow: 0 0 0 1px var(--green), 0 0 20px var(--green-glow);
+    }
+    .opt-card.selected::after {
+      content: '✓';
+      position: absolute; top: 8px; right: 10px;
+      color: var(--green); font-size: 0.75rem; font-weight: 700;
+    }
+    .opt-card.na-card {
+      border-style: dashed;
+      opacity: 0.7;
+    }
+    .opt-card.na-card.selected { opacity: 1; border-color: var(--gold); background: rgba(201,168,76,0.06); box-shadow: 0 0 0 1px var(--gold); }
+    .opt-card.na-card.selected::after { color: var(--gold); }
+
+    .opt-icon { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+    .opt-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .opt-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
+    .opt-badge {
+      display: inline-block; margin-top: 6px;
+      background: rgba(46,204,113,0.12); color: var(--green);
+      border: 1px solid rgba(46,204,113,0.3);
+      border-radius: 20px; padding: 2px 10px; font-size: 0.65rem; font-weight: 600;
+    }
+    .opt-badge.gold { background: rgba(201,168,76,0.1); color: var(--gold); border-color: rgba(201,168,76,0.3); }
+    .opt-badge.silver { background: rgba(180,180,180,0.1); color: #aaa; border-color: rgba(180,180,180,0.2); }
+
+    /* ═══════════════════════════════════════════
+       COLOR SWATCHES
+    ═══════════════════════════════════════════ */
+    .color-grid {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .color-swatch {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer;
+    }
+    .swatch-circle {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 2.5px solid var(--border);
+      transition: all var(--trans);
+      position: relative;
+    }
+    .color-swatch:hover .swatch-circle { transform: scale(1.1); }
+    .color-swatch.selected .swatch-circle {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px var(--green-glow), 0 0 16px var(--green-glow);
+    }
+    .color-swatch.selected .swatch-circle::after {
+      content: '✓';
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700;
+      color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    }
+    .swatch-label { font-size: 0.65rem; color: var(--text-dim); text-align: center; max-width: 56px; line-height: 1.2; }
+
+    /* ═══════════════════════════════════════════
+       MODULE BUILDER (KFC-style)
+    ═══════════════════════════════════════════ */
+    .module-section-label {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--text-faint); text-transform: uppercase;
+      margin: 24px 0 12px;
+    }
+    .module-section-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .modules-list { display: flex; flex-direction: column; gap: 8px; }
+    .module-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 16px;
+      transition: all var(--trans);
+    }
+    .module-row.in-cart {
+      border-color: var(--border-act);
+      background: rgba(46,204,113,0.04);
+    }
+    .module-icon { font-size: 1.4rem; flex-shrink: 0; width: 32px; text-align: center; }
+    .module-info { flex: 1; min-width: 0; }
+    .module-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .module-detail { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+    .module-badge {
+      font-size: 0.65rem; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px; flex-shrink: 0;
+    }
+    .badge-inc { background: rgba(46,204,113,0.1); color: var(--green); border: 1px solid rgba(46,204,113,0.2); }
+    .badge-opt { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
+    .qty-control {
+      display: flex; align-items: center; gap: 0;
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .qty-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-dim); font-size: 1.1rem; font-weight: 600;
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--trans); flex-shrink: 0;
+    }
+    .qty-btn:hover { background: var(--bg-4); color: var(--green); }
+    .qty-val {
+      min-width: 32px; text-align: center; font-size: 0.9rem; font-weight: 600;
+      color: var(--text); padding: 0 4px;
+    }
+
+    /* ═══════════════════════════════════════════
+       SECTION DIVIDER
+    ═══════════════════════════════════════════ */
+    .section-divider {
+      height: 1px; background: var(--border); margin: 32px 0;
+    }
+
+    /* ═══════════════════════════════════════════
+       FORM INPUTS
+    ═══════════════════════════════════════════ */
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 24px;
+    }
+    .form-grid.full { grid-template-columns: 1fr; }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label {
+      font-size: 0.78rem; font-weight: 600; color: var(--text-dim);
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .form-label span { color: var(--green); margin-left: 2px; }
+    .form-input, .form-select, .form-textarea {
+      background: var(--bg-2); border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 12px 14px;
+      color: var(--text); font-family: var(--font-sans); font-size: 0.9rem;
+      transition: all var(--trans); outline: none; width: 100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px var(--green-glow);
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-faint); }
+    .form-select option { background: var(--bg-2); color: var(--text); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.5);
+      cursor: pointer;
+    }
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.5);
+      cursor: pointer;
+    }
+
+    /* ═══════════════════════════════════════════
+       NAVIGATION BUTTONS
+    ═══════════════════════════════════════════ */
+    .step-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 32px; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: 8px; border: none;
+      font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: all var(--trans); text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--green); color: #000;
+      box-shadow: 0 0 0 0 var(--green-glow);
+    }
+    .btn-primary:hover {
+      background: #27ae60;
+      box-shadow: 0 0 20px var(--green-glow), 0 4px 12px rgba(0,0,0,0.4);
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+    .btn-gold {
+      background: linear-gradient(135deg, #c9a84c, #e8c96e);
+      color: #000; font-weight: 700;
+    }
+    .btn-gold:hover {
+      box-shadow: 0 0 20px var(--gold-glow), 0 4px 12px rgba(0,0,0,0.4);
+      transform: translateY(-1px);
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+    .btn-lg { padding: 16px 32px; font-size: 1rem; border-radius: 10px; }
+    .btn-full { width: 100%; justify-content: center; }
+    .btn svg { flex-shrink: 0; }
+
+    /* ═══════════════════════════════════════════
+       SIDEBAR — LIVE SUMMARY
+    ═══════════════════════════════════════════ */
+    .cust-sidebar {
+      position: sticky; top: 80px;
+    }
+    .summary-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .summary-header {
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(46,204,113,0.08), transparent);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .summary-header-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: rgba(46,204,113,0.1); border: 1px solid var(--border-act);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .summary-header-text h3 {
+      font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500;
+    }
+    .summary-header-text p { font-size: 0.75rem; color: var(--text-dim); }
+    .summary-body { padding: 16px 20px; }
+    .summary-item {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-item-key { color: var(--text-dim); flex-shrink: 0; }
+    .summary-item-val { color: var(--text); font-weight: 500; text-align: right; }
+    .summary-empty {
+      text-align: center; color: var(--text-faint); font-size: 0.8rem;
+      padding: 24px 0;
+    }
+    .summary-modules { padding: 12px 20px; }
+    .summary-module-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0; font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-module-item:last-child { border-bottom: none; }
+    .smi-icon { font-size: 0.9rem; }
+    .smi-name { flex: 1; color: var(--text); }
+    .smi-qty {
+      font-size: 0.7rem; font-weight: 700; color: var(--green);
+      background: rgba(46,204,113,0.1); border-radius: 4px; padding: 1px 6px;
+    }
+    .summary-gama {
+      margin: 12px 20px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.08), transparent);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 0.8rem;
+    }
+    .summary-gama-label { color: var(--gold); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .summary-gama-val { font-weight: 600; margin-top: 2px; }
+    .summary-note {
+      padding: 12px 20px;
+      font-size: 0.72rem; color: var(--text-faint); font-style: italic;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ═══════════════════════════════════════════
+       GAMA CARDS
+    ═══════════════════════════════════════════ */
+    .gama-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 700px) { .gama-grid { grid-template-columns: 1fr; } }
+    .gama-card {
+      background: var(--bg-2); border: 2px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px 16px;
+      cursor: pointer; transition: all var(--trans);
+      position: relative; text-align: center;
+    }
+    .gama-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .gama-card.selected {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.05);
+      box-shadow: 0 0 0 1px var(--gold), 0 0 30px var(--gold-glow);
+    }
+    .gama-card.selected::after {
+      content: '✓ Seleccionada';
+      position: absolute; top: 12px; right: 12px;
+      font-size: 0.65rem; font-weight: 700; color: var(--gold);
+    }
+    .gama-icon { font-size: 2.2rem; margin-bottom: 12px; display: block; }
+    .gama-name {
+      font-family: var(--font-serif); font-size: 1.4rem; font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .gama-card:nth-child(1) .gama-name { color: #aaa; }
+    .gama-card:nth-child(2) .gama-name { color: var(--green); }
+    .gama-card:nth-child(3) .gama-name { color: var(--gold); }
+    .gama-price {
+      font-size: 0.75rem; color: var(--text-dim); margin-bottom: 14px;
+    }
+    .gama-features { list-style: none; text-align: left; display: flex; flex-direction: column; gap: 6px; }
+    .gama-features li {
+      font-size: 0.78rem; color: var(--text-dim);
+      display: flex; align-items: flex-start; gap: 6px;
+    }
+    .gama-features li::before { content: '›'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .gama-card:nth-child(3) .gama-features li::before { color: var(--gold); }
+
+    /* ═══════════════════════════════════════════
+       TOGGLE SWITCH
+    ═══════════════════════════════════════════ */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      margin-bottom: 10px; cursor: pointer;
+      transition: all var(--trans);
+    }
+    .toggle-row:hover { border-color: rgba(46,204,113,0.3); }
+    .toggle-row.active { border-color: var(--border-act); background: rgba(46,204,113,0.04); }
+    .toggle-left { display: flex; align-items: center; gap: 12px; }
+    .toggle-icon { font-size: 1.3rem; }
+    .toggle-info .t-name { font-size: 0.9rem; font-weight: 600; }
+    .toggle-info .t-desc { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+    .toggle-switch {
+      width: 44px; height: 24px; border-radius: 12px;
+      background: var(--bg-4); border: 1px solid var(--border);
+      position: relative; transition: all var(--trans); flex-shrink: 0;
+    }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--text-faint); transition: all var(--trans);
+    }
+    .toggle-row.active .toggle-switch { background: var(--green); border-color: var(--green); }
+    .toggle-row.active .toggle-switch::after { left: calc(100% - 19px); background: #000; }
+
+    /* ═══════════════════════════════════════════
+       FINISH SCREEN
+    ═══════════════════════════════════════════ */
+    .finish-screen {
+      text-align: center; padding: 40px 20px;
+    }
+    .finish-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(46,204,113,0.1); border: 2px solid var(--green);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin: 0 auto 24px;
+      animation: finishPulse 2s ease-in-out infinite;
+    }
+    @keyframes finishPulse {
+      0%, 100% { box-shadow: 0 0 0 0 var(--green-glow); }
+      50% { box-shadow: 0 0 0 12px rgba(46,204,113,0); }
+    }
+    .finish-screen h2 {
+      font-family: var(--font-serif); font-size: 2rem; margin-bottom: 8px;
+    }
+    .finish-screen p { color: var(--text-dim); margin-bottom: 32px; }
+    .finish-actions {
+      display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════
+       LED AMBIENT GLOW (decorative)
+    ═══════════════════════════════════════════ */
+    .led-ambient {
+      position: fixed; pointer-events: none; z-index: -1;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(46,204,113,0.04) 0%, transparent 70%);
+      top: -200px; right: -200px;
+      animation: ambientDrift 8s ease-in-out infinite alternate;
+    }
+    @keyframes ambientDrift {
+      from { transform: translate(0, 0); }
+      to   { transform: translate(-50px, 80px); }
+    }
+
+    /* ═══════════════════════════════════════════
+       UTILITY
+    ═══════════════════════════════════════════ */
+    .hidden { display: none !important; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .info-box {
+      background: rgba(46,204,113,0.05);
+      border: 1px solid var(--border-act);
+      border-radius: 8px; padding: 12px 14px;
+      font-size: 0.8rem; color: var(--text-dim);
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .info-box-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════ */
+    @media (max-width: 600px) {
+      .progress-wrap { padding: 0 16px 24px; }
+      .step-label { display: none; }
+      .cust-main { padding: 0 16px 60px; }
+      .gama-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient LED glow -->
+  <div class="led-ambient" aria-hidden="true"></div>
+
+  <!-- ═══ NAVBAR ═══ -->
+  <header class="navbar" id="cust-navbar">
+    <a href="index.html" class="nav-logo">
+      <img src="img/logo.jpg" alt="MHG Arquitectos" />
+      <span class="nav-logo-text">MHG <span class="accent">Arquitectos</span></span>
+    </a>
+    <a href="index.html" class="nav-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Volver al sitio
+    </a>
+  </header>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="cust-hero">
+    <div class="hero-eyebrow">Customizador Interactivo</div>
+    <h1>Diseña tu <em>cocina ideal</em></h1>
+    <p>Arma tu cocina a medida paso a paso. Al finalizar generamos tu cotización y agendamos el levantamiento.</p>
+  </section>
+
+  <!-- ═══ PROGRESS BAR ═══ -->
+  <div class="progress-wrap">
+    <div class="progress-steps" id="progressSteps">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      <!-- Steps generated by JS -->
+    </div>
+  </div>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="cust-main">
+    <div class="cust-content">
+
+      <!-- ════════════════════════════
+           STEP 0: ¿Tiene cocina?
+      ════════════════════════════ -->
+      <div class="step-panel active" id="step-0" data-step="0">
+        <h2 class="step-title">¡Bienvenido al <em>configurador</em>!</h2>
+        <p class="step-subtitle">Cuéntanos un poco sobre tu situación actual para orientarte mejor.</p>
+
+        <div class="options-grid cols-2">
+          <div class="opt-card" id="has-kitchen-no" data-val="no" onclick="selectOpt(this,'has_kitchen')">
+            <span class="opt-icon">🏗️</span>
+            <div class="opt-name">No tengo cocina</div>
+            <div class="opt-desc">Quiero diseñar una cocina nueva desde cero</div>
+          </div>
+          <div class="opt-card" id="has-kitchen-yes" data-val="si" onclick="selectOpt(this,'has_kitchen')">
+            <span class="opt-icon">🔄</span>
+            <div class="opt-name">Ya tengo cocina</div>
+            <div class="opt-desc">Quiero renovar o reemplazar mi cocina actual</div>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <div></div>
+          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-0" disabled>
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 1: GAMA
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-1" data-step="1">
+        <h2 class="step-title">Elige tu <em>gama</em></h2>
+        <p class="step-subtitle">Cada gama incluye una configuración predeterminada que puedes personalizar en los siguientes pasos.</p>
+
+        <div class="gama-grid">
+          <!-- BÁSICA -->
+          <div class="gama-card" onclick="selectGama(this,'basica')" id="gama-basica">
+            <span class="gama-icon">🥈</span>
+            <div class="gama-name">Básica</div>
+            <div class="gama-price">Punto de partida accesible</div>
+            <ul class="gama-features">
+              <li>Módulos estándar MDF</li>
+              <li>Interior color blanco</li>
+              <li>Herraje económico push-to-open</li>
+              <li>Cubierta laminada de alta presión</li>
+              <li>Frente sólido en colores básicos</li>
+              <li>Sin isla / Sin LED</li>
+            </ul>
+          </div>
+          <!-- MEDIA -->
+          <div class="gama-card" onclick="selectGama(this,'media')" id="gama-media">
+            <span class="gama-icon">🥇</span>
+            <div class="gama-name">Media</div>
+            <div class="gama-price">Relación calidad-precio</div>
+            <ul class="gama-features">
+              <li>Módulos MDF con extraíbles</li>
+              <li>Interior melamina madera</li>
+              <li>Herraje de cierre suave</li>
+              <li>Cubierta granito o cuarzo básico</li>
+              <li>Frentes marca Araujo / Decolux</li>
+              <li>Iluminación LED bajo muebles</li>
+            </ul>
+          </div>
+          <!-- ALTA -->
+          <div class="gama-card" onclick="selectGama(this,'alta')" id="gama-alta">
+            <span class="gama-icon">✨</span>
+            <div class="gama-name">Premium</div>
+            <div class="gama-price">Lo mejor en materiales y acabados</div>
+            <ul class="gama-features">
+              <li>Módulos premium con esquineros extraíbles</li>
+              <li>Interior melamina de lujo</li>
+              <li>Herraje Blum (cierre suave + amortiguado)</li>
+              <li>Cubierta cuarzo o sinterizado</li>
+              <li>Frentes marca Transformad</li>
+              <li>LED perimetral + isla + vitrinas</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-1" disabled>
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 2: INTERIOR COLOR
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-2" data-step="2">
+        <h2 class="step-title">Color del <em>interior</em></h2>
+        <p class="step-subtitle">El color interior es la melanina que se ve dentro de los muebles al abrirlos.</p>
+
+        <div class="options-grid cols-3">
+          <div class="opt-card" onclick="selectOpt(this,'interior_color')" data-val="blanco">
+            <span class="opt-icon">⬜</span>
+            <div class="opt-name">Blanco básico</div>
+            <div class="opt-desc">Clásico, limpio y atemporal</div>
+            <span class="opt-badge silver">Gama Básica</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'interior_color')" data-val="gris">
+            <span class="opt-icon">🩶</span>
+            <div class="opt-name">Sólido gris</div>
+            <div class="opt-desc">Moderno y neutro</div>
+            <span class="opt-badge">Gama Media</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'interior_color')" data-val="madera">
+            <span class="opt-icon">🪵</span>
+            <div class="opt-name">Madera</div>
+            <div class="opt-desc">Cálido y natural</div>
+            <span class="opt-badge gold">Premium</span>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-2" disabled>
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 3: FRENTES
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-3" data-step="3">
+        <h2 class="step-title">Color y estilo de <em>frentes</em></h2>
+        <p class="step-subtitle">Los frentes (puertas) son lo que defines el carácter visual de tu cocina.</p>
+
+        <div class="info-box">
+          <span class="info-box-icon">💡</span>
+          <span>Primero elige el tipo de frente. Luego verás los colores disponibles para ese tipo.</span>
+        </div>
+
+        <!-- Tipo de frente -->
+        <div class="module-section-label">Tipo de frente</div>
+        <div class="options-grid">
+          <div class="opt-card" onclick="selectFrenteType(this,'solido')" data-val="solido">
+            <span class="opt-icon">🎨</span>
+            <div class="opt-name">Sólido</div>
+            <div class="opt-desc">Acabado liso en un color uniforme</div>
+          </div>
+          <div class="opt-card" onclick="selectFrenteType(this,'madera')" data-val="madera">
+            <span class="opt-icon">🌲</span>
+            <div class="opt-name">Madera</div>
+            <div class="opt-desc">Veta natural o imitación madera</div>
+          </div>
+          <div class="opt-card" onclick="selectFrenteType(this,'araujo')" data-val="araujo">
+            <span class="opt-icon">🏷️</span>
+            <div class="opt-name">Araujo</div>
+            <div class="opt-desc">Gama media · Variedad de acabados</div>
+          </div>
+          <div class="opt-card" onclick="selectFrenteType(this,'decolux')" data-val="decolux">
+            <span class="opt-icon">🏷️</span>
+            <div class="opt-name">Decolux</div>
+            <div class="opt-desc">Gama media-alta · Alto brillo y mate</div>
+          </div>
+          <div class="opt-card" onclick="selectFrenteType(this,'transformad')" data-val="transformad">
+            <span class="opt-icon">⭐</span>
+            <div class="opt-name">Transformad</div>
+            <div class="opt-desc">Premium · Acabados de lujo</div>
+          </div>
+        </div>
+
+        <!-- Color selection (appears after type) -->
+        <div id="color-section" class="hidden mt-24">
+          <div class="module-section-label">Selecciona el color</div>
+          <div class="color-grid" id="color-swatches"></div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-3" disabled>
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 4: MÓDULOS
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-4" data-step="4">
+        <h2 class="step-title">Arma tus <em>módulos</em></h2>
+        <p class="step-subtitle">Selecciona y ajusta la cantidad de cada módulo. Los incluidos en tu gama ya están preseleccionados.</p>
+
+        <div class="info-box">
+          <span class="info-box-icon">📐</span>
+          <span>Ajusta la cantidad de cada módulo. No te preocupes por las dimensiones exactas — nuestro equipo las toma durante el levantamiento.</span>
+        </div>
+
+        <!-- MUEBLES BAJOS -->
+        <div class="module-section-label">Muebles Bajos</div>
+        <div class="modules-list" id="modules-bajos"></div>
+
+        <!-- MUEBLES ALTOS / AÉREOS -->
+        <div class="module-section-label">Muebles Altos / Aéreos</div>
+        <div class="modules-list" id="modules-altos"></div>
+
+        <!-- MÓDULOS ESPECIALES -->
+        <div class="module-section-label">Módulos Especiales</div>
+        <div class="modules-list" id="modules-especiales"></div>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary" onclick="nextStep()">
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 5: CUBIERTA
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-5" data-step="5">
+        <h2 class="step-title">Tipo de <em>cubierta</em></h2>
+        <p class="step-subtitle">La cubierta es la superficie de trabajo de tu cocina. Van en orden de precio (de menor a mayor).</p>
+
+        <div class="options-grid cols-2">
+          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="laminado">
+            <span class="opt-icon">🟫</span>
+            <div class="opt-name">Laminado Alta Presión</div>
+            <div class="opt-desc">Resistente y económico. Amplia variedad de colores y texturas.</div>
+            <span class="opt-badge silver">Menor costo</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="corian">
+            <span class="opt-icon">⬜</span>
+            <div class="opt-name">Superficie Sólida Corian®</div>
+            <div class="opt-desc">Blanco puro, sin juntas visibles. Reparable y muy higiénico.</div>
+            <span class="opt-badge">Gama Media</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="granito">
+            <span class="opt-icon">🪨</span>
+            <div class="opt-name">Granito Natural</div>
+            <div class="opt-desc">Piedra natural única. Excelente durabilidad. Múltiples modelos disponibles.</div>
+            <span class="opt-badge">Gama Media</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="cuarzo">
+            <span class="opt-icon">💎</span>
+            <div class="opt-name">Cuarzo Engineered</div>
+            <div class="opt-desc">Alta resistencia, colores uniformes y acabado premium.</div>
+            <span class="opt-badge gold">Premium</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="sinterizado">
+            <span class="opt-icon">✨</span>
+            <div class="opt-name">Cuarzo Sinterizado</div>
+            <div class="opt-desc">Lo más avanzado del mercado. Resistente al calor, rayaduras y UV.</div>
+            <span class="opt-badge gold">Top Premium</span>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-5" disabled>
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 6: HERRAJES
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-6" data-step="6">
+        <h2 class="step-title">Sistema de <em>herrajes</em></h2>
+        <p class="step-subtitle">Los herrajes determinan cómo se abren y cierran tus muebles. Define la experiencia cotidiana de tu cocina.</p>
+
+        <div class="options-grid cols-2">
+          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="economico">
+            <span class="opt-icon">🔩</span>
+            <div class="opt-name">Económico</div>
+            <div class="opt-desc">Push-to-open estándar. Funcional y duradero para uso regular.</div>
+            <span class="opt-badge silver">Gama Básica</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="cierre_suave">
+            <span class="opt-icon">🤫</span>
+            <div class="opt-name">Cierre Suave</div>
+            <div class="opt-desc">Las puertas y cajones se cierran con suavidad automáticamente. Sin golpes.</div>
+            <span class="opt-badge">Gama Media</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="blum">
+            <span class="opt-icon">🏆</span>
+            <div class="opt-name">Blum Premium</div>
+            <div class="opt-desc">Marca alemana de referencia mundial. Cierre suave + amortiguado en cajones y puertas.</div>
+            <span class="opt-badge gold">Premium</span>
+          </div>
+          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="oculto">
+            <span class="opt-icon">🫥</span>
+            <div class="opt-name">Sin jaladores (oculto)</div>
+            <div class="opt-desc">Apertura por perfil de aluminio o toque. Estética minimalista.</div>
+            <span class="opt-badge gold">Diseño</span>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-6" disabled>
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 7: EXTRAS (LED, isla)
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-7" data-step="7">
+        <h2 class="step-title">Extras y <em>opciones adicionales</em></h2>
+        <p class="step-subtitle">Personaliza aún más tu cocina. Selecciona lo que deseas incluir. Todo es opcional.</p>
+
+        <div class="toggle-row" id="toggle-led" onclick="toggleExtra(this,'led')">
+          <div class="toggle-left">
+            <span class="toggle-icon">💡</span>
+            <div class="toggle-info">
+              <div class="t-name">Iluminación LED</div>
+              <div class="t-desc">Luces LED integradas en los muebles y bajo aéreos</div>
+            </div>
+          </div>
+          <div class="toggle-switch"></div>
+        </div>
+
+        <!-- Sub-options for LED -->
+        <div id="led-subopts" class="hidden" style="margin: 0 0 10px 20px; padding-left: 16px; border-left: 2px solid var(--border-act);">
+          <div style="margin: 12px 0 8px; font-size: 0.8rem; color: var(--text-dim);">Tipo de iluminación:</div>
+          <div class="options-grid cols-3">
+            <div class="opt-card" onclick="selectOpt(this,'led_tipo')" data-val="bajo_muebles">
+              <span class="opt-icon">⬇️</span>
+              <div class="opt-name" style="font-size:0.8rem">Bajo muebles altos</div>
+            </div>
+            <div class="opt-card" onclick="selectOpt(this,'led_tipo')" data-val="cinta_perimetral">
+              <span class="opt-icon">🔆</span>
+              <div class="opt-name" style="font-size:0.8rem">Cinta perimetral</div>
+            </div>
+            <div class="opt-card" onclick="selectOpt(this,'led_tipo')" data-val="spot">
+              <span class="opt-icon">💫</span>
+              <div class="opt-name" style="font-size:0.8rem">Spot empotrado</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="toggle-row" id="toggle-isla" onclick="toggleExtra(this,'isla')">
+          <div class="toggle-left">
+            <span class="toggle-icon">🏝️</span>
+            <div class="toggle-info">
+              <div class="t-name">Isla / Barra</div>
+              <div class="t-desc">Módulo central con opción de bancos o parrilla integrada</div>
+            </div>
+          </div>
+          <div class="toggle-switch"></div>
+        </div>
+
+        <!-- Sub-options for isla -->
+        <div id="isla-subopts" class="hidden" style="margin: 0 0 10px 20px; padding-left: 16px; border-left: 2px solid var(--border-act);">
+          <div style="margin: 12px 0 8px; font-size: 0.8rem; color: var(--text-dim);">Opciones de isla:</div>
+          <div class="toggle-row" id="toggle-bancos" onclick="toggleExtra(this,'bancos')" style="margin-bottom:8px">
+            <div class="toggle-left">
+              <span class="toggle-icon">🪑</span>
+              <div class="toggle-info">
+                <div class="t-name" style="font-size:0.85rem">Bancos / Cubierta volada</div>
+                <div class="t-desc">Para sentarse en la isla</div>
+              </div>
+            </div>
+            <div class="toggle-switch"></div>
+          </div>
+          <div class="toggle-row" id="toggle-parrilla-isla" onclick="toggleExtra(this,'parrilla_isla')" style="margin-bottom:0">
+            <div class="toggle-left">
+              <span class="toggle-icon">🔥</span>
+              <div class="toggle-info">
+                <div class="t-name" style="font-size:0.85rem">Parrilla en isla</div>
+                <div class="t-desc">Integración de parrilla en la cubierta de la isla</div>
+              </div>
+            </div>
+            <div class="toggle-switch"></div>
+          </div>
+        </div>
+
+        <div class="toggle-row" id="toggle-mueble-auxiliar" onclick="toggleExtra(this,'mueble_auxiliar')">
+          <div class="toggle-left">
+            <span class="toggle-icon">🗄️</span>
+            <div class="toggle-info">
+              <div class="t-name">Mueble auxiliar</div>
+              <div class="t-desc">Mueble complementario para mayor almacenamiento</div>
+            </div>
+          </div>
+          <div class="toggle-switch"></div>
+        </div>
+
+        <div class="toggle-row" id="toggle-campana" onclick="toggleExtra(this,'campana')">
+          <div class="toggle-left">
+            <span class="toggle-icon">💨</span>
+            <div class="toggle-info">
+              <div class="t-name">Campana extractora</div>
+              <div class="t-desc">Extracción de humos y olores integrada</div>
+            </div>
+          </div>
+          <div class="toggle-switch"></div>
+        </div>
+
+        <!-- Sub-options campana -->
+        <div id="campana-subopts" class="hidden" style="margin: 0 0 10px 20px; padding-left: 16px; border-left: 2px solid var(--border-act);">
+          <div style="margin: 12px 0 8px; font-size: 0.8rem; color: var(--text-dim);">Tipo de campana:</div>
+          <div class="options-grid">
+            <div class="opt-card" onclick="selectOpt(this,'campana_tipo')" data-val="pared">
+              <span class="opt-icon">🧱</span>
+              <div class="opt-name" style="font-size:0.8rem">A pared</div>
+            </div>
+            <div class="opt-card" onclick="selectOpt(this,'campana_tipo')" data-val="isla_campana">
+              <span class="opt-icon">⬇️</span>
+              <div class="opt-name" style="font-size:0.8rem">Tipo isla</div>
+            </div>
+            <div class="opt-card" onclick="selectOpt(this,'campana_tipo')" data-val="empotrada">
+              <span class="opt-icon">⬛</span>
+              <div class="opt-name" style="font-size:0.8rem">Empotrada</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary" onclick="nextStep()">
+            Continuar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 8: DATOS DEL CLIENTE
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-8" data-step="8">
+        <h2 class="step-title">Tus <em>datos de contacto</em></h2>
+        <p class="step-subtitle">Para agendar tu levantamiento y enviarte el resumen de cotización.</p>
+
+        <form id="client-form" onsubmit="return false;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="c-nombre">Nombre completo <span>*</span></label>
+              <input class="form-input" type="text" id="c-nombre" placeholder="Tu nombre y apellido" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-tel">Número de teléfono <span>*</span></label>
+              <input class="form-input" type="tel" id="c-tel" placeholder="+52 271 000 0000" required />
+            </div>
+            <div class="form-group full">
+              <label class="form-label" for="c-dir">Dirección / Municipio <span>*</span></label>
+              <input class="form-input" type="text" id="c-dir" placeholder="Colonia, Municipio, Ciudad" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-fecha">Fecha preferida de levantamiento <span>*</span></label>
+              <input class="form-input" type="date" id="c-fecha" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-hora">Hora preferida <span>*</span></label>
+              <input class="form-input" type="time" id="c-hora" required />
+            </div>
+          </div>
+        </form>
+
+        <div class="step-nav">
+          <button class="btn btn-outline" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Atrás
+          </button>
+          <button class="btn btn-primary btn-lg" onclick="finishConfig()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10zm-2-6l7-4-7-4v8z"/></svg>
+            Finalizar y generar cotización
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════
+           STEP 9: DONE
+      ════════════════════════════ -->
+      <div class="step-panel" id="step-9" data-step="9">
+        <div class="finish-screen">
+          <div class="finish-icon">✅</div>
+          <h2>¡Cotización <em style="color:var(--green);font-style:italic">lista</em>!</h2>
+          <p>Tu configuración está completa. Descarga tu resumen y envíanos los detalles por WhatsApp para confirmar tu cita.</p>
+          <div class="finish-actions">
+            <button class="btn btn-gold btn-lg btn-full" onclick="downloadPDF()" id="btn-pdf">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Descargar mi cotización PDF
+            </button>
+            <button class="btn btn-primary btn-lg btn-full" onclick="sendWhatsApp()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              Enviar a MHG por WhatsApp
+            </button>
+            <a href="index.html" class="btn btn-outline btn-full">
+              Volver al sitio principal
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /cust-content -->
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="cust-sidebar">
+      <div class="summary-card">
+        <div class="summary-header">
+          <div class="summary-header-icon">🍳</div>
+          <div class="summary-header-text">
+            <h3>Tu Cocina</h3>
+            <p>Resumen en tiempo real</p>
+          </div>
+        </div>
+
+        <div id="summary-gama-wrap" class="hidden">
+          <div class="summary-gama">
+            <div class="summary-gama-label">Gama seleccionada</div>
+            <div class="summary-gama-val" id="summary-gama-val">—</div>
+          </div>
+        </div>
+
+        <div class="summary-body" id="summary-body">
+          <div class="summary-empty">
+            <div style="font-size:1.5rem;margin-bottom:8px">👆</div>
+            Tus selecciones aparecerán aquí
+          </div>
+        </div>
+
+        <div id="summary-modules-wrap" class="hidden">
+          <div style="padding:8px 20px;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase">Módulos seleccionados</div>
+          <div class="summary-modules" id="summary-modules"></div>
+        </div>
+
+        <div class="summary-note">
+          ✦ Los precios exactos se definen durante el levantamiento en sitio.
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <script src="cotizador.js"></script>
+</body>
+</html>
