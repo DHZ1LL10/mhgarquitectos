@@ -214,8 +214,8 @@ function submitModal() {
   }
 
   // Build WhatsApp message
-  const iconMap = { construccion:'🏗️', mobiliario:'🪵', interiorismo:'🎨' };
-  let msg = `${iconMap[activeModalKey]} *COTIZACIÓN — ${config.title.toUpperCase()}*\n\n`;
+  const iconMap = { construccion:'', mobiliario:'', interiorismo:'' };
+  let msg = `*COTIZACIÓN — ${config.title.toUpperCase()}*\n\n`;
 
   config.fields.forEach(field => {
     const el = document.getElementById(field.id);
