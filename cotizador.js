@@ -66,26 +66,42 @@ const STEP_HEADERS = [
 /* ─── MODULE CATALOG ─── */
 const MODULE_CATALOG = {
   bajos: [
-    { id:'tarja',        name:'Módulo de tarja',          size:'45 cm',   desc:'Para lavaplatos sencillo o doble. Incluye acceso para desagüe y alimentación.' },
-    { id:'basura',       name:'Módulo bote de basura',    size:'45 cm',   desc:'Cubo de basura extraíble integrado, oculto dentro del mueble.' },
-    { id:'garrafon',     name:'Herraje garrafón',         size:'45 cm',   desc:'Módulo especial con guía extraíble para facilitar el cambio del garrafón.' },
-    { id:'cajones_60',   name:'Cajones (ancho estándar)', size:'60 cm+',  desc:'Mueble de cajones corridos. Ideal para utensilios, ropa de cocina y almacenamiento.' },
-    { id:'cajones_cat2', name:'Cajones dobles (en mueble)',size:'60+ cm', desc:'Dos o más cajones integrados en un mismo módulo de mayor profundidad.' },
-    { id:'extraible_15', name:'Extraíble angosto',        size:'15 cm',   desc:'Módulo extraíble para especias, aceites y condimentos. Óptimo en espacios reducidos.' },
-    { id:'extraible_30', name:'Extraíble mediano',        size:'30 cm',   desc:'Extraíble para almacenaje vertical de tablas, bandejas o alimentos en bolsa.' },
-    { id:'esquinero',    name:'Esquinero extraíble',      size:'~100 cm', desc:'Solución funcional para la esquina de la cocina. Maximiza el espacio disponible.' },
-    { id:'cajones_ind',  name:'Cajones individuales',     size:'≤60 cm',  desc:'Cajón individual de menor dimensión para zonas específicas o complemento de módulos.' },
+    { id:'tarja',        name:'Módulo de tarja',          size:'45 cm',   desc:'Para lavaplatos sencillo o doble. Incluye acceso para desagüe y alimentación.',
+      img:'https://images.unsplash.com/photo-1587093430416-0dc23a0c62c1?auto=format&fit=crop&w=800&h=460&q=80' },
+    { id:'basura',       name:'Módulo bote de basura',    size:'45 cm',   desc:'Cubo de basura extraíble integrado, oculto dentro del mueble.',
+      img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&h=460&q=80' },
+    { id:'garrafon',     name:'Herraje garrafón',         size:'45 cm',   desc:'Módulo especial con guía extraíble para facilitar el cambio del garrafón.',
+      img:null },
+    { id:'cajones_60',   name:'Cajones (ancho estándar)', size:'60 cm+',  desc:'Mueble de cajones corridos. Ideal para utensilios, ropa de cocina y almacenamiento.',
+      img:'https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=800&h=460&q=80' },
+    { id:'cajones_cat2', name:'Cajones dobles (en mueble)',size:'60+ cm', desc:'Dos o más cajones integrados en un mismo módulo de mayor profundidad.',
+      img:'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&h=460&q=80' },
+    { id:'extraible_15', name:'Extraíble angosto',        size:'15 cm',   desc:'Módulo extraíble para especias, aceites y condimentos. Óptimo en espacios reducidos.',
+      img:null },
+    { id:'extraible_30', name:'Extraíble mediano',        size:'30 cm',   desc:'Extraíble para almacenaje vertical de tablas, bandejas o alimentos en bolsa.',
+      img:null },
+    { id:'esquinero',    name:'Esquinero extraíble',      size:'~100 cm', desc:'Solución funcional para la esquina de la cocina. Maximiza el espacio disponible.',
+      img:null },
+    { id:'cajones_ind',  name:'Cajones individuales',     size:'≤60 cm',  desc:'Cajón individual de menor dimensión para zonas específicas o complemento de módulos.',
+      img:'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&h=460&q=80' },
   ],
   altos: [
-    { id:'torre_horno',  name:'Torre de hornos',          size:'60–80 cm ancho', desc:'Mueble vertical para empotrar horno o microondas. La altura depende del electrodoméstico.' },
-    { id:'mod_refri',    name:'Módulo refrigerador',      size:'~95 cm',  desc:'Marco de muebles a cada lado del refrigerador para integración visual completa.' },
-    { id:'vitrina_cristal',name:'Vitrina con cristal',    size:'Variable',desc:'Puerta de vidrio templado para mostrar vajilla o vajilla decorativa.' },
-    { id:'alacena',      name:'Módulo aéreo estándar',    size:'Variable',desc:'Mueble superior de almacenamiento general. Puede llevar puerta sencilla o doble.' },
+    { id:'torre_horno',  name:'Torre de hornos',          size:'60–80 cm ancho', desc:'Mueble vertical para empotrar horno o microondas. La altura depende del electrodoméstico.',
+      img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&h=460&q=80' },
+    { id:'mod_refri',    name:'Módulo refrigerador',      size:'~95 cm',  desc:'Marco de muebles a cada lado del refrigerador para integración visual completa.',
+      img:'https://images.unsplash.com/photo-1484154133-d2d5ffe43ea1?auto=format&fit=crop&w=800&h=460&q=80' },
+    { id:'vitrina_cristal',name:'Vitrina con cristal',    size:'Variable',desc:'Puerta de vidrio templado para mostrar vajilla o vajilla decorativa.',
+      img:'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&h=460&q=80' },
+    { id:'alacena',      name:'Módulo aéreo estándar',    size:'Variable',desc:'Mueble superior de almacenamiento general. Puede llevar puerta sencilla o doble.',
+      img:'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&h=460&q=80' },
   ],
   especiales: [
-    { id:'panel_entrepanel',name:'Módulo panel / entrepanel', size:'Variable', desc:'Panel decorativo lateral o divisorio con entrepanel para dar terminado y uniformidad.' },
-    { id:'extraible_especias',name:'Extraíble especias + parrilla', size:'15–30 cm', desc:'Solución junto a parrilla o estufa para especias, aceites y herramientas de cocina.' },
-    { id:'mod_cajones_isla',name:'Isla — módulos cajones',  size:'Variable', desc:'Cajones integrados en la isla para almacenamiento a doble acceso.' },
+    { id:'panel_entrepanel',name:'Módulo panel / entrepanel', size:'Variable', desc:'Panel decorativo lateral o divisorio con entrepanel para dar terminado y uniformidad.',
+      img:null },
+    { id:'extraible_especias',name:'Extraíble especias + parrilla', size:'15–30 cm', desc:'Solución junto a parrilla o estufa para especias, aceites y herramientas de cocina.',
+      img:null },
+    { id:'mod_cajones_isla',name:'Isla — módulos cajones',  size:'Variable', desc:'Cajones integrados en la isla para almacenamiento a doble acceso.',
+      img:'https://images.unsplash.com/photo-1556909172-8c2f041fca1e?auto=format&fit=crop&w=800&h=460&q=80' },
   ]
 };
 
@@ -182,10 +198,10 @@ function buildModules() {
   Object.entries(MODULE_CATALOG).forEach(([cat, mods]) => {
     const container = document.getElementById(`modules-${cat}`);
     if (!container) return;
-    container.innerHTML = mods.map(m => `
-      <div class="option-card" id="mod-${m.id}" data-mod-id="${m.id}">
-        <div class="option-photo">
-          <div class="photo-placeholder">
+    container.innerHTML = mods.map(m => {
+      const photoHTML = m.img
+        ? `<img src="${m.img}" alt="${m.name}" onerror="this.parentElement.innerHTML=placeholderHTML('${m.name}')" />`
+        : `<div class="photo-placeholder">
             <div class="photo-placeholder-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="3" y="5" width="18" height="14" rx="2"/>
@@ -193,7 +209,16 @@ function buildModules() {
               </svg>
             </div>
             <div class="photo-placeholder-text">Imagen de referencia</div>
-          </div>
+          </div>`;
+
+      return `
+      <div class="option-card" id="mod-${m.id}" data-mod-id="${m.id}">
+        <div class="option-photo">
+          ${photoHTML}
+          ${m.img ? `<button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), '${m.name}')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+            Ampliar
+          </button>` : ''}
         </div>
         <div class="option-info">
           <span class="option-tag">${m.size}</span>

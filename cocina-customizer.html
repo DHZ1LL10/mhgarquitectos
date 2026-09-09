@@ -286,7 +286,7 @@
     }
     .option-card.card-vertical .option-photo {
       width: 100%;
-      height: 200px;
+      height: 180px;
     }
     .option-card.card-vertical .option-info {
       width: 100%;
@@ -299,25 +299,26 @@
       width: 62%;
       flex-shrink: 0;
       position: relative;
-      min-height: 200px;
+      height: 220px;        /* Fixed height — image never grows the card */
       background: var(--light);
       overflow: hidden;
     }
     .option-photo img {
       width: 100%; height: 100%;
       object-fit: cover;
+      object-position: center;
       transition: transform 0.4s ease;
     }
-    .option-card:hover .option-photo img { transform: scale(1.03); }
+    .option-card:hover .option-photo img { transform: scale(1.04); }
 
     /* Photo placeholder */
     .photo-placeholder {
       width: 100%; height: 100%;
-      background: var(--light);
+      min-height: 220px;
+      background: linear-gradient(135deg, var(--light) 0%, #e8ebe9 100%);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 10px;
-      min-height: 200px;
     }
     .photo-placeholder-icon {
       width: 48px; height: 48px;
@@ -880,7 +881,8 @@
 
             <div class="option-card" id="opt-si-cocina" onclick="selectCardOpt(this,'has_kitchen','si')">
               <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&q=80"
+                <!-- Renovación — cocina existente siendo renovada/remodelada -->
+                <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&h=460&q=80"
                      alt="Renovación de cocina"
                      onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
                 <div class="photo-check">
@@ -920,7 +922,8 @@
             <!-- Básica -->
             <div class="option-card" id="gama-basica" onclick="selectGamaCard(this,'basica')">
               <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80"
+                <!-- Gama Básica — cocina blanca sencilla y funcional -->
+                <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&h=460&q=80"
                      alt="Gama Básica"
                      onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
                 <div class="photo-check">
@@ -948,7 +951,8 @@
             <!-- Media -->
             <div class="option-card" id="gama-media" onclick="selectGamaCard(this,'media')">
               <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1484154133-d2d5ffe43ea1?auto=format&fit=crop&w=800&q=80"
+                <!-- Gama Media — cocina moderna con herrajes y cubierta de calidad -->
+                <img src="https://images.unsplash.com/photo-1484154133-d2d5ffe43ea1?auto=format&fit=crop&w=800&h=460&q=80"
                      alt="Gama Media"
                      onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
                 <div class="photo-check">
@@ -976,7 +980,8 @@
             <!-- Premium -->
             <div class="option-card" id="gama-alta" onclick="selectGamaCard(this,'alta')">
               <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80"
+                <!-- Premium — cocina de lujo con isla y acabados de alto nivel -->
+                <img src="https://images.unsplash.com/photo-1556909172-8c2f041fca1e?auto=format&fit=crop&w=800&h=460&q=80"
                      alt="Gama Premium"
                      onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
                 <div class="photo-check">
@@ -1104,8 +1109,9 @@
 
             <div class="option-card" id="fr-madera" onclick="selectFrenteCard(this,'madera')">
               <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=800&q=80"
-                     alt="Frente madera"
+                <!-- Frente madera — primer plano de puerta de cocina con veta madera -->
+                <img src="https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=800&h=460&q=80&sat=-20"
+                     alt="Frente tipo madera"
                      onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
                 <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
                 <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Frente tipo madera')">
@@ -1240,7 +1246,8 @@
 
             <div class="option-card" id="cub-granito" onclick="selectCardOpt(this,'cubierta','granito')">
               <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=800&q=80"
+                <!-- Granito — foto muy cercana de textura de granito natural -->
+                <img src="https://images.unsplash.com/photo-1608543292671-ec1562e0ef1c?auto=format&fit=crop&w=800&h=460&q=80"
                      alt="Cubierta de granito"
                      onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
                 <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
@@ -1264,7 +1271,8 @@
 
             <div class="option-card" id="cub-cuarzo" onclick="selectCardOpt(this,'cubierta','cuarzo')">
               <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1556909172-8c2f041fca1e?auto=format&fit=crop&w=800&q=80"
+                <!-- Cuarzo blanco — textura limpia de cuarzo engineered -->
+                <img src="https://images.unsplash.com/photo-1556909172-8c2f041fca1e?auto=format&fit=crop&w=800&h=460&q=80"
                      alt="Cubierta de cuarzo"
                      onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
                 <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
@@ -1408,7 +1416,8 @@
           <!-- LED -->
           <div class="toggle-card" id="toggle-led" onclick="toggleExtraCard(this,'led')">
             <div class="toggle-card-photo">
-              <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=400&q=80"
+              <!-- LED — tira led bajo muebles altos de cocina -->
+              <img src="https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=400&h=300&q=80"
                    alt="Iluminación LED"
                    onerror="this.style.display='none'" />
             </div>
@@ -1434,7 +1443,8 @@
           <!-- Isla -->
           <div class="toggle-card" id="toggle-isla" onclick="toggleExtraCard(this,'isla')">
             <div class="toggle-card-photo">
-              <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=400&q=80"
+              <!-- Isla de cocina con bancos y cubierta -->
+              <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=400&h=300&q=80"
                    alt="Isla de cocina"
                    onerror="this.style.display='none'" />
             </div>
