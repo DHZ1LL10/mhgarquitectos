@@ -196,49 +196,42 @@ function updateSidebar(step) {
 /* ─── MODULES ─── */
 function buildModules() {
   Object.entries(MODULE_CATALOG).forEach(([cat, mods]) => {
-    const container = document.getElementById(`modules-${cat}`);
+    const container = document.getElementById('modules-' + cat);
     if (!container) return;
-    container.innerHTML = mods.map(m => {
-      const photoHTML = m.img
-        ? `<img src="${m.img}" alt="${m.name}" onerror="this.parentElement.innerHTML=placeholderHTML('${m.name}')" />`
-        : `<div class="photo-placeholder">
-            <div class="photo-placeholder-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="5" width="18" height="14" rx="2"/>
-                <path d="M3 10h18"/>
-              </svg>
-            </div>
-            <div class="photo-placeholder-text">Imagen de referencia</div>
-          </div>`;
 
-      return `
-      <div class="option-card" id="mod-${m.id}" data-mod-id="${m.id}">
-        <div class="option-photo">
-          ${photoHTML}
-          ${m.img ? `<button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), '${m.name}')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-            Ampliar
-          </button>` : ''}
-        </div>
-        <div class="option-info">
-          <span class="option-tag">${m.size}</span>
-          <h3 class="option-name">${m.name}</h3>
-          <p class="option-desc">${m.desc}</p>
-          <div class="qty-row">
-            <span class="qty-label">
-              <span class="qty-active-indicator" id="ind-${m.id}"></span>
-            </span>
-            <div class="qty-control">
-              <button class="qty-btn" onclick="changeQty('${m.id}', -1)">−</button>
-              <span class="qty-val" id="qty-${m.id}">0</span>
-              <button class="qty-btn" onclick="changeQty('${m.id}', +1)">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `).join('');
+    container.innerHTML = mods.map(function(m) {
+      var photoHTML;
+      if (m.img) {
+        photoHTML = '<img src="' + m.img + '" alt="' + m.name + '" onerror="this.parentElement.innerHTML=placeholderHTML(\'Imagen de referencia\')" />';
+        photoHTML += '<button class="zoom-btn" onclick="openLightbox(event,this.closest(\'.option-card\').querySelector(\'img\'),\'' + m.name.replace(/'/g, '') + '\')">'
+          + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>'
+          + ' Ampliar</button>';
+      } else {
+        photoHTML = '<div class="photo-placeholder">'
+          + '<div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg></div>'
+          + '<div class="photo-placeholder-text">Imagen de referencia</div>'
+          + '</div>';
+      }
+
+      return '<div class="option-card" id="mod-' + m.id + '" data-mod-id="' + m.id + '">'
+        + '<div class="option-photo">' + photoHTML + '</div>'
+        + '<div class="option-info">'
+        + '<span class="option-tag">' + m.size + '</span>'
+        + '<h3 class="option-name">' + m.name + '</h3>'
+        + '<p class="option-desc">' + m.desc + '</p>'
+        + '<div class="qty-row">'
+        + '<span class="qty-label"><span class="qty-active-indicator" id="ind-' + m.id + '"></span></span>'
+        + '<div class="qty-control">'
+        + '<button class="qty-btn" onclick="changeQty(\'' + m.id + '\',-1)">\u2212</button>'
+        + '<span class="qty-val" id="qty-' + m.id + '">0</span>'
+        + '<button class="qty-btn" onclick="changeQty(\'' + m.id + '\',+1)">+</button>'
+        + '</div></div>'
+        + '</div></div>';
+    }).join('');
   });
 }
+
+
 
 function changeQty(id, delta) {
   const current = state.modules[id] || 0;
