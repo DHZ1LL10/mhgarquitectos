@@ -3,1251 +3,1584 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Customizador de Cocina | MHG Arquitectos</title>
-  <meta name="description" content="Diseña tu cocina integral a medida con MHG Arquitectos. Selecciona módulos, materiales, colores y agenda tu levantamiento." />
+  <title>Configurador de Cocina | MHG Arquitectos</title>
+  <meta name="description" content="Configura tu cocina integral a medida con MHG Arquitectos. Selecciona módulos, materiales y agenda tu levantamiento." />
   <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- jsPDF CDN -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    /* ═══════════════════════════════════════════
-       OLED BASE + DESIGN TOKENS
-    ═══════════════════════════════════════════ */
+    /* ─── DESIGN TOKENS (matching landing page) ─── */
     :root {
-      --green:       #2ecc71;
-      --green-dim:   #1a7a43;
-      --green-glow:  rgba(46,204,113,0.25);
-      --gold:        #c9a84c;
-      --gold-glow:   rgba(201,168,76,0.2);
-      --bg:          #000000;
-      --bg-1:        #0a0a0a;
-      --bg-2:        #111111;
-      --bg-3:        #1a1a1a;
-      --bg-4:        #222222;
-      --border:      rgba(255,255,255,0.07);
-      --border-act:  rgba(46,204,113,0.4);
-      --text:        #f0f0f0;
-      --text-dim:    #888888;
-      --text-faint:  #444444;
-      --font-serif:  'Cormorant Garamond', Georgia, serif;
-      --font-sans:   'Inter', system-ui, sans-serif;
-      --radius:      12px;
-      --radius-lg:   20px;
-      --trans:       0.25s cubic-bezier(.4,0,.2,1);
+      --green:       #1a4f2e;
+      --green-mid:   #22643a;
+      --green-light: #2d7a48;
+      --green-fade:  rgba(26, 79, 46, 0.06);
+      --dark:        #0f1210;
+      --mid:         #3a4240;
+      --muted:       #7a8480;
+      --border:      #e4e7e5;
+      --border-dark: #cdd2cf;
+      --white:       #ffffff;
+      --off-white:   #f9faf9;
+      --light:       #f0f2f1;
+      --font-body:   'Inter', system-ui, sans-serif;
+      --font-display:'Cormorant Garamond', Georgia, serif;
+      --radius-sm:   4px;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+      --radius-xl:   18px;
+      --shadow-sm:   0 1px 4px rgba(0,0,0,.05);
+      --shadow-md:   0 4px 20px rgba(0,0,0,.07);
+      --shadow-lg:   0 12px 40px rgba(0,0,0,.10);
+      --transition:  0.28s cubic-bezier(.4,0,.2,1);
+      --sidebar-w:   260px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html { scroll-behavior: smooth; }
-
+    html { scroll-behavior: smooth; font-size: 15px; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-sans);
-      font-size: 15px;
+      font-family: var(--font-body);
+      color: var(--dark);
+      background: var(--off-white);
       line-height: 1.6;
-      min-height: 100vh;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    button { font-family: var(--font-body); }
+
+    /* ─── LAYOUT ─── */
+    .app-wrap {
+      display: flex;
+      min-height: 100vh;
     }
 
-    /* ═══════════════════════════════════════════
-       NAVBAR
-    ═══════════════════════════════════════════ */
-    .navbar {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(20px);
+    /* ══════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════ */
+    .app-sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px 20px;
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 64px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .nav-logo {
       display: flex; align-items: center; gap: 12px;
-      text-decoration: none; color: var(--text);
+      flex-shrink: 0;
     }
-    .nav-logo img {
-      width: 38px; height: 38px; border-radius: 8px; object-fit: cover;
-      border: 1px solid var(--border-act);
+    .sidebar-brand img {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
     }
-    .nav-logo-text { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500; }
-    .nav-logo-text .accent { color: var(--green); }
-    .nav-back {
-      display: flex; align-items: center; gap: 8px;
-      color: var(--text-dim); text-decoration: none; font-size: 0.85rem;
-      transition: color var(--trans);
+    .sidebar-brand-text {
+      display: flex; flex-direction: column;
     }
-    .nav-back:hover { color: var(--green); }
-    .nav-back svg { flex-shrink: 0; }
-
-    /* ═══════════════════════════════════════════
-       HERO BANNER
-    ═══════════════════════════════════════════ */
-    .cust-hero {
-      padding: 56px 24px 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+    .sidebar-brand-name {
+      font-family: var(--font-display);
+      font-size: 1rem; font-weight: 500;
+      color: var(--dark); line-height: 1.1;
     }
-    .cust-hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(46,204,113,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero-eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(46,204,113,0.1);
-      border: 1px solid var(--border-act);
-      border-radius: 100px;
-      padding: 4px 16px;
-      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
-      color: var(--green); text-transform: uppercase;
-      margin-bottom: 20px;
-    }
-    .hero-eyebrow::before {
-      content: '';
-      width: 6px; height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
-    }
-    .cust-hero h1 {
-      font-family: var(--font-serif);
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 400; line-height: 1.1;
-      margin-bottom: 16px;
-    }
-    .cust-hero h1 em { color: var(--green); font-style: italic; }
-    .cust-hero p {
-      color: var(--text-dim); font-size: 1rem; max-width: 520px; margin: 0 auto;
+    .sidebar-brand-name em { color: var(--green); font-style: normal; }
+    .sidebar-brand-sub {
+      font-size: 0.65rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-top: 2px;
     }
 
-    /* ═══════════════════════════════════════════
-       PROGRESS BAR
-    ═══════════════════════════════════════════ */
-    .progress-wrap {
-      padding: 0 24px 32px;
-      max-width: 900px; margin: 0 auto;
+    /* Step list (KFC category style) */
+    .sidebar-steps {
+      padding: 20px 0;
+      flex: 1;
     }
-    .progress-steps {
-      display: flex; align-items: center; gap: 0;
-      position: relative;
-    }
-    .progress-steps::before {
-      content: '';
-      position: absolute; top: 16px; left: 16px; right: 16px; height: 2px;
-      background: var(--bg-3);
-      z-index: 0;
-    }
-    .progress-fill {
-      position: absolute; top: 16px; left: 16px; height: 2px;
-      background: linear-gradient(90deg, var(--green-dim), var(--green));
-      transition: width 0.5s cubic-bezier(.4,0,.2,1);
-      z-index: 1;
-    }
-    .progress-step {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      flex: 1; position: relative; z-index: 2;
-    }
-    .step-dot {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: var(--bg-3); border: 2px solid var(--bg-4);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: 600; color: var(--text-faint);
-      transition: all var(--trans);
-    }
-    .progress-step.done .step-dot {
-      background: var(--green-dim); border-color: var(--green);
-      color: white;
-    }
-    .progress-step.active .step-dot {
-      background: var(--green); border-color: var(--green);
-      color: black; font-weight: 700;
-      box-shadow: 0 0 0 4px var(--green-glow), 0 0 16px var(--green-glow);
-    }
-    .step-label {
-      font-size: 0.65rem; font-weight: 500; color: var(--text-faint);
-      text-align: center; white-space: nowrap; letter-spacing: 0.05em;
-    }
-    .progress-step.active .step-label { color: var(--green); }
-    .progress-step.done .step-label { color: var(--text-dim); }
-
-    /* ═══════════════════════════════════════════
-       MAIN LAYOUT
-    ═══════════════════════════════════════════ */
-    .cust-main {
-      max-width: 1200px; margin: 0 auto;
-      padding: 0 24px 80px;
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 32px;
-      align-items: start;
-    }
-    @media (max-width: 900px) {
-      .cust-main { grid-template-columns: 1fr; }
-      .cust-sidebar { order: -1; }
-    }
-
-    /* ═══════════════════════════════════════════
-       STEP PANELS
-    ═══════════════════════════════════════════ */
-    .step-panel {
-      display: none;
-      animation: fadeIn 0.3s ease;
-    }
-    .step-panel.active { display: block; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .step-title {
-      font-family: var(--font-serif); font-size: 1.8rem; font-weight: 400;
-      margin-bottom: 6px; line-height: 1.2;
-    }
-    .step-title em { color: var(--green); font-style: italic; }
-    .step-subtitle {
-      color: var(--text-dim); font-size: 0.9rem; margin-bottom: 28px;
-    }
-
-    /* ═══════════════════════════════════════════
-       OPTION CARDS (radio-style)
-    ═══════════════════════════════════════════ */
-    .options-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    .sidebar-step {
+      display: flex;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 24px;
-    }
-    .options-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-    .options-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-
-    .opt-card {
-      background: var(--bg-2);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 14px;
-      cursor: pointer;
-      transition: all var(--trans);
+      padding: 11px 20px;
+      cursor: default;
+      transition: background var(--transition);
       position: relative;
-      user-select: none;
-      text-align: center;
+      border-left: 3px solid transparent;
     }
-    .opt-card:hover {
-      border-color: rgba(46,204,113,0.3);
-      background: var(--bg-3);
-      transform: translateY(-1px);
+    .sidebar-step.active {
+      background: var(--green-fade);
+      border-left-color: var(--green);
     }
-    .opt-card.selected {
-      border-color: var(--green);
-      background: rgba(46,204,113,0.06);
-      box-shadow: 0 0 0 1px var(--green), 0 0 20px var(--green-glow);
-    }
-    .opt-card.selected::after {
-      content: '✓';
-      position: absolute; top: 8px; right: 10px;
-      color: var(--green); font-size: 0.75rem; font-weight: 700;
-    }
-    .opt-card.na-card {
-      border-style: dashed;
+    .sidebar-step.done {
       opacity: 0.7;
     }
-    .opt-card.na-card.selected { opacity: 1; border-color: var(--gold); background: rgba(201,168,76,0.06); box-shadow: 0 0 0 1px var(--gold); }
-    .opt-card.na-card.selected::after { color: var(--gold); }
-
-    .opt-icon { font-size: 1.8rem; margin-bottom: 8px; display: block; }
-    .opt-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
-    .opt-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
-    .opt-badge {
-      display: inline-block; margin-top: 6px;
-      background: rgba(46,204,113,0.12); color: var(--green);
-      border: 1px solid rgba(46,204,113,0.3);
-      border-radius: 20px; padding: 2px 10px; font-size: 0.65rem; font-weight: 600;
-    }
-    .opt-badge.gold { background: rgba(201,168,76,0.1); color: var(--gold); border-color: rgba(201,168,76,0.3); }
-    .opt-badge.silver { background: rgba(180,180,180,0.1); color: #aaa; border-color: rgba(180,180,180,0.2); }
-
-    /* ═══════════════════════════════════════════
-       COLOR SWATCHES
-    ═══════════════════════════════════════════ */
-    .color-grid {
-      display: flex; flex-wrap: wrap; gap: 10px;
-      margin-bottom: 24px;
-    }
-    .color-swatch {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      cursor: pointer;
-    }
-    .swatch-circle {
-      width: 44px; height: 44px; border-radius: 50%;
-      border: 2.5px solid var(--border);
-      transition: all var(--trans);
-      position: relative;
-    }
-    .color-swatch:hover .swatch-circle { transform: scale(1.1); }
-    .color-swatch.selected .swatch-circle {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px var(--green-glow), 0 0 16px var(--green-glow);
-    }
-    .color-swatch.selected .swatch-circle::after {
-      content: '✓';
-      position: absolute; inset: 0;
+    .step-bullet {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-dark);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; font-weight: 700;
-      color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+      font-size: 0.72rem; font-weight: 600; color: var(--muted);
+      flex-shrink: 0;
+      transition: all var(--transition);
+      background: var(--white);
     }
-    .swatch-label { font-size: 0.65rem; color: var(--text-dim); text-align: center; max-width: 56px; line-height: 1.2; }
-
-    /* ═══════════════════════════════════════════
-       MODULE BUILDER (KFC-style)
-    ═══════════════════════════════════════════ */
-    .module-section-label {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
-      color: var(--text-faint); text-transform: uppercase;
-      margin: 24px 0 12px;
-    }
-    .module-section-label::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .modules-list { display: flex; flex-direction: column; gap: 8px; }
-    .module-row {
-      display: flex; align-items: center; gap: 12px;
-      background: var(--bg-2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 12px 16px;
-      transition: all var(--trans);
-    }
-    .module-row.in-cart {
-      border-color: var(--border-act);
-      background: rgba(46,204,113,0.04);
-    }
-    .module-icon { font-size: 1.4rem; flex-shrink: 0; width: 32px; text-align: center; }
-    .module-info { flex: 1; min-width: 0; }
-    .module-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
-    .module-detail { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
-    .module-badge {
-      font-size: 0.65rem; font-weight: 600; padding: 2px 8px;
-      border-radius: 20px; flex-shrink: 0;
-    }
-    .badge-inc { background: rgba(46,204,113,0.1); color: var(--green); border: 1px solid rgba(46,204,113,0.2); }
-    .badge-opt { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
-    .qty-control {
-      display: flex; align-items: center; gap: 0;
-      background: var(--bg-3); border: 1px solid var(--border);
-      border-radius: 8px; overflow: hidden;
-    }
-    .qty-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--text-dim); font-size: 1.1rem; font-weight: 600;
-      width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
-      transition: all var(--trans); flex-shrink: 0;
-    }
-    .qty-btn:hover { background: var(--bg-4); color: var(--green); }
-    .qty-val {
-      min-width: 32px; text-align: center; font-size: 0.9rem; font-weight: 600;
-      color: var(--text); padding: 0 4px;
-    }
-
-    /* ═══════════════════════════════════════════
-       SECTION DIVIDER
-    ═══════════════════════════════════════════ */
-    .section-divider {
-      height: 1px; background: var(--border); margin: 32px 0;
-    }
-
-    /* ═══════════════════════════════════════════
-       FORM INPUTS
-    ═══════════════════════════════════════════ */
-    .form-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-      margin-bottom: 24px;
-    }
-    .form-grid.full { grid-template-columns: 1fr; }
-    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
-
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group.full { grid-column: 1 / -1; }
-    .form-label {
-      font-size: 0.78rem; font-weight: 600; color: var(--text-dim);
-      letter-spacing: 0.05em; text-transform: uppercase;
-    }
-    .form-label span { color: var(--green); margin-left: 2px; }
-    .form-input, .form-select, .form-textarea {
-      background: var(--bg-2); border: 1.5px solid var(--border);
-      border-radius: 8px; padding: 12px 14px;
-      color: var(--text); font-family: var(--font-sans); font-size: 0.9rem;
-      transition: all var(--trans); outline: none; width: 100%;
-    }
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
+    .sidebar-step.active .step-bullet {
+      background: var(--green);
       border-color: var(--green);
-      box-shadow: 0 0 0 3px var(--green-glow);
+      color: var(--white);
     }
-    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-faint); }
-    .form-select option { background: var(--bg-2); color: var(--text); }
-    .form-textarea { resize: vertical; min-height: 80px; }
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) opacity(0.5);
-      cursor: pointer;
+    .sidebar-step.done .step-bullet {
+      background: var(--green-fade);
+      border-color: var(--green);
+      color: var(--green);
     }
-    input[type="time"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) opacity(0.5);
-      cursor: pointer;
+    .step-text {
+      display: flex; flex-direction: column;
+    }
+    .step-text-label {
+      font-size: 0.78rem; font-weight: 500;
+      color: var(--mid);
+      line-height: 1.2;
+    }
+    .sidebar-step.active .step-text-label { color: var(--green); font-weight: 600; }
+    .step-text-val {
+      font-size: 0.68rem; color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 160px;
     }
 
-    /* ═══════════════════════════════════════════
-       NAVIGATION BUTTONS
-    ═══════════════════════════════════════════ */
-    .step-nav {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: 32px; gap: 12px;
+    .sidebar-back {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
     }
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px; border-radius: 8px; border: none;
-      font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; transition: all var(--trans); text-decoration: none;
+    .sidebar-back a {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; color: var(--muted);
+      text-decoration: none;
+      transition: color var(--transition);
     }
-    .btn-primary {
-      background: var(--green); color: #000;
-      box-shadow: 0 0 0 0 var(--green-glow);
+    .sidebar-back a:hover { color: var(--green); }
+    .sidebar-back svg { flex-shrink: 0; }
+
+    /* ══════════════════════════════════
+       MAIN CONTENT
+    ══════════════════════════════════ */
+    .app-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    .btn-primary:hover {
-      background: #27ae60;
-      box-shadow: 0 0 20px var(--green-glow), 0 4px 12px rgba(0,0,0,0.4);
-      transform: translateY(-1px);
+
+    /* Thin progress bar at very top */
+    .top-progress {
+      height: 3px;
+      background: var(--border);
+      flex-shrink: 0;
     }
-    .btn-outline {
-      background: transparent; color: var(--text);
+    .top-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-mid), var(--green-light));
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+      width: 0%;
+    }
+
+    /* Content header */
+    .content-header {
+      padding: 36px 48px 24px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .content-eyebrow {
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--green); margin-bottom: 8px;
+    }
+    .content-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 400; line-height: 1.15;
+      color: var(--dark); margin-bottom: 6px;
+    }
+    .content-title em { color: var(--green); font-style: italic; }
+    .content-subtitle {
+      font-size: 0.88rem; color: var(--muted);
+      max-width: 520px;
+    }
+
+    /* Scrollable body */
+    .content-body {
+      flex: 1;
+      padding: 32px 48px;
+      overflow-y: auto;
+    }
+
+    /* Step panels */
+    .step-panel { display: none; }
+    .step-panel.active {
+      display: block;
+      animation: panelIn 0.28s ease;
+    }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════
+       OPTION CARDS (horizontal: photo | info)
+    ══════════════════════════════════ */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* For 2-column layouts (gama, situacion) */
+    .options-list.cols-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .options-list.cols-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .option-card {
+      display: flex;
+      background: var(--white);
       border: 1.5px solid var(--border);
-    }
-    .btn-outline:hover { border-color: var(--green); color: var(--green); }
-    .btn-gold {
-      background: linear-gradient(135deg, #c9a84c, #e8c96e);
-      color: #000; font-weight: 700;
-    }
-    .btn-gold:hover {
-      box-shadow: 0 0 20px var(--gold-glow), 0 4px 12px rgba(0,0,0,0.4);
-      transform: translateY(-1px);
-    }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-    .btn-lg { padding: 16px 32px; font-size: 1rem; border-radius: 10px; }
-    .btn-full { width: 100%; justify-content: center; }
-    .btn svg { flex-shrink: 0; }
-
-    /* ═══════════════════════════════════════════
-       SIDEBAR — LIVE SUMMARY
-    ═══════════════════════════════════════════ */
-    .cust-sidebar {
-      position: sticky; top: 80px;
-    }
-    .summary-card {
-      background: var(--bg-1);
-      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       overflow: hidden;
+      transition: all var(--transition);
+      cursor: pointer;
     }
-    .summary-header {
-      padding: 20px;
-      background: linear-gradient(135deg, rgba(46,204,113,0.08), transparent);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 12px;
+    .option-card:hover {
+      border-color: var(--border-dark);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
     }
-    .summary-header-icon {
-      width: 40px; height: 40px; border-radius: 10px;
-      background: rgba(46,204,113,0.1); border: 1px solid var(--border-act);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
+    .option-card.selected {
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px var(--green), var(--shadow-md);
     }
-    .summary-header-text h3 {
-      font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500;
+    .option-card.selected .option-info { background: var(--green-fade); }
+
+    /* Vertical card variant (for gama / 3-col) */
+    .option-card.card-vertical {
+      flex-direction: column;
+      cursor: pointer;
     }
-    .summary-header-text p { font-size: 0.75rem; color: var(--text-dim); }
-    .summary-body { padding: 16px 20px; }
-    .summary-item {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      gap: 12px; padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.82rem;
+    .option-card.card-vertical .option-photo {
+      width: 100%;
+      height: 200px;
     }
-    .summary-item:last-child { border-bottom: none; }
-    .summary-item-key { color: var(--text-dim); flex-shrink: 0; }
-    .summary-item-val { color: var(--text); font-weight: 500; text-align: right; }
-    .summary-empty {
-      text-align: center; color: var(--text-faint); font-size: 0.8rem;
-      padding: 24px 0;
-    }
-    .summary-modules { padding: 12px 20px; }
-    .summary-module-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 0; font-size: 0.8rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .summary-module-item:last-child { border-bottom: none; }
-    .smi-icon { font-size: 0.9rem; }
-    .smi-name { flex: 1; color: var(--text); }
-    .smi-qty {
-      font-size: 0.7rem; font-weight: 700; color: var(--green);
-      background: rgba(46,204,113,0.1); border-radius: 4px; padding: 1px 6px;
-    }
-    .summary-gama {
-      margin: 12px 20px;
-      background: linear-gradient(135deg, rgba(201,168,76,0.08), transparent);
-      border: 1px solid rgba(201,168,76,0.2);
-      border-radius: 8px; padding: 10px 14px;
-      font-size: 0.8rem;
-    }
-    .summary-gama-label { color: var(--gold); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; }
-    .summary-gama-val { font-weight: 600; margin-top: 2px; }
-    .summary-note {
-      padding: 12px 20px;
-      font-size: 0.72rem; color: var(--text-faint); font-style: italic;
+    .option-card.card-vertical .option-info {
+      width: 100%;
+      border-left: none;
       border-top: 1px solid var(--border);
     }
 
-    /* ═══════════════════════════════════════════
-       GAMA CARDS
-    ═══════════════════════════════════════════ */
-    .gama-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-      margin-bottom: 24px;
+    /* Photo section */
+    .option-photo {
+      width: 62%;
+      flex-shrink: 0;
+      position: relative;
+      min-height: 200px;
+      background: var(--light);
+      overflow: hidden;
     }
-    @media (max-width: 700px) { .gama-grid { grid-template-columns: 1fr; } }
-    .gama-card {
-      background: var(--bg-2); border: 2px solid var(--border);
-      border-radius: var(--radius-lg); padding: 20px 16px;
-      cursor: pointer; transition: all var(--trans);
-      position: relative; text-align: center;
+    .option-photo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
     }
-    .gama-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
-    .gama-card.selected {
-      border-color: var(--gold);
-      background: rgba(201,168,76,0.05);
-      box-shadow: 0 0 0 1px var(--gold), 0 0 30px var(--gold-glow);
-    }
-    .gama-card.selected::after {
-      content: '✓ Seleccionada';
-      position: absolute; top: 12px; right: 12px;
-      font-size: 0.65rem; font-weight: 700; color: var(--gold);
-    }
-    .gama-icon { font-size: 2.2rem; margin-bottom: 12px; display: block; }
-    .gama-name {
-      font-family: var(--font-serif); font-size: 1.4rem; font-weight: 500;
-      margin-bottom: 6px;
-    }
-    .gama-card:nth-child(1) .gama-name { color: #aaa; }
-    .gama-card:nth-child(2) .gama-name { color: var(--green); }
-    .gama-card:nth-child(3) .gama-name { color: var(--gold); }
-    .gama-price {
-      font-size: 0.75rem; color: var(--text-dim); margin-bottom: 14px;
-    }
-    .gama-features { list-style: none; text-align: left; display: flex; flex-direction: column; gap: 6px; }
-    .gama-features li {
-      font-size: 0.78rem; color: var(--text-dim);
-      display: flex; align-items: flex-start; gap: 6px;
-    }
-    .gama-features li::before { content: '›'; color: var(--green); font-weight: 700; flex-shrink: 0; }
-    .gama-card:nth-child(3) .gama-features li::before { color: var(--gold); }
+    .option-card:hover .option-photo img { transform: scale(1.03); }
 
-    /* ═══════════════════════════════════════════
-       TOGGLE SWITCH
-    ═══════════════════════════════════════════ */
-    .toggle-row {
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--bg-2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px 16px;
-      margin-bottom: 10px; cursor: pointer;
-      transition: all var(--trans);
+    /* Photo placeholder */
+    .photo-placeholder {
+      width: 100%; height: 100%;
+      background: var(--light);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+      min-height: 200px;
     }
-    .toggle-row:hover { border-color: rgba(46,204,113,0.3); }
-    .toggle-row.active { border-color: var(--border-act); background: rgba(46,204,113,0.04); }
-    .toggle-left { display: flex; align-items: center; gap: 12px; }
-    .toggle-icon { font-size: 1.3rem; }
-    .toggle-info .t-name { font-size: 0.9rem; font-weight: 600; }
-    .toggle-info .t-desc { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+    .photo-placeholder-icon {
+      width: 48px; height: 48px;
+      border: 1.5px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .photo-placeholder-icon svg { color: var(--muted); }
+    .photo-placeholder-text {
+      font-size: 0.7rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      text-align: center; line-height: 1.5; max-width: 120px;
+    }
+
+    /* Zoom button */
+    .zoom-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      font-size: 0.7rem; font-weight: 500;
+      color: var(--mid); cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      opacity: 0;
+      transition: all var(--transition);
+      z-index: 2;
+    }
+    .option-photo:hover .zoom-btn { opacity: 1; }
+    .zoom-btn:hover { background: var(--white); color: var(--green); }
+
+    /* Selected checkmark over photo */
+    .photo-check {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: var(--green);
+      color: var(--white);
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      display: none; align-items: center; justify-content: center;
+      z-index: 2;
+    }
+    .option-card.selected .photo-check { display: flex; }
+
+    /* Info section */
+    .option-info {
+      flex: 1;
+      padding: 24px;
+      display: flex; flex-direction: column;
+      border-left: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+    .option-tag {
+      display: inline-block;
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--green);
+      background: var(--green-fade);
+      border: 1px solid rgba(26,79,46,0.15);
+      border-radius: 20px;
+      padding: 3px 10px;
+      margin-bottom: 10px;
+      align-self: flex-start;
+    }
+    .option-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem; font-weight: 400;
+      color: var(--dark); line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .option-desc {
+      font-size: 0.82rem; color: var(--muted);
+      line-height: 1.6; margin-bottom: 12px;
+      flex: 1;
+    }
+    .option-specs {
+      display: flex; flex-direction: column; gap: 4px;
+      margin-bottom: 16px;
+    }
+    .option-spec {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.75rem; color: var(--mid);
+    }
+    .option-spec::before {
+      content: '';
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .select-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px;
+      background: transparent;
+      border: 1.5px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      font-size: 0.8rem; font-weight: 500; color: var(--mid);
+      cursor: pointer; transition: all var(--transition);
+      align-self: flex-start;
+      margin-top: auto;
+    }
+    .select-btn:hover {
+      border-color: var(--green); color: var(--green);
+    }
+    .option-card.selected .select-btn {
+      background: var(--green); border-color: var(--green);
+      color: var(--white);
+    }
+
+    /* ══════════════════════════════════
+       QTY CONTROL (modules step)
+    ══════════════════════════════════ */
+    .qty-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-top: auto; padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .qty-label {
+      font-size: 0.75rem; color: var(--muted); flex: 1;
+    }
+    .qty-control {
+      display: flex; align-items: center;
+      border: 1.5px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .qty-btn {
+      width: 32px; height: 32px;
+      background: var(--light);
+      border: none; cursor: pointer;
+      font-size: 1rem; font-weight: 500; color: var(--mid);
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition);
+    }
+    .qty-btn:hover { background: var(--green); color: var(--white); }
+    .qty-val {
+      min-width: 36px; text-align: center;
+      font-size: 0.88rem; font-weight: 600; color: var(--dark);
+      padding: 0 4px; border-inline: 1.5px solid var(--border-dark);
+    }
+    .qty-active-indicator {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border-dark);
+      transition: background var(--transition);
+      flex-shrink: 0;
+    }
+    .option-card.in-cart .qty-active-indicator { background: var(--green); }
+
+    /* ══════════════════════════════════
+       COLOR SWATCHES
+    ══════════════════════════════════ */
+    .color-section {
+      margin-top: 16px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .color-section-label {
+      font-size: 0.68rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .color-row {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .color-swatch {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      cursor: pointer;
+    }
+    .swatch-dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--border);
+      transition: all var(--transition);
+      position: relative;
+    }
+    .color-swatch:hover .swatch-dot { transform: scale(1.1); border-color: var(--border-dark); }
+    .color-swatch.selected .swatch-dot {
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px rgba(26,79,46,0.25);
+    }
+    .color-swatch.selected .swatch-dot::after {
+      content: '';
+      position: absolute; inset: 4px;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 50%;
+    }
+    .swatch-name {
+      font-size: 0.62rem; color: var(--muted); text-align: center;
+      max-width: 44px; line-height: 1.2;
+    }
+
+    /* ══════════════════════════════════
+       TOGGLE ROWS (extras step)
+    ══════════════════════════════════ */
+    .toggle-card {
+      display: flex;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: all var(--transition);
+      margin-bottom: 12px;
+    }
+    .toggle-card.active {
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px var(--green);
+    }
+    .toggle-card-photo {
+      width: 200px; flex-shrink: 0;
+      background: var(--light);
+      min-height: 120px;
+      overflow: hidden;
+    }
+    .toggle-card-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .toggle-card-body {
+      flex: 1; padding: 18px 20px;
+      display: flex; align-items: center; gap: 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toggle-card-info { flex: 1; }
+    .toggle-card-name { font-size: 0.92rem; font-weight: 600; color: var(--dark); margin-bottom: 3px; }
+    .toggle-card-desc { font-size: 0.78rem; color: var(--muted); }
+    .toggle-switch-wrap { flex-shrink: 0; }
     .toggle-switch {
-      width: 44px; height: 24px; border-radius: 12px;
-      background: var(--bg-4); border: 1px solid var(--border);
-      position: relative; transition: all var(--trans); flex-shrink: 0;
+      width: 46px; height: 26px; border-radius: 13px;
+      background: var(--border-dark); border: none;
+      position: relative; cursor: pointer;
+      transition: background var(--transition);
     }
     .toggle-switch::after {
-      content: ''; position: absolute; top: 3px; left: 3px;
-      width: 16px; height: 16px; border-radius: 50%;
-      background: var(--text-faint); transition: all var(--trans);
+      content: '';
+      position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--white);
+      transition: left var(--transition);
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
     }
-    .toggle-row.active .toggle-switch { background: var(--green); border-color: var(--green); }
-    .toggle-row.active .toggle-switch::after { left: calc(100% - 19px); background: #000; }
+    .toggle-card.active .toggle-switch { background: var(--green); }
+    .toggle-card.active .toggle-switch::after { left: calc(100% - 23px); }
 
-    /* ═══════════════════════════════════════════
+    /* Sub-options for toggles */
+    .sub-options {
+      display: none;
+      padding: 16px 20px 16px 220px;
+      background: var(--green-fade);
+      border-top: 1px solid rgba(26,79,46,0.1);
+    }
+    .sub-options.visible { display: block; }
+    .sub-options-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .sub-opts-row {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .sub-opt {
+      padding: 6px 14px;
+      background: var(--white);
+      border: 1.5px solid var(--border-dark);
+      border-radius: 100px;
+      font-size: 0.76rem; font-weight: 500; color: var(--mid);
+      cursor: pointer; transition: all var(--transition);
+    }
+    .sub-opt:hover { border-color: var(--green); color: var(--green); }
+    .sub-opt.selected { background: var(--green); border-color: var(--green); color: var(--white); }
+
+    /* ══════════════════════════════════
+       GAMA TIER BADGES
+    ══════════════════════════════════ */
+    .gama-badge {
+      display: inline-block;
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      border-radius: 20px; padding: 3px 10px;
+      margin-bottom: 10px;
+    }
+    .gama-badge.basica  { background: #f0f2f1; color: var(--muted); border: 1px solid var(--border-dark); }
+    .gama-badge.media   { background: rgba(26,79,46,0.06); color: var(--green); border: 1px solid rgba(26,79,46,0.2); }
+    .gama-badge.premium { background: #fdf8ee; color: #8a6820; border: 1px solid #e8d5a0; }
+
+    /* ══════════════════════════════════
+       FORM (datos cliente)
+    ══════════════════════════════════ */
+    .form-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 680px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label {
+      font-size: 0.72rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted);
+    }
+    .form-label span { color: var(--green); }
+    .form-input, .form-select {
+      background: var(--off-white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 11px 14px;
+      font-family: var(--font-body); font-size: 0.88rem; color: var(--dark);
+      transition: all var(--transition); outline: none; width: 100%;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--green);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(26,79,46,0.08);
+    }
+    .form-input::placeholder { color: var(--muted); }
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      opacity: 0.5; cursor: pointer;
+    }
+
+    /* ══════════════════════════════════
+       BOTTOM NAVIGATION
+    ══════════════════════════════════ */
+    .content-footer {
+      padding: 16px 48px;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .step-counter {
+      font-size: 0.78rem; color: var(--muted);
+      text-align: center;
+    }
+    .step-counter strong { color: var(--dark); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 22px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body); font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; border: none; transition: all var(--transition);
+      text-decoration: none;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--border-dark);
+      color: var(--mid);
+    }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+    .btn-primary {
+      background: var(--green);
+      color: var(--white);
+      border: 1.5px solid var(--green);
+    }
+    .btn-primary:hover { background: var(--green-mid); }
+    .btn:disabled { opacity: 0.4; pointer-events: none; }
+    .btn svg { flex-shrink: 0; }
+
+    /* ══════════════════════════════════
        FINISH SCREEN
-    ═══════════════════════════════════════════ */
-    .finish-screen {
-      text-align: center; padding: 40px 20px;
+    ══════════════════════════════════ */
+    .finish-wrap {
+      max-width: 560px;
     }
-    .finish-icon {
-      width: 80px; height: 80px; border-radius: 50%;
-      background: rgba(46,204,113,0.1); border: 2px solid var(--green);
+    .finish-line {
+      width: 48px; height: 2px;
+      background: var(--green); margin-bottom: 28px;
+    }
+    .finish-title {
+      font-family: var(--font-display);
+      font-size: 2.4rem; font-weight: 400;
+      line-height: 1.1; margin-bottom: 12px;
+    }
+    .finish-title em { color: var(--green); font-style: italic; }
+    .finish-desc { color: var(--muted); font-size: 0.92rem; margin-bottom: 32px; }
+    .finish-actions { display: flex; flex-direction: column; gap: 12px; }
+    .btn-gold {
+      background: linear-gradient(135deg, #c9a84c, #e0bb6a);
+      color: #3a2800; border: none; font-weight: 600;
+    }
+    .btn-gold:hover { background: linear-gradient(135deg, #b8972d, #c9a84c); }
+    .btn-lg { padding: 14px 28px; font-size: 0.92rem; }
+
+    /* ══════════════════════════════════
+       LIGHTBOX
+    ══════════════════════════════════ */
+    .lightbox {
+      display: none;
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.88);
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-inner {
+      position: relative;
+      max-width: 1000px; max-height: 80vh;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .lightbox-inner img {
+      width: 100%; max-height: 80vh;
+      object-fit: contain;
+      border-radius: var(--radius-lg);
+    }
+    .lightbox-caption {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      padding: 20px 24px 16px;
+      color: var(--white); font-size: 0.88rem;
+    }
+    .lightbox-close {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--white);
+      width: 36px; height: 36px;
+      border-radius: 50%; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; margin: 0 auto 24px;
-      animation: finishPulse 2s ease-in-out infinite;
+      font-size: 1rem; transition: all var(--transition);
     }
-    @keyframes finishPulse {
-      0%, 100% { box-shadow: 0 0 0 0 var(--green-glow); }
-      50% { box-shadow: 0 0 0 12px rgba(46,204,113,0); }
+    .lightbox-close:hover { background: rgba(255,255,255,0.25); }
+
+    /* Section divider in modules */
+    .module-section-head {
+      display: flex; align-items: center; gap: 12px;
+      margin: 28px 0 14px;
     }
-    .finish-screen h2 {
-      font-family: var(--font-serif); font-size: 2rem; margin-bottom: 8px;
+    .module-section-head:first-child { margin-top: 0; }
+    .module-section-head h3 {
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); white-space: nowrap;
     }
-    .finish-screen p { color: var(--text-dim); margin-bottom: 32px; }
-    .finish-actions {
-      display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 0 auto;
+    .module-section-head::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
     }
 
-    /* ═══════════════════════════════════════════
-       LED AMBIENT GLOW (decorative)
-    ═══════════════════════════════════════════ */
-    .led-ambient {
-      position: fixed; pointer-events: none; z-index: -1;
-      width: 600px; height: 600px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(46,204,113,0.04) 0%, transparent 70%);
-      top: -200px; right: -200px;
-      animation: ambientDrift 8s ease-in-out infinite alternate;
-    }
-    @keyframes ambientDrift {
-      from { transform: translate(0, 0); }
-      to   { transform: translate(-50px, 80px); }
-    }
-
-    /* ═══════════════════════════════════════════
-       UTILITY
-    ═══════════════════════════════════════════ */
-    .hidden { display: none !important; }
-    .mt-8 { margin-top: 8px; }
-    .mt-16 { margin-top: 16px; }
-    .mt-24 { margin-top: 24px; }
+    /* Info box */
     .info-box {
-      background: rgba(46,204,113,0.05);
-      border: 1px solid var(--border-act);
-      border-radius: 8px; padding: 12px 14px;
-      font-size: 0.8rem; color: var(--text-dim);
-      display: flex; align-items: flex-start; gap: 10px;
-      margin-bottom: 20px;
+      background: var(--green-fade);
+      border: 1px solid rgba(26,79,46,0.15);
+      border-left: 3px solid var(--green);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 0.8rem; color: var(--mid);
+      margin-bottom: 24px;
     }
-    .info-box-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
 
-    /* ═══════════════════════════════════════════
+    /* ══════════════════════════════════
        RESPONSIVE
-    ═══════════════════════════════════════════ */
-    @media (max-width: 600px) {
-      .progress-wrap { padding: 0 16px 24px; }
-      .step-label { display: none; }
-      .cust-main { padding: 0 16px 60px; }
-      .gama-grid { grid-template-columns: 1fr; }
+    ══════════════════════════════════ */
+    @media (max-width: 900px) {
+      :root { --sidebar-w: 220px; }
+      .content-header { padding: 24px 28px 20px; }
+      .content-body { padding: 24px 28px; }
+      .content-footer { padding: 14px 28px; }
+      .options-list.cols-3 { grid-template-columns: 1fr 1fr; }
+      .option-photo { width: 50%; }
+    }
+    @media (max-width: 720px) {
+      .app-sidebar { display: none; }
+      .app-content { margin-left: 0; }
+      .option-card { flex-direction: column; }
+      .option-photo { width: 100%; min-height: 180px; }
+      .options-list.cols-2,
+      .options-list.cols-3 { grid-template-columns: 1fr; }
+      .content-header { padding: 20px 20px 16px; }
+      .content-body { padding: 20px; }
+      .content-footer { padding: 12px 20px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .toggle-card-photo { display: none; }
+      .sub-options { padding: 14px 16px; }
+      .finish-title { font-size: 1.8rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Ambient LED glow -->
-  <div class="led-ambient" aria-hidden="true"></div>
+  <!-- ═══ APP LAYOUT ═══ -->
+  <div class="app-wrap">
 
-  <!-- ═══ NAVBAR ═══ -->
-  <header class="navbar" id="cust-navbar">
-    <a href="index.html" class="nav-logo">
-      <img src="img/logo.jpg" alt="MHG Arquitectos" />
-      <span class="nav-logo-text">MHG <span class="accent">Arquitectos</span></span>
-    </a>
-    <a href="index.html" class="nav-back">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Volver al sitio
-    </a>
-  </header>
-
-  <!-- ═══ HERO ═══ -->
-  <section class="cust-hero">
-    <div class="hero-eyebrow">Customizador Interactivo</div>
-    <h1>Diseña tu <em>cocina ideal</em></h1>
-    <p>Arma tu cocina a medida paso a paso. Al finalizar generamos tu cotización y agendamos el levantamiento.</p>
-  </section>
-
-  <!-- ═══ PROGRESS BAR ═══ -->
-  <div class="progress-wrap">
-    <div class="progress-steps" id="progressSteps">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-      <!-- Steps generated by JS -->
-    </div>
-  </div>
-
-  <!-- ═══ MAIN CONTENT ═══ -->
-  <main class="cust-main">
-    <div class="cust-content">
-
-      <!-- ════════════════════════════
-           STEP 0: ¿Tiene cocina?
-      ════════════════════════════ -->
-      <div class="step-panel active" id="step-0" data-step="0">
-        <h2 class="step-title">¡Bienvenido al <em>configurador</em>!</h2>
-        <p class="step-subtitle">Cuéntanos un poco sobre tu situación actual para orientarte mejor.</p>
-
-        <div class="options-grid cols-2">
-          <div class="opt-card" id="has-kitchen-no" data-val="no" onclick="selectOpt(this,'has_kitchen')">
-            <span class="opt-icon">🏗️</span>
-            <div class="opt-name">No tengo cocina</div>
-            <div class="opt-desc">Quiero diseñar una cocina nueva desde cero</div>
-          </div>
-          <div class="opt-card" id="has-kitchen-yes" data-val="si" onclick="selectOpt(this,'has_kitchen')">
-            <span class="opt-icon">🔄</span>
-            <div class="opt-name">Ya tengo cocina</div>
-            <div class="opt-desc">Quiero renovar o reemplazar mi cocina actual</div>
-          </div>
-        </div>
-
-        <div class="step-nav">
-          <div></div>
-          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-0" disabled>
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-brand">
+        <img src="img/logo.jpg" alt="MHG" />
+        <div class="sidebar-brand-text">
+          <div class="sidebar-brand-name">MHG <em>Arquitectos</em></div>
+          <div class="sidebar-brand-sub">Configurador de Cocina</div>
         </div>
       </div>
 
-      <!-- ════════════════════════════
-           STEP 1: GAMA
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-1" data-step="1">
-        <h2 class="step-title">Elige tu <em>gama</em></h2>
-        <p class="step-subtitle">Cada gama incluye una configuración predeterminada que puedes personalizar en los siguientes pasos.</p>
+      <nav class="sidebar-steps" id="sidebarSteps">
+        <!-- Generated by JS -->
+      </nav>
 
-        <div class="gama-grid">
-          <!-- BÁSICA -->
-          <div class="gama-card" onclick="selectGama(this,'basica')" id="gama-basica">
-            <span class="gama-icon">🥈</span>
-            <div class="gama-name">Básica</div>
-            <div class="gama-price">Punto de partida accesible</div>
-            <ul class="gama-features">
-              <li>Módulos estándar MDF</li>
-              <li>Interior color blanco</li>
-              <li>Herraje económico push-to-open</li>
-              <li>Cubierta laminada de alta presión</li>
-              <li>Frente sólido en colores básicos</li>
-              <li>Sin isla / Sin LED</li>
-            </ul>
-          </div>
-          <!-- MEDIA -->
-          <div class="gama-card" onclick="selectGama(this,'media')" id="gama-media">
-            <span class="gama-icon">🥇</span>
-            <div class="gama-name">Media</div>
-            <div class="gama-price">Relación calidad-precio</div>
-            <ul class="gama-features">
-              <li>Módulos MDF con extraíbles</li>
-              <li>Interior melamina madera</li>
-              <li>Herraje de cierre suave</li>
-              <li>Cubierta granito o cuarzo básico</li>
-              <li>Frentes marca Araujo / Decolux</li>
-              <li>Iluminación LED bajo muebles</li>
-            </ul>
-          </div>
-          <!-- ALTA -->
-          <div class="gama-card" onclick="selectGama(this,'alta')" id="gama-alta">
-            <span class="gama-icon">✨</span>
-            <div class="gama-name">Premium</div>
-            <div class="gama-price">Lo mejor en materiales y acabados</div>
-            <ul class="gama-features">
-              <li>Módulos premium con esquineros extraíbles</li>
-              <li>Interior melamina de lujo</li>
-              <li>Herraje Blum (cierre suave + amortiguado)</li>
-              <li>Cubierta cuarzo o sinterizado</li>
-              <li>Frentes marca Transformad</li>
-              <li>LED perimetral + isla + vitrinas</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-1" disabled>
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 2: INTERIOR COLOR
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-2" data-step="2">
-        <h2 class="step-title">Color del <em>interior</em></h2>
-        <p class="step-subtitle">El color interior es la melanina que se ve dentro de los muebles al abrirlos.</p>
-
-        <div class="options-grid cols-3">
-          <div class="opt-card" onclick="selectOpt(this,'interior_color')" data-val="blanco">
-            <span class="opt-icon">⬜</span>
-            <div class="opt-name">Blanco básico</div>
-            <div class="opt-desc">Clásico, limpio y atemporal</div>
-            <span class="opt-badge silver">Gama Básica</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'interior_color')" data-val="gris">
-            <span class="opt-icon">🩶</span>
-            <div class="opt-name">Sólido gris</div>
-            <div class="opt-desc">Moderno y neutro</div>
-            <span class="opt-badge">Gama Media</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'interior_color')" data-val="madera">
-            <span class="opt-icon">🪵</span>
-            <div class="opt-name">Madera</div>
-            <div class="opt-desc">Cálido y natural</div>
-            <span class="opt-badge gold">Premium</span>
-          </div>
-        </div>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-2" disabled>
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 3: FRENTES
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-3" data-step="3">
-        <h2 class="step-title">Color y estilo de <em>frentes</em></h2>
-        <p class="step-subtitle">Los frentes (puertas) son lo que defines el carácter visual de tu cocina.</p>
-
-        <div class="info-box">
-          <span class="info-box-icon">💡</span>
-          <span>Primero elige el tipo de frente. Luego verás los colores disponibles para ese tipo.</span>
-        </div>
-
-        <!-- Tipo de frente -->
-        <div class="module-section-label">Tipo de frente</div>
-        <div class="options-grid">
-          <div class="opt-card" onclick="selectFrenteType(this,'solido')" data-val="solido">
-            <span class="opt-icon">🎨</span>
-            <div class="opt-name">Sólido</div>
-            <div class="opt-desc">Acabado liso en un color uniforme</div>
-          </div>
-          <div class="opt-card" onclick="selectFrenteType(this,'madera')" data-val="madera">
-            <span class="opt-icon">🌲</span>
-            <div class="opt-name">Madera</div>
-            <div class="opt-desc">Veta natural o imitación madera</div>
-          </div>
-          <div class="opt-card" onclick="selectFrenteType(this,'araujo')" data-val="araujo">
-            <span class="opt-icon">🏷️</span>
-            <div class="opt-name">Araujo</div>
-            <div class="opt-desc">Gama media · Variedad de acabados</div>
-          </div>
-          <div class="opt-card" onclick="selectFrenteType(this,'decolux')" data-val="decolux">
-            <span class="opt-icon">🏷️</span>
-            <div class="opt-name">Decolux</div>
-            <div class="opt-desc">Gama media-alta · Alto brillo y mate</div>
-          </div>
-          <div class="opt-card" onclick="selectFrenteType(this,'transformad')" data-val="transformad">
-            <span class="opt-icon">⭐</span>
-            <div class="opt-name">Transformad</div>
-            <div class="opt-desc">Premium · Acabados de lujo</div>
-          </div>
-        </div>
-
-        <!-- Color selection (appears after type) -->
-        <div id="color-section" class="hidden mt-24">
-          <div class="module-section-label">Selecciona el color</div>
-          <div class="color-grid" id="color-swatches"></div>
-        </div>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-3" disabled>
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 4: MÓDULOS
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-4" data-step="4">
-        <h2 class="step-title">Arma tus <em>módulos</em></h2>
-        <p class="step-subtitle">Selecciona y ajusta la cantidad de cada módulo. Los incluidos en tu gama ya están preseleccionados.</p>
-
-        <div class="info-box">
-          <span class="info-box-icon">📐</span>
-          <span>Ajusta la cantidad de cada módulo. No te preocupes por las dimensiones exactas — nuestro equipo las toma durante el levantamiento.</span>
-        </div>
-
-        <!-- MUEBLES BAJOS -->
-        <div class="module-section-label">Muebles Bajos</div>
-        <div class="modules-list" id="modules-bajos"></div>
-
-        <!-- MUEBLES ALTOS / AÉREOS -->
-        <div class="module-section-label">Muebles Altos / Aéreos</div>
-        <div class="modules-list" id="modules-altos"></div>
-
-        <!-- MÓDULOS ESPECIALES -->
-        <div class="module-section-label">Módulos Especiales</div>
-        <div class="modules-list" id="modules-especiales"></div>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary" onclick="nextStep()">
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 5: CUBIERTA
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-5" data-step="5">
-        <h2 class="step-title">Tipo de <em>cubierta</em></h2>
-        <p class="step-subtitle">La cubierta es la superficie de trabajo de tu cocina. Van en orden de precio (de menor a mayor).</p>
-
-        <div class="options-grid cols-2">
-          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="laminado">
-            <span class="opt-icon">🟫</span>
-            <div class="opt-name">Laminado Alta Presión</div>
-            <div class="opt-desc">Resistente y económico. Amplia variedad de colores y texturas.</div>
-            <span class="opt-badge silver">Menor costo</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="corian">
-            <span class="opt-icon">⬜</span>
-            <div class="opt-name">Superficie Sólida Corian®</div>
-            <div class="opt-desc">Blanco puro, sin juntas visibles. Reparable y muy higiénico.</div>
-            <span class="opt-badge">Gama Media</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="granito">
-            <span class="opt-icon">🪨</span>
-            <div class="opt-name">Granito Natural</div>
-            <div class="opt-desc">Piedra natural única. Excelente durabilidad. Múltiples modelos disponibles.</div>
-            <span class="opt-badge">Gama Media</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="cuarzo">
-            <span class="opt-icon">💎</span>
-            <div class="opt-name">Cuarzo Engineered</div>
-            <div class="opt-desc">Alta resistencia, colores uniformes y acabado premium.</div>
-            <span class="opt-badge gold">Premium</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'cubierta')" data-val="sinterizado">
-            <span class="opt-icon">✨</span>
-            <div class="opt-name">Cuarzo Sinterizado</div>
-            <div class="opt-desc">Lo más avanzado del mercado. Resistente al calor, rayaduras y UV.</div>
-            <span class="opt-badge gold">Top Premium</span>
-          </div>
-        </div>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-5" disabled>
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 6: HERRAJES
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-6" data-step="6">
-        <h2 class="step-title">Sistema de <em>herrajes</em></h2>
-        <p class="step-subtitle">Los herrajes determinan cómo se abren y cierran tus muebles. Define la experiencia cotidiana de tu cocina.</p>
-
-        <div class="options-grid cols-2">
-          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="economico">
-            <span class="opt-icon">🔩</span>
-            <div class="opt-name">Económico</div>
-            <div class="opt-desc">Push-to-open estándar. Funcional y duradero para uso regular.</div>
-            <span class="opt-badge silver">Gama Básica</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="cierre_suave">
-            <span class="opt-icon">🤫</span>
-            <div class="opt-name">Cierre Suave</div>
-            <div class="opt-desc">Las puertas y cajones se cierran con suavidad automáticamente. Sin golpes.</div>
-            <span class="opt-badge">Gama Media</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="blum">
-            <span class="opt-icon">🏆</span>
-            <div class="opt-name">Blum Premium</div>
-            <div class="opt-desc">Marca alemana de referencia mundial. Cierre suave + amortiguado en cajones y puertas.</div>
-            <span class="opt-badge gold">Premium</span>
-          </div>
-          <div class="opt-card" onclick="selectOpt(this,'herraje')" data-val="oculto">
-            <span class="opt-icon">🫥</span>
-            <div class="opt-name">Sin jaladores (oculto)</div>
-            <div class="opt-desc">Apertura por perfil de aluminio o toque. Estética minimalista.</div>
-            <span class="opt-badge gold">Diseño</span>
-          </div>
-        </div>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary" onclick="nextStep()" id="btn-next-6" disabled>
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 7: EXTRAS (LED, isla)
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-7" data-step="7">
-        <h2 class="step-title">Extras y <em>opciones adicionales</em></h2>
-        <p class="step-subtitle">Personaliza aún más tu cocina. Selecciona lo que deseas incluir. Todo es opcional.</p>
-
-        <div class="toggle-row" id="toggle-led" onclick="toggleExtra(this,'led')">
-          <div class="toggle-left">
-            <span class="toggle-icon">💡</span>
-            <div class="toggle-info">
-              <div class="t-name">Iluminación LED</div>
-              <div class="t-desc">Luces LED integradas en los muebles y bajo aéreos</div>
-            </div>
-          </div>
-          <div class="toggle-switch"></div>
-        </div>
-
-        <!-- Sub-options for LED -->
-        <div id="led-subopts" class="hidden" style="margin: 0 0 10px 20px; padding-left: 16px; border-left: 2px solid var(--border-act);">
-          <div style="margin: 12px 0 8px; font-size: 0.8rem; color: var(--text-dim);">Tipo de iluminación:</div>
-          <div class="options-grid cols-3">
-            <div class="opt-card" onclick="selectOpt(this,'led_tipo')" data-val="bajo_muebles">
-              <span class="opt-icon">⬇️</span>
-              <div class="opt-name" style="font-size:0.8rem">Bajo muebles altos</div>
-            </div>
-            <div class="opt-card" onclick="selectOpt(this,'led_tipo')" data-val="cinta_perimetral">
-              <span class="opt-icon">🔆</span>
-              <div class="opt-name" style="font-size:0.8rem">Cinta perimetral</div>
-            </div>
-            <div class="opt-card" onclick="selectOpt(this,'led_tipo')" data-val="spot">
-              <span class="opt-icon">💫</span>
-              <div class="opt-name" style="font-size:0.8rem">Spot empotrado</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="toggle-row" id="toggle-isla" onclick="toggleExtra(this,'isla')">
-          <div class="toggle-left">
-            <span class="toggle-icon">🏝️</span>
-            <div class="toggle-info">
-              <div class="t-name">Isla / Barra</div>
-              <div class="t-desc">Módulo central con opción de bancos o parrilla integrada</div>
-            </div>
-          </div>
-          <div class="toggle-switch"></div>
-        </div>
-
-        <!-- Sub-options for isla -->
-        <div id="isla-subopts" class="hidden" style="margin: 0 0 10px 20px; padding-left: 16px; border-left: 2px solid var(--border-act);">
-          <div style="margin: 12px 0 8px; font-size: 0.8rem; color: var(--text-dim);">Opciones de isla:</div>
-          <div class="toggle-row" id="toggle-bancos" onclick="toggleExtra(this,'bancos')" style="margin-bottom:8px">
-            <div class="toggle-left">
-              <span class="toggle-icon">🪑</span>
-              <div class="toggle-info">
-                <div class="t-name" style="font-size:0.85rem">Bancos / Cubierta volada</div>
-                <div class="t-desc">Para sentarse en la isla</div>
-              </div>
-            </div>
-            <div class="toggle-switch"></div>
-          </div>
-          <div class="toggle-row" id="toggle-parrilla-isla" onclick="toggleExtra(this,'parrilla_isla')" style="margin-bottom:0">
-            <div class="toggle-left">
-              <span class="toggle-icon">🔥</span>
-              <div class="toggle-info">
-                <div class="t-name" style="font-size:0.85rem">Parrilla en isla</div>
-                <div class="t-desc">Integración de parrilla en la cubierta de la isla</div>
-              </div>
-            </div>
-            <div class="toggle-switch"></div>
-          </div>
-        </div>
-
-        <div class="toggle-row" id="toggle-mueble-auxiliar" onclick="toggleExtra(this,'mueble_auxiliar')">
-          <div class="toggle-left">
-            <span class="toggle-icon">🗄️</span>
-            <div class="toggle-info">
-              <div class="t-name">Mueble auxiliar</div>
-              <div class="t-desc">Mueble complementario para mayor almacenamiento</div>
-            </div>
-          </div>
-          <div class="toggle-switch"></div>
-        </div>
-
-        <div class="toggle-row" id="toggle-campana" onclick="toggleExtra(this,'campana')">
-          <div class="toggle-left">
-            <span class="toggle-icon">💨</span>
-            <div class="toggle-info">
-              <div class="t-name">Campana extractora</div>
-              <div class="t-desc">Extracción de humos y olores integrada</div>
-            </div>
-          </div>
-          <div class="toggle-switch"></div>
-        </div>
-
-        <!-- Sub-options campana -->
-        <div id="campana-subopts" class="hidden" style="margin: 0 0 10px 20px; padding-left: 16px; border-left: 2px solid var(--border-act);">
-          <div style="margin: 12px 0 8px; font-size: 0.8rem; color: var(--text-dim);">Tipo de campana:</div>
-          <div class="options-grid">
-            <div class="opt-card" onclick="selectOpt(this,'campana_tipo')" data-val="pared">
-              <span class="opt-icon">🧱</span>
-              <div class="opt-name" style="font-size:0.8rem">A pared</div>
-            </div>
-            <div class="opt-card" onclick="selectOpt(this,'campana_tipo')" data-val="isla_campana">
-              <span class="opt-icon">⬇️</span>
-              <div class="opt-name" style="font-size:0.8rem">Tipo isla</div>
-            </div>
-            <div class="opt-card" onclick="selectOpt(this,'campana_tipo')" data-val="empotrada">
-              <span class="opt-icon">⬛</span>
-              <div class="opt-name" style="font-size:0.8rem">Empotrada</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary" onclick="nextStep()">
-            Continuar
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 8: DATOS DEL CLIENTE
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-8" data-step="8">
-        <h2 class="step-title">Tus <em>datos de contacto</em></h2>
-        <p class="step-subtitle">Para agendar tu levantamiento y enviarte el resumen de cotización.</p>
-
-        <form id="client-form" onsubmit="return false;">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label" for="c-nombre">Nombre completo <span>*</span></label>
-              <input class="form-input" type="text" id="c-nombre" placeholder="Tu nombre y apellido" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="c-tel">Número de teléfono <span>*</span></label>
-              <input class="form-input" type="tel" id="c-tel" placeholder="+52 271 000 0000" required />
-            </div>
-            <div class="form-group full">
-              <label class="form-label" for="c-dir">Dirección / Municipio <span>*</span></label>
-              <input class="form-input" type="text" id="c-dir" placeholder="Colonia, Municipio, Ciudad" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="c-fecha">Fecha preferida de levantamiento <span>*</span></label>
-              <input class="form-input" type="date" id="c-fecha" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="c-hora">Hora preferida <span>*</span></label>
-              <input class="form-input" type="time" id="c-hora" required />
-            </div>
-          </div>
-        </form>
-
-        <div class="step-nav">
-          <button class="btn btn-outline" onclick="prevStep()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Atrás
-          </button>
-          <button class="btn btn-primary btn-lg" onclick="finishConfig()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10zm-2-6l7-4-7-4v8z"/></svg>
-            Finalizar y generar cotización
-          </button>
-        </div>
-      </div>
-
-      <!-- ════════════════════════════
-           STEP 9: DONE
-      ════════════════════════════ -->
-      <div class="step-panel" id="step-9" data-step="9">
-        <div class="finish-screen">
-          <div class="finish-icon">✅</div>
-          <h2>¡Cotización <em style="color:var(--green);font-style:italic">lista</em>!</h2>
-          <p>Tu configuración está completa. Descarga tu resumen y envíanos los detalles por WhatsApp para confirmar tu cita.</p>
-          <div class="finish-actions">
-            <button class="btn btn-gold btn-lg btn-full" onclick="downloadPDF()" id="btn-pdf">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Descargar mi cotización PDF
-            </button>
-            <button class="btn btn-primary btn-lg btn-full" onclick="sendWhatsApp()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-              Enviar a MHG por WhatsApp
-            </button>
-            <a href="index.html" class="btn btn-outline btn-full">
-              Volver al sitio principal
-            </a>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /cust-content -->
-
-    <!-- ═══ SIDEBAR ═══ -->
-    <aside class="cust-sidebar">
-      <div class="summary-card">
-        <div class="summary-header">
-          <div class="summary-header-icon">🍳</div>
-          <div class="summary-header-text">
-            <h3>Tu Cocina</h3>
-            <p>Resumen en tiempo real</p>
-          </div>
-        </div>
-
-        <div id="summary-gama-wrap" class="hidden">
-          <div class="summary-gama">
-            <div class="summary-gama-label">Gama seleccionada</div>
-            <div class="summary-gama-val" id="summary-gama-val">—</div>
-          </div>
-        </div>
-
-        <div class="summary-body" id="summary-body">
-          <div class="summary-empty">
-            <div style="font-size:1.5rem;margin-bottom:8px">👆</div>
-            Tus selecciones aparecerán aquí
-          </div>
-        </div>
-
-        <div id="summary-modules-wrap" class="hidden">
-          <div style="padding:8px 20px;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase">Módulos seleccionados</div>
-          <div class="summary-modules" id="summary-modules"></div>
-        </div>
-
-        <div class="summary-note">
-          ✦ Los precios exactos se definen durante el levantamiento en sitio.
-        </div>
+      <div class="sidebar-back">
+        <a href="index.html">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Volver al sitio
+        </a>
       </div>
     </aside>
 
-  </main>
+    <!-- ══ MAIN CONTENT ══ -->
+    <main class="app-content">
+
+      <!-- Progress bar -->
+      <div class="top-progress">
+        <div class="top-progress-fill" id="topProgressFill"></div>
+      </div>
+
+      <!-- Step header -->
+      <header class="content-header" id="contentHeader">
+        <div class="content-eyebrow" id="contentEyebrow">Paso 1 de 9</div>
+        <h1 class="content-title" id="contentTitle">Bienvenido al <em>configurador</em></h1>
+        <p class="content-subtitle" id="contentSubtitle">Cuéntanos sobre tu situación para orientarte mejor.</p>
+      </header>
+
+      <!-- Step panels -->
+      <div class="content-body">
+
+        <!-- ════ STEP 0: ¿Tiene cocina? ════ -->
+        <div class="step-panel active" id="step-0">
+          <div class="options-list cols-2">
+
+            <div class="option-card" id="opt-no-cocina" onclick="selectCardOpt(this,'has_kitchen','no')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80"
+                     alt="Cocina nueva"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina nueva')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="option-tag">Proyecto nuevo</span>
+                <h2 class="option-name">No tengo cocina</h2>
+                <p class="option-desc">Diseñaremos tu cocina integral desde cero, adaptada a las dimensiones y necesidades de tu espacio.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Levantamiento de medidas en sitio</div>
+                  <div class="option-spec">Diseño personalizado completo</div>
+                  <div class="option-spec">Entrega e instalación incluidas</div>
+                </div>
+                <button class="select-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                  Seleccionar
+                </button>
+              </div>
+            </div>
+
+            <div class="option-card" id="opt-si-cocina" onclick="selectCardOpt(this,'has_kitchen','si')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&q=80"
+                     alt="Renovación de cocina"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Renovación de cocina')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="option-tag">Renovación</span>
+                <h2 class="option-name">Ya tengo cocina</h2>
+                <p class="option-desc">Renovamos o reemplazamos tu cocina actual, aprovechando el espacio existente con un diseño completamente nuevo.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Evaluación de estructura actual</div>
+                  <div class="option-spec">Propuesta de remodelación</div>
+                  <div class="option-spec">Instalación sin contratiempos</div>
+                </div>
+                <button class="select-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                  Seleccionar
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ════ STEP 1: GAMA ════ -->
+        <div class="step-panel" id="step-1">
+          <div class="info-box">
+            Cada gama incluye una configuración base que podrás ajustar en los pasos siguientes.
+          </div>
+          <div class="options-list">
+
+            <!-- Básica -->
+            <div class="option-card" id="gama-basica" onclick="selectGamaCard(this,'basica')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80"
+                     alt="Gama Básica"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina Gama Básica')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge basica">Gama Básica</span>
+                <h2 class="option-name">Básica</h2>
+                <p class="option-desc">Cocina funcional con materiales de calidad, diseño limpio y acabados estándar. La opción ideal para quienes buscan practicidad.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Módulos MDF en color blanco</div>
+                  <div class="option-spec">Herraje económico push-to-open</div>
+                  <div class="option-spec">Cubierta laminada de alta presión</div>
+                  <div class="option-spec">Sin isla ni iluminación LED</div>
+                </div>
+                <button class="select-btn">Seleccionar esta gama</button>
+              </div>
+            </div>
+
+            <!-- Media -->
+            <div class="option-card" id="gama-media" onclick="selectGamaCard(this,'media')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1484154133-d2d5ffe43ea1?auto=format&fit=crop&w=800&q=80"
+                     alt="Gama Media"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina Gama Media')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge media">Gama Media</span>
+                <h2 class="option-name">Media</h2>
+                <p class="option-desc">Excelente relación calidad-precio con materiales superiores, módulos extraíbles y cubierta de granito o cuarzo. Incluye iluminación LED.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Módulos MDF con extraíbles</div>
+                  <div class="option-spec">Herraje de cierre suave</div>
+                  <div class="option-spec">Cubierta de granito o cuarzo básico</div>
+                  <div class="option-spec">Frentes Araujo / Decolux + LED bajo muebles</div>
+                </div>
+                <button class="select-btn">Seleccionar esta gama</button>
+              </div>
+            </div>
+
+            <!-- Premium -->
+            <div class="option-card" id="gama-alta" onclick="selectGamaCard(this,'alta')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80"
+                     alt="Gama Premium"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina Premium')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge premium">Premium</span>
+                <h2 class="option-name">Premium</h2>
+                <p class="option-desc">Lo mejor en materiales, herrajes y acabados. Esquineros extraíbles, vitrinas, isla, cuarzo sinterizado y herraje Blum alemán. Experiencia sin compromisos.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Módulos premium con esquinero extraíble</div>
+                  <div class="option-spec">Herraje Blum (cierre suave amortiguado)</div>
+                  <div class="option-spec">Cuarzo o sinterizado de alta resistencia</div>
+                  <div class="option-spec">Frentes Transformad + LED perimetral + isla</div>
+                </div>
+                <button class="select-btn">Seleccionar esta gama</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ════ STEP 2: INTERIOR COLOR ════ -->
+        <div class="step-panel" id="step-2">
+          <div class="options-list">
+
+            <div class="option-card" id="int-blanco" onclick="selectCardOpt(this,'interior_color','blanco')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                  </div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="option-tag">Interior</span>
+                <h2 class="option-name">Blanco básico</h2>
+                <p class="option-desc">Melamina blanca clásica. Atemporal, limpia y luminosa. La opción más práctica para el interior de los muebles.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Color: Blanco puro</div>
+                  <div class="option-spec">Material: Melamina resistente</div>
+                  <div class="option-spec">Incluida en Gama Básica</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="int-gris" onclick="selectCardOpt(this,'interior_color','gris')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                  </div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="option-tag">Interior</span>
+                <h2 class="option-name">Sólido gris</h2>
+                <p class="option-desc">Melamina en tono gris moderno. Aporta profundidad y carácter al interior de cada mueble.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Color: Gris medio</div>
+                  <div class="option-spec">Material: Melamina mate</div>
+                  <div class="option-spec">Incluida en Gama Media</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="int-madera" onclick="selectCardOpt(this,'interior_color','madera')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80"
+                     alt="Interior madera"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Interior madera')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="option-tag">Interior</span>
+                <h2 class="option-name">Madera</h2>
+                <p class="option-desc">Melamina con acabado de veta natural. Aporta calidez y elegancia al interior de los muebles. Opción premium.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Color: Roble o nogal (a elegir)</div>
+                  <div class="option-spec">Material: Melamina texturizada</div>
+                  <div class="option-spec">Incluida en Gama Premium</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ════ STEP 3: FRENTES ════ -->
+        <div class="step-panel" id="step-3">
+          <div class="options-list" id="frentes-list">
+
+            <div class="option-card" id="fr-solido" onclick="selectFrenteCard(this,'solido')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="option-tag">Tipo de frente</span>
+                <h2 class="option-name">Sólido liso</h2>
+                <p class="option-desc">Acabado uniforme en un solo color. Diseño minimalista y fácil de limpiar. Disponible en amplia gama de colores.</p>
+                <div id="colors-solido" class="color-section" style="display:none"></div>
+                <button class="select-btn">Ver colores</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="fr-madera" onclick="selectFrenteCard(this,'madera')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=800&q=80"
+                     alt="Frente madera"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Frente tipo madera')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="option-tag">Tipo de frente</span>
+                <h2 class="option-name">Veta madera</h2>
+                <p class="option-desc">Acabado que imita la veta natural de la madera. Aporta calidez y un estilo contemporáneo sin el mantenimiento de la madera real.</p>
+                <div id="colors-madera" class="color-section" style="display:none"></div>
+                <button class="select-btn">Ver colores</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="fr-araujo" onclick="selectFrenteCard(this,'araujo')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge media">Gama Media</span>
+                <h2 class="option-name">Araujo</h2>
+                <p class="option-desc">Marca reconocida de tableros decorativos. Variedad de acabados lisos y texturizados, con buena durabilidad y presentación.</p>
+                <div id="colors-araujo" class="color-section" style="display:none"></div>
+                <button class="select-btn">Ver colores</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="fr-decolux" onclick="selectFrenteCard(this,'decolux')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge media">Gama Media-Alta</span>
+                <h2 class="option-name">Decolux</h2>
+                <p class="option-desc">Tableros de alta calidad con acabados en alto brillo y mate premium. Líneas modernas y colores actuales con excelente terminado.</p>
+                <div id="colors-decolux" class="color-section" style="display:none"></div>
+                <button class="select-btn">Ver colores</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="fr-transformad" onclick="selectFrenteCard(this,'transformad')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge premium">Premium</span>
+                <h2 class="option-name">Transformad</h2>
+                <p class="option-desc">Marca premium de frentes para cocina. Acabados de lujo con la mayor variedad de colores y texturas del mercado. Resistencia superior.</p>
+                <div id="colors-transformad" class="color-section" style="display:none"></div>
+                <button class="select-btn">Ver colores</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ════ STEP 4: MÓDULOS ════ -->
+        <div class="step-panel" id="step-4">
+          <div class="info-box">
+            Ajusta la cantidad de cada módulo. No te preocupes por las medidas exactas — el equipo las toma en el levantamiento.
+          </div>
+
+          <div class="module-section-head"><h3>Muebles Bajos</h3></div>
+          <div class="options-list" id="modules-bajos"></div>
+
+          <div class="module-section-head"><h3>Muebles Altos / Aéreos</h3></div>
+          <div class="options-list" id="modules-altos"></div>
+
+          <div class="module-section-head"><h3>Módulos Especiales</h3></div>
+          <div class="options-list" id="modules-especiales"></div>
+        </div>
+
+        <!-- ════ STEP 5: CUBIERTA ════ -->
+        <div class="step-panel" id="step-5">
+          <div class="options-list">
+
+            <div class="option-card" id="cub-laminado" onclick="selectCardOpt(this,'cubierta','laminado')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="10" rx="2"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge basica">Menor costo</span>
+                <h2 class="option-name">Laminado Alta Presión</h2>
+                <p class="option-desc">Superficie resistente al calor y rayones. Amplia variedad de colores y texturas. La opción más accesible con muy buena durabilidad.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Resistente al calor y humedad</div>
+                  <div class="option-spec">Amplia gama de colores y texturas</div>
+                  <div class="option-spec">Mantenimiento muy sencillo</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="cub-corian" onclick="selectCardOpt(this,'cubierta','corian')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="10" rx="2"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge media">Gama Media</span>
+                <h2 class="option-name">Corian® Superficie Sólida</h2>
+                <p class="option-desc">Material termomoldeado sin juntas visibles. Blanco puro, muy higiénico y completamente reparable en caso de rayaduras.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Sin juntas — completamente sellado</div>
+                  <div class="option-spec">Higiénico y fácil de limpiar</div>
+                  <div class="option-spec">Reparable con lija fina</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="cub-granito" onclick="selectCardOpt(this,'cubierta','granito')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=800&q=80"
+                     alt="Cubierta de granito"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Granito natural')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge media">Gama Media</span>
+                <h2 class="option-name">Granito Natural</h2>
+                <p class="option-desc">Piedra natural única, con veta irrepetible. Excelente durabilidad y resistencia al calor. Múltiples modelos disponibles según el stock.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Piedra 100% natural</div>
+                  <div class="option-spec">Alta resistencia al calor directo</div>
+                  <div class="option-spec">Varios modelos disponibles</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="cub-cuarzo" onclick="selectCardOpt(this,'cubierta','cuarzo')">
+              <div class="option-photo">
+                <img src="https://images.unsplash.com/photo-1556909172-8c2f041fca1e?auto=format&fit=crop&w=800&q=80"
+                     alt="Cubierta de cuarzo"
+                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cuarzo Engineered')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                  Ampliar
+                </button>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge premium">Premium</span>
+                <h2 class="option-name">Cuarzo Engineered</h2>
+                <p class="option-desc">Cuarzo compuesto de alta ingeniería. Color uniforme, superficie no porosa y altísima resistencia. Sin necesidad de sellador.</p>
+                <div class="option-specs">
+                  <div class="option-spec">No requiere sellado periódico</div>
+                  <div class="option-spec">Alta resistencia a manchas y rayones</div>
+                  <div class="option-spec">Colores uniformes y consistentes</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="cub-sinterizado" onclick="selectCardOpt(this,'cubierta','sinterizado')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M7 7V5M12 7V5M17 7V5"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge premium">Top Premium</span>
+                <h2 class="option-name">Cuarzo Sinterizado</h2>
+                <p class="option-desc">La tecnología más avanzada disponible. Resiste el calor directo, rayones UV y cambios extremos de temperatura. Ideal para uso intensivo.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Resistente al calor directo (ollas)</div>
+                  <div class="option-spec">Resistente a UV — no amarilla</div>
+                  <div class="option-spec">Durabilidad excepcional a largo plazo</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ════ STEP 6: HERRAJES ════ -->
+        <div class="step-panel" id="step-6">
+          <div class="options-list">
+
+            <div class="option-card" id="her-economico" onclick="selectCardOpt(this,'herraje','economico')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge basica">Gama Básica</span>
+                <h2 class="option-name">Herraje Económico</h2>
+                <p class="option-desc">Sistema push-to-open estándar. Apertura a presión, sin jaladores visibles. Funcional y duradero para uso diario regular.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Apertura por presión directa</div>
+                  <div class="option-spec">Sin jaladores externos</div>
+                  <div class="option-spec">Buena durabilidad para uso normal</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="her-suave" onclick="selectCardOpt(this,'herraje','cierre_suave')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge media">Gama Media</span>
+                <h2 class="option-name">Cierre Suave</h2>
+                <p class="option-desc">Las puertas y cajones se cierran automáticamente con suavidad. Elimina los golpes y prolonga la vida útil de los muebles.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Cierre automático sin golpes</div>
+                  <div class="option-spec">Mayor vida útil de bisagras</div>
+                  <div class="option-spec">Experiencia de uso silenciosa</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="her-blum" onclick="selectCardOpt(this,'herraje','blum')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge premium">Premium</span>
+                <h2 class="option-name">Blum Premium</h2>
+                <p class="option-desc">Marca alemana de referencia mundial en herrajes de cocina. Cierre suave amortiguado en puertas y cajones. Garantía de durabilidad superior.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Cierre suave con amortiguador integrado</div>
+                  <div class="option-spec">50,000+ ciclos de apertura garantizados</div>
+                  <div class="option-spec">Precisión y ajuste alemán</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+            <div class="option-card" id="her-oculto" onclick="selectCardOpt(this,'herraje','oculto')">
+              <div class="option-photo">
+                <div class="photo-placeholder">
+                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><line x1="5" y1="7" x2="19" y2="7"/></svg></div>
+                  <div class="photo-placeholder-text">Imagen de referencia</div>
+                </div>
+                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+              </div>
+              <div class="option-info">
+                <span class="gama-badge premium">Diseño</span>
+                <h2 class="option-name">Sin jaladores (perfil oculto)</h2>
+                <p class="option-desc">Apertura mediante perfil de aluminio integrado o sistema toque. Estética completamente limpia y minimalista, sin elementos visibles.</p>
+                <div class="option-specs">
+                  <div class="option-spec">Perfil de aluminio o sistema toque</div>
+                  <div class="option-spec">Estética minimalista sin jaladores</div>
+                  <div class="option-spec">Complementa diseños contemporáneos</div>
+                </div>
+                <button class="select-btn">Seleccionar</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ════ STEP 7: EXTRAS ════ -->
+        <div class="step-panel" id="step-7">
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:24px;">Todo es opcional. Activa lo que desees incluir en tu cocina.</p>
+
+          <!-- LED -->
+          <div class="toggle-card" id="toggle-led" onclick="toggleExtraCard(this,'led')">
+            <div class="toggle-card-photo">
+              <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=400&q=80"
+                   alt="Iluminación LED"
+                   onerror="this.style.display='none'" />
+            </div>
+            <div class="toggle-card-body">
+              <div class="toggle-card-info">
+                <div class="toggle-card-name">Iluminación LED</div>
+                <div class="toggle-card-desc">Luces LED integradas en muebles aéreos y zonas de trabajo</div>
+              </div>
+              <div class="toggle-switch-wrap">
+                <div class="toggle-switch"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sub-options" id="sub-led">
+            <div class="sub-options-label">Tipo de iluminación</div>
+            <div class="sub-opts-row">
+              <button class="sub-opt" onclick="selectSubOpt(this,'led_tipo','bajo_muebles')">Bajo muebles altos</button>
+              <button class="sub-opt" onclick="selectSubOpt(this,'led_tipo','cinta_perimetral')">Cinta perimetral</button>
+              <button class="sub-opt" onclick="selectSubOpt(this,'led_tipo','spot')">Spot empotrado</button>
+            </div>
+          </div>
+
+          <!-- Isla -->
+          <div class="toggle-card" id="toggle-isla" onclick="toggleExtraCard(this,'isla')">
+            <div class="toggle-card-photo">
+              <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=400&q=80"
+                   alt="Isla de cocina"
+                   onerror="this.style.display='none'" />
+            </div>
+            <div class="toggle-card-body">
+              <div class="toggle-card-info">
+                <div class="toggle-card-name">Isla / Barra</div>
+                <div class="toggle-card-desc">Módulo central con opción de bancos y parrilla integrada</div>
+              </div>
+              <div class="toggle-switch-wrap">
+                <div class="toggle-switch"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sub-options" id="sub-isla">
+            <div class="sub-options-label">Opciones de isla</div>
+            <div class="sub-opts-row">
+              <button class="sub-opt" onclick="selectSubOpt(this,'bancos',true)">Con bancos (cubierta volada)</button>
+              <button class="sub-opt" onclick="selectSubOpt(this,'parrilla_isla',true)">Con parrilla integrada</button>
+            </div>
+          </div>
+
+          <!-- Campana -->
+          <div class="toggle-card" id="toggle-campana" onclick="toggleExtraCard(this,'campana')">
+            <div class="toggle-card-photo">
+              <div class="photo-placeholder" style="min-height:120px;">
+                <div class="photo-placeholder-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20h16M4 20l4-8h8l4 8M12 4v8"/></svg></div>
+              </div>
+            </div>
+            <div class="toggle-card-body">
+              <div class="toggle-card-info">
+                <div class="toggle-card-name">Campana extractora</div>
+                <div class="toggle-card-desc">Extracción de humos y olores. Varios tipos disponibles</div>
+              </div>
+              <div class="toggle-switch-wrap">
+                <div class="toggle-switch"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sub-options" id="sub-campana">
+            <div class="sub-options-label">Tipo de campana</div>
+            <div class="sub-opts-row">
+              <button class="sub-opt" onclick="selectSubOpt(this,'campana_tipo','pared')">A pared</button>
+              <button class="sub-opt" onclick="selectSubOpt(this,'campana_tipo','isla_campana')">Tipo isla</button>
+              <button class="sub-opt" onclick="selectSubOpt(this,'campana_tipo','empotrada')">Empotrada</button>
+            </div>
+          </div>
+
+          <!-- Mueble auxiliar -->
+          <div class="toggle-card" id="toggle-mueble_auxiliar" onclick="toggleExtraCard(this,'mueble_auxiliar')">
+            <div class="toggle-card-photo">
+              <div class="photo-placeholder" style="min-height:120px;">
+                <div class="photo-placeholder-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div>
+              </div>
+            </div>
+            <div class="toggle-card-body">
+              <div class="toggle-card-info">
+                <div class="toggle-card-name">Mueble auxiliar</div>
+                <div class="toggle-card-desc">Mueble complementario para almacenamiento adicional fuera de la cocina principal</div>
+              </div>
+              <div class="toggle-switch-wrap">
+                <div class="toggle-switch"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════ STEP 8: DATOS DEL CLIENTE ════ -->
+        <div class="step-panel" id="step-8">
+          <div class="form-card">
+            <form id="client-form" onsubmit="return false;">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label" for="c-nombre">Nombre completo <span>*</span></label>
+                  <input class="form-input" type="text" id="c-nombre" placeholder="Nombre y apellido" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="c-tel">Teléfono <span>*</span></label>
+                  <input class="form-input" type="tel" id="c-tel" placeholder="+52 271 000 0000" required />
+                </div>
+                <div class="form-group full">
+                  <label class="form-label" for="c-dir">Dirección / Municipio <span>*</span></label>
+                  <input class="form-input" type="text" id="c-dir" placeholder="Colonia, Municipio, Estado" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="c-fecha">Fecha de levantamiento <span>*</span></label>
+                  <input class="form-input" type="date" id="c-fecha" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="c-hora">Hora preferida <span>*</span></label>
+                  <input class="form-input" type="time" id="c-hora" required />
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ════ STEP 9: DONE ════ -->
+        <div class="step-panel" id="step-9">
+          <div class="finish-wrap">
+            <div class="finish-line"></div>
+            <h1 class="finish-title">Configuración <em>lista</em></h1>
+            <p class="finish-desc">Tu cocina está diseñada. Descarga tu resumen en PDF y envía los detalles al equipo de MHG para confirmar tu cita de levantamiento.</p>
+            <div class="finish-actions">
+              <button class="btn btn-gold btn-lg" onclick="downloadPDF()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Descargar cotización en PDF
+              </button>
+              <button class="btn btn-primary btn-lg" onclick="sendWhatsApp()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                Enviar resumen por WhatsApp
+              </button>
+              <a href="index.html" class="btn btn-outline btn-lg">Volver al sitio</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content-body -->
+
+      <!-- Bottom navigation -->
+      <footer class="content-footer" id="contentFooter">
+        <button class="btn btn-outline" id="btnPrev" onclick="prevStep()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Anterior
+        </button>
+        <div class="step-counter">
+          Paso <strong id="counterCurrent">1</strong> de <strong>9</strong>
+        </div>
+        <button class="btn btn-primary" id="btnNext" onclick="nextStep()">
+          Siguiente
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </footer>
+
+    </main><!-- /app-content -->
+  </div><!-- /app-wrap -->
+
+  <!-- ═══ LIGHTBOX ═══ -->
+  <div class="lightbox" id="lightbox" onclick="closeLightboxOnBg(event)">
+    <div class="lightbox-inner">
+      <img id="lightboxImg" src="" alt="" />
+      <div class="lightbox-caption" id="lightboxCaption"></div>
+      <button class="lightbox-close" onclick="closeLightbox()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
 
   <script src="cotizador.js"></script>
 </body>
