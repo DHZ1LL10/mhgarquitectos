@@ -372,12 +372,66 @@ a { text-decoration: none; color: inherit; }
 .services-header-left .section-label { margin-bottom: 8px; }
 .services-header-left .section-title { margin: 0; }
 
+.services-header-right-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+
 .services-header-right {
   font-size: .85rem;
   color: var(--muted);
   max-width: 280px;
   text-align: right;
   line-height: 1.6;
+}
+
+/* ── CTA mode toggle pill ── */
+.cta-mode-toggle {
+  display: inline-flex;
+  background: var(--light);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.cta-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .22s ease;
+  white-space: nowrap;
+}
+
+.cta-mode-btn.active {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(26,79,46,.25);
+}
+
+.cta-mode-btn.active svg { stroke: #fff; }
+.cta-mode-btn svg { transition: stroke .22s; }
+
+/* Indicator dot on WA mode */
+.services-list.mode-wa .service-row .service-cta:not(a)::before {
+  content: '';
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #25d366;
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .services-list { list-style: none; }
