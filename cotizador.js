@@ -3,6 +3,19 @@
    cotizador.js  —  Logic engine v3 (redesigned)
 ═══════════════════════════════════════════════════════════════ */
 
+/* ─── EMAILJS CONFIG — LLENA ESTOS VALORES CON TU CUENTA DE EMAILJS.COM ───
+   1. Crea cuenta gratis en https://www.emailjs.com/
+   2. Agrega un Email Service (Gmail, Outlook, etc.)
+   3. Crea un Email Template con variables: {{cliente_nombre}}, {{cliente_tel}},
+      {{cliente_direccion}}, {{cliente_fecha}}, {{cliente_hora}}, {{config_texto}}, {{folio}}
+   4. Rellena los tres valores de abajo
+─────────────────────────────────────────────────────────────── */
+const EMAILJS_PUBLIC_KEY  = 'TU_PUBLIC_KEY';    // ← reemplaza
+const EMAILJS_SERVICE_ID  = 'TU_SERVICE_ID';    // ← reemplaza
+const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';   // ← reemplaza
+/* ─────────────────────────────────────────────────────────────── */
+
+
 /* ─── STATE ─── */
 const state = {
   current_step: 0,
@@ -466,6 +479,8 @@ function nextStep() {
   if (!ok) return;
 
   if (step < 9) renderStep(step + 1);
+  // Auto-send email to office when reaching done screen
+  if (step === 8) sendToOfficeEmail();
 }
 
 function prevStep() {
@@ -476,157 +491,299 @@ function prevStep() {
    PDF GENERATION
 ═══════════════════════════════════════════════════════ */
 function downloadPDF() {
+  // Load logo from site, then generate. Fallback to text if CORS blocks it.
+  var logoEl = new Image();
+  logoEl.crossOrigin = 'anonymous';
+  logoEl.onload = function() {
+    var canvas = document.createElement('canvas');
+    canvas.width  = logoEl.naturalWidth  || 120;
+    canvas.height = logoEl.naturalHeight || 120;
+    canvas.getContext('2d').drawImage(logoEl, 0, 0);
+    _buildPDF(canvas.toDataURL('image/jpeg', 0.9));
+  };
+  logoEl.onerror = function() { _buildPDF(null); };
+  // Try absolute URL so it works from any page
+  logoEl.src = (window.location.origin || '') + '/img/logo.jpg';
+}
+
+function _buildPDF(logoDataURL) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const W = 210, MARGIN = 18;
-  const green = [26, 79, 46];
-  const dark  = [15, 18, 16];
-  const light = [240, 242, 241];
-  const muted = [122, 132, 128];
+  const doc    = new jsPDF({ unit:'mm', format:'a4' });
+  const W      = 210;
+  const M      = 16;   // margin
+  const GREEN  = [26, 79, 46];
+  const GREEN2 = [38, 110, 64];   // lighter green for accents
+  const CREAM  = [248, 246, 240];
+  const DARK   = [22, 26, 23];
+  const MUTED  = [110, 122, 116];
+  const BORDER = [220, 226, 222];
+  const GOLD   = [180, 148, 80];
+
+  const folio  = 'COT-' + Date.now().toString().slice(-6);
+  const fecha  = new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'});
   let y = 0;
 
-  // Header bar
-  doc.setFillColor(...green);
-  doc.rect(0, 0, W, 38, 'F');
+  /* ── HEADER ── */
+  // Dark green full-width bar
+  doc.setFillColor(...GREEN);
+  doc.rect(0, 0, W, 46, 'F');
 
-  // Logo placeholder area
-  doc.setFillColor(255,255,255, 0.15);
-  doc.roundedRect(MARGIN, 8, 22, 22, 2, 2, 'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(8); doc.setTextColor(255,255,255);
-  doc.text('MHG', MARGIN + 11, 21, {align:'center'});
+  // Thin gold accent line at bottom of header
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 44, W, 1.2, 'F');
 
-  // Title in header
-  doc.setFont('helvetica','bold'); doc.setFontSize(18);
-  doc.setTextColor(255,255,255);
-  doc.text('MHG ARQUITECTOS', MARGIN + 28, 17);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  // Logo image or text fallback
+  if (logoDataURL) {
+    // White circle behind logo
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(M, 7, 28, 28, 3, 3, 'F');
+    doc.addImage(logoDataURL, 'JPEG', M + 1, 8, 26, 26);
+  } else {
+    doc.setFillColor(255, 255, 255, 0.12);
+    doc.roundedRect(M, 7, 28, 28, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text('MHG', M + 14, 23, { align:'center' });
+  }
+
+  // Company name
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(20);
+  doc.setTextColor(255, 255, 255);
+  doc.text('MHG ARQUITECTOS', M + 34, 19);
+
+  // Subtitle
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
   doc.setTextColor(200, 230, 210);
-  doc.text('Configurador de Cocina Integral', MARGIN + 28, 23);
+  doc.text('Preconfiguración de Cocina Integral', M + 34, 26);
 
-  // Folio & date
-  const folio = `COT-${Date.now().toString().slice(-6)}`;
-  const fecha = new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(7);
-  doc.setTextColor(200,230,210);
-  doc.text(`Folio: ${folio}`, W - MARGIN, 16, {align:'right'});
-  doc.text(fecha, W - MARGIN, 22, {align:'right'});
+  // Thin separator inside header
+  doc.setDrawColor(...GREEN2);
+  doc.setLineWidth(0.3);
+  doc.line(M + 34, 29, W - M, 29);
 
-  y = 50;
+  // Folio + date (right-aligned)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+  doc.setTextColor(200, 230, 210);
+  doc.text('Folio:', W - M - 32, 20);
+  doc.setFont('helvetica', 'normal');
+  doc.text(folio, W - M, 20, { align:'right' });
+  doc.text(fecha, W - M, 27, { align:'right' });
 
-  // Helper: section title
-  const sectionTitle = (txt, yy) => {
-    doc.setFillColor(...light);
-    doc.rect(MARGIN, yy, W - MARGIN*2, 8, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8);
-    doc.setTextColor(...green);
-    doc.text(txt.toUpperCase(), MARGIN + 4, yy + 5.5);
-    return yy + 13;
+  y = 56;
+
+  /* ── HELPERS ── */
+  var rowAlt = false;
+  const section = function(txt, yy) {
+    // Section bar with left accent stripe
+    doc.setFillColor(...CREAM);
+    doc.rect(M, yy, W - M * 2, 9, 'F');
+    doc.setFillColor(...GREEN);
+    doc.rect(M, yy, 3, 9, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+    doc.setTextColor(...GREEN);
+    doc.text(txt.toUpperCase(), M + 7, yy + 6);
+    // Thin rule underneath
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.2);
+    doc.line(M, yy + 9, W - M, yy + 9);
+    rowAlt = false;
+    return yy + 15;
   };
 
-  // Helper: row
-  const row = (label, value, yy) => {
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
-    doc.setTextColor(...muted); doc.text(label, MARGIN + 4, yy);
-    doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
-    doc.text(value || '—', MARGIN + 52, yy);
-    return yy + 7;
+  const row = function(label, value, yy) {
+    // Alternating row background
+    if (rowAlt) {
+      doc.setFillColor(245, 247, 245);
+      doc.rect(M, yy - 5, W - M * 2, 8, 'F');
+    }
+    rowAlt = !rowAlt;
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text(label, M + 4, yy);
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.setTextColor(...DARK);
+    doc.text(value || '—', M + 56, yy);
+
+    // Light bottom rule
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.1);
+    doc.line(M, yy + 2.5, W - M, yy + 2.5);
+
+    return yy + 8;
   };
 
-  // ── Cliente
-  y = sectionTitle('Datos del cliente', y);
+  /* ── CLIENTE ── */
+  y = section('Datos del cliente', y);
   y = row('Nombre:', state.cliente.nombre, y);
   y = row('Teléfono:', state.cliente.tel, y);
   y = row('Dirección:', state.cliente.direccion, y);
-  y = row('Fecha levantamiento:', `${state.cliente.fecha}  ${state.cliente.hora}`, y);
-  y += 6;
+  y = row('Cita de levantamiento:', state.cliente.fecha + '  ' + state.cliente.hora, y);
+  y += 8;
 
-  // ── Configuración
-  y = sectionTitle('Configuración seleccionada', y);
+  /* ── CONFIGURACIÓN ── */
+  y = section('Configuración seleccionada', y);
   y = row('Situación:', state.has_kitchen === 'no' ? 'Nueva cocina' : 'Renovación de cocina existente', y);
-  y = row('Gama:', GAMA_LABELS[state.gama] || state.gama, y);
+  y = row('Gama:', GAMA_LABELS[state.gama]  || state.gama, y);
   y = row('Interior:', INT_LABELS[state.interior_color] || state.interior_color, y);
-  y = row('Frentes:', `${FRENTE_LABELS[state.frente_tipo] || state.frente_tipo}${state.frente_color ? ' — ' + state.frente_color : ''}`, y);
+  y = row('Frentes:', (FRENTE_LABELS[state.frente_tipo] || state.frente_tipo) + (state.frente_color ? ' — ' + state.frente_color : ''), y);
   y = row('Cubierta:', CUB_LABELS[state.cubierta] || state.cubierta, y);
   y = row('Herraje:', HER_LABELS[state.herraje] || state.herraje, y);
-  y += 6;
+  y += 8;
 
-  // ── Módulos
-  const modEntries = Object.entries(state.modules).filter(([,q]) => q > 0);
+  /* ── MÓDULOS ── */
+  const modEntries = Object.entries(state.modules).filter(function(e){ return e[1] > 0; });
   if (modEntries.length > 0) {
-    y = sectionTitle('Módulos seleccionados', y);
-    const allMods = [...MODULE_CATALOG.bajos, ...MODULE_CATALOG.altos, ...MODULE_CATALOG.especiales];
-    modEntries.forEach(([id, qty]) => {
-      const mod = allMods.find(m => m.id === id);
-      if (mod) y = row(`${mod.name}:`, `${qty} unidad${qty !== 1 ? 'es' : ''}  (${mod.size})`, y);
+    y = section('Módulos seleccionados', y);
+    const allMods = [].concat(MODULE_CATALOG.bajos, MODULE_CATALOG.altos, MODULE_CATALOG.especiales);
+    modEntries.forEach(function(e) {
+      var id = e[0], qty = e[1];
+      var mod = allMods.find(function(m){ return m.id === id; });
+      if (mod) y = row(mod.name + ':', qty + ' unidad' + (qty !== 1 ? 'es' : '') + '   ' + mod.size, y);
     });
-    y += 6;
+    y += 8;
   }
 
-  // ── Extras
-  const extrasActivos = ['led','isla','campana','mueble_auxiliar'].filter(k => state.extras[k]);
+  /* ── EXTRAS ── */
+  const extrasActivos = ['led','isla','campana','mueble_auxiliar'].filter(function(k){ return state.extras[k]; });
   if (extrasActivos.length > 0) {
-    y = sectionTitle('Elementos adicionales', y);
-    const EXTRA_LABELS = { led:'Iluminación LED', isla:'Isla / Barra', campana:'Campana extractora', mueble_auxiliar:'Mueble auxiliar' };
-    extrasActivos.forEach(k => {
-      let det = '';
-      if (k === 'led' && state.extras.led_tipo) det = ` (${state.extras.led_tipo})`;
-      if (k === 'isla' && state.extras.bancos) det += ' — Con bancos';
-      if (k === 'campana' && state.extras.campana_tipo) det += ` (${state.extras.campana_tipo})`;
+    y = section('Elementos adicionales', y);
+    var EXTRA_LABELS = { led:'Iluminación LED', isla:'Isla / Barra', campana:'Campana extractora', mueble_auxiliar:'Mueble auxiliar' };
+    extrasActivos.forEach(function(k) {
+      var det = '';
+      if (k === 'led' && state.extras.led_tipo) det = ' (' + state.extras.led_tipo + ')';
+      if (k === 'isla' && state.extras.bancos)   det += ' — Con bancos';
+      if (k === 'campana' && state.extras.campana_tipo) det += ' (' + state.extras.campana_tipo + ')';
       y = row(EXTRA_LABELS[k] + ':', 'Incluido' + det, y);
     });
-    y += 6;
+    y += 8;
   }
 
-  // ── Footer
-  doc.setFillColor(...green);
-  doc.rect(0, 277, W, 20, 'F');
-  doc.setFont('helvetica','normal'); doc.setFontSize(7);
-  doc.setTextColor(200, 230, 210);
-  doc.text('MHG Arquitectos  |  Tel. 271 704 1499  |  Fortín de las Flores, Veracruz', W/2, 284, {align:'center'});
-  doc.text('Este documento es una preconfiguración orientativa. La cotización formal se entrega tras el levantamiento.', W/2, 290, {align:'center'});
+  /* ── NOTE BOX ── */
+  var noteY = 245;
+  doc.setFillColor(...CREAM);
+  doc.roundedRect(M, noteY, W - M * 2, 14, 2, 2, 'F');
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(M, noteY, W - M * 2, 14, 2, 2, 'S');
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5);
+  doc.setTextColor(...MUTED);
+  doc.text('Nota: Este documento es una preconfiguración orientativa.', W / 2, noteY + 6, {align:'center'});
+  doc.text('La cotización formal se entregará tras el levantamiento en sitio.', W / 2, noteY + 11, {align:'center'});
 
-  doc.save(`MHG_Cocina_${state.cliente.nombre?.replace(/\s+/g,'_') || folio}.pdf`);
+  /* ── FOOTER ── */
+  doc.setFillColor(...GREEN);
+  doc.rect(0, 271, W, 26, 'F');
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 271, W, 1.2, 'F');
+
+  // Footer: logo again (small)
+  if (logoDataURL) {
+    doc.addImage(logoDataURL, 'JPEG', M, 275, 14, 14);
+  }
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  doc.text('MHG Arquitectos', M + 17, 281);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+  doc.setTextColor(200, 230, 210);
+  doc.text('Tel. 271 704 1499  |  Fortín de las Flores, Veracruz', M + 17, 287);
+
+  // QR area placeholder (right)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+  doc.setTextColor(200, 230, 210);
+  doc.text('mhgarquitectos.com', W - M, 281, {align:'right'});
+  doc.text('Folio: ' + folio, W - M, 287, {align:'right'});
+
+  doc.save('MHG_Cocina_' + (state.cliente.nombre || folio).replace(/\s+/g, '_') + '.pdf');
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   AUTO-NOTIFY OFFICE (EmailJS)
+═══════════════════════════════════════════════════════ */
+function sendToOfficeEmail() {
+  // Skip if EmailJS not configured
+  if (!window.emailjs || EMAILJS_PUBLIC_KEY === 'TU_PUBLIC_KEY') {
+    console.info('EmailJS no configurado aún — revisa las instrucciones al inicio de cotizador.js');
+    return;
+  }
+  var allMods = [].concat(MODULE_CATALOG.bajos, MODULE_CATALOG.altos, MODULE_CATALOG.especiales);
+  var modLines = Object.entries(state.modules)
+    .filter(function(e){ return e[1] > 0; })
+    .map(function(e){
+      var mod = allMods.find(function(m){ return m.id === e[0]; });
+      return (mod ? mod.name : e[0]) + ' x' + e[1];
+    }).join('\n') || '(Sin módulos especificados)';
+
+  var extrasActivos = ['led','isla','campana','mueble_auxiliar']
+    .filter(function(k){ return state.extras[k]; })
+    .map(function(k){ return ({led:'LED', isla:'Isla', campana:'Campana', mueble_auxiliar:'Mueble auxiliar'})[k]; })
+    .join(', ') || 'Ninguno';
+
+  var configTexto = [
+    'Situación: ' + (state.has_kitchen === 'no' ? 'Nueva cocina' : 'Renovación'),
+    'Gama: ' + (GAMA_LABELS[state.gama] || state.gama),
+    'Interior: ' + (INT_LABELS[state.interior_color] || state.interior_color),
+    'Frentes: ' + (FRENTE_LABELS[state.frente_tipo] || state.frente_tipo) + (state.frente_color ? ' — ' + state.frente_color : ''),
+    'Cubierta: ' + (CUB_LABELS[state.cubierta] || state.cubierta),
+    'Herraje: ' + (HER_LABELS[state.herraje] || state.herraje),
+    '',
+    'MÓDULOS:',
+    modLines,
+    '',
+    'EXTRAS: ' + extrasActivos,
+  ].join('\n');
+
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    folio:            'COT-' + Date.now().toString().slice(-6),
+    cliente_nombre:   state.cliente.nombre,
+    cliente_tel:      state.cliente.tel,
+    cliente_direccion:state.cliente.direccion,
+    cliente_fecha:    state.cliente.fecha,
+    cliente_hora:     state.cliente.hora,
+    config_texto:     configTexto,
+  }).then(function() {
+    console.info('Notificación enviada correctamente a la oficina.');
+  }).catch(function(err) {
+    console.warn('EmailJS error:', err);
+  });
 }
 
 /* ═══════════════════════════════════════════════════════
-   WHATSAPP
+   WHATSAPP (copy for the client — optional)
 ═══════════════════════════════════════════════════════ */
 function sendWhatsApp() {
-  const allMods = [...MODULE_CATALOG.bajos, ...MODULE_CATALOG.altos, ...MODULE_CATALOG.especiales];
-  const modLines = Object.entries(state.modules)
-    .filter(([,q]) => q > 0)
-    .map(([id, q]) => {
-      const m = allMods.find(x => x.id === id);
-      return `  • ${m ? m.name : id} x${q}`;
+  var allMods = [].concat(MODULE_CATALOG.bajos, MODULE_CATALOG.altos, MODULE_CATALOG.especiales);
+  var modLines = Object.entries(state.modules)
+    .filter(function(e){ return e[1] > 0; })
+    .map(function(e){
+      var mod = allMods.find(function(m){ return m.id === e[0]; });
+      return '  • ' + (mod ? mod.name : e[0]) + ' x' + e[1];
     }).join('\n') || '  • (Sin módulos especificados)';
 
-  const extrasActivos = ['led','isla','campana','mueble_auxiliar']
-    .filter(k => state.extras[k])
-    .map(k => ({ led:'LED', isla:'Isla', campana:'Campana', mueble_auxiliar:'Mueble auxiliar' })[k])
+  var extrasActivos = ['led','isla','campana','mueble_auxiliar']
+    .filter(function(k){ return state.extras[k]; })
+    .map(function(k){ return ({led:'LED', isla:'Isla', campana:'Campana', mueble_auxiliar:'Mueble auxiliar'})[k]; })
     .join(', ') || 'Ninguno';
 
-  const msg = `*NUEVA CONFIGURACIÓN — COCINA INTEGRAL*
+  var msg = '*NUEVA CONFIGURACIÓN — COCINA INTEGRAL*\n\n'
+    + '*Cliente:* ' + state.cliente.nombre + '\n'
+    + '*Teléfono:* ' + state.cliente.tel + '\n'
+    + '*Dirección:* ' + state.cliente.direccion + '\n'
+    + '*Levantamiento:* ' + state.cliente.fecha + '  ' + state.cliente.hora + '\n\n'
+    + '*CONFIGURACIÓN*\n'
+    + '• Situación: ' + (state.has_kitchen === 'no' ? 'Nueva cocina' : 'Renovación') + '\n'
+    + '• Gama: ' + (GAMA_LABELS[state.gama] || state.gama) + '\n'
+    + '• Interior: ' + (INT_LABELS[state.interior_color] || state.interior_color) + '\n'
+    + '• Frentes: ' + (FRENTE_LABELS[state.frente_tipo] || state.frente_tipo) + (state.frente_color ? ' — ' + state.frente_color : '') + '\n'
+    + '• Cubierta: ' + (CUB_LABELS[state.cubierta] || state.cubierta) + '\n'
+    + '• Herraje: ' + (HER_LABELS[state.herraje] || state.herraje) + '\n\n'
+    + '*MÓDULOS*\n' + modLines + '\n\n'
+    + '*EXTRAS:* ' + extrasActivos + '\n\n'
+    + '_Configuración enviada desde el sitio web_';
 
-*Cliente:* ${state.cliente.nombre}
-*Teléfono:* ${state.cliente.tel}
-*Dirección:* ${state.cliente.direccion}
-*Levantamiento:* ${state.cliente.fecha}  ${state.cliente.hora}
-
-*CONFIGURACIÓN*
-• Situación: ${state.has_kitchen === 'no' ? 'Nueva cocina' : 'Renovación'}
-• Gama: ${GAMA_LABELS[state.gama] || state.gama}
-• Interior: ${INT_LABELS[state.interior_color] || state.interior_color}
-• Frentes: ${FRENTE_LABELS[state.frente_tipo] || state.frente_tipo}${state.frente_color ? ' — ' + state.frente_color : ''}
-• Cubierta: ${CUB_LABELS[state.cubierta] || state.cubierta}
-• Herraje: ${HER_LABELS[state.herraje] || state.herraje}
-
-*MÓDULOS*
-${modLines}
-
-*EXTRAS:* ${extrasActivos}
-
-_Configuración enviada desde el sitio web_`;
-
-  window.open(`https://wa.me/5212717041499?text=${encodeURIComponent(msg)}`, '_blank');
+  window.open('https://wa.me/5212717041499?text=' + encodeURIComponent(msg), '_blank');
 }
