@@ -3,19 +3,6 @@
    cotizador.js  —  Logic engine v3 (redesigned)
 ═══════════════════════════════════════════════════════════════ */
 
-/* ─── EMAILJS CONFIG — LLENA ESTOS VALORES CON TU CUENTA DE EMAILJS.COM ───
-   1. Crea cuenta gratis en https://www.emailjs.com/
-   2. Agrega un Email Service (Gmail, Outlook, etc.)
-   3. Crea un Email Template con variables: {{cliente_nombre}}, {{cliente_tel}},
-      {{cliente_direccion}}, {{cliente_fecha}}, {{cliente_hora}}, {{config_texto}}, {{folio}}
-   4. Rellena los tres valores de abajo
-─────────────────────────────────────────────────────────────── */
-const EMAILJS_PUBLIC_KEY  = 'TU_PUBLIC_KEY';    // ← reemplaza
-const EMAILJS_SERVICE_ID  = 'TU_SERVICE_ID';    // ← reemplaza
-const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';   // ← reemplaza
-/* ─────────────────────────────────────────────────────────────── */
-
-
 /* ─── STATE ─── */
 const state = {
   current_step: 0,
@@ -479,8 +466,6 @@ function nextStep() {
   if (!ok) return;
 
   if (step < 9) renderStep(step + 1);
-  // Auto-send email to office when reaching done screen
-  if (step === 8) sendToOfficeEmail();
 }
 
 function prevStep() {
@@ -701,89 +686,43 @@ function _buildPDF(logoDataURL) {
 
 
 /* ═══════════════════════════════════════════════════════
-   AUTO-NOTIFY OFFICE (EmailJS)
-═══════════════════════════════════════════════════════ */
-function sendToOfficeEmail() {
-  // Skip if EmailJS not configured
-  if (!window.emailjs || EMAILJS_PUBLIC_KEY === 'TU_PUBLIC_KEY') {
-    console.info('EmailJS no configurado aún — revisa las instrucciones al inicio de cotizador.js');
-    return;
-  }
-  var allMods = [].concat(MODULE_CATALOG.bajos, MODULE_CATALOG.altos, MODULE_CATALOG.especiales);
-  var modLines = Object.entries(state.modules)
-    .filter(function(e){ return e[1] > 0; })
-    .map(function(e){
-      var mod = allMods.find(function(m){ return m.id === e[0]; });
-      return (mod ? mod.name : e[0]) + ' x' + e[1];
-    }).join('\n') || '(Sin módulos especificados)';
-
-  var extrasActivos = ['led','isla','campana','mueble_auxiliar']
-    .filter(function(k){ return state.extras[k]; })
-    .map(function(k){ return ({led:'LED', isla:'Isla', campana:'Campana', mueble_auxiliar:'Mueble auxiliar'})[k]; })
-    .join(', ') || 'Ninguno';
-
-  var configTexto = [
-    'Situación: ' + (state.has_kitchen === 'no' ? 'Nueva cocina' : 'Renovación'),
-    'Gama: ' + (GAMA_LABELS[state.gama] || state.gama),
-    'Interior: ' + (INT_LABELS[state.interior_color] || state.interior_color),
-    'Frentes: ' + (FRENTE_LABELS[state.frente_tipo] || state.frente_tipo) + (state.frente_color ? ' — ' + state.frente_color : ''),
-    'Cubierta: ' + (CUB_LABELS[state.cubierta] || state.cubierta),
-    'Herraje: ' + (HER_LABELS[state.herraje] || state.herraje),
-    '',
-    'MÓDULOS:',
-    modLines,
-    '',
-    'EXTRAS: ' + extrasActivos,
-  ].join('\n');
-
-  emailjs.init(EMAILJS_PUBLIC_KEY);
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-    folio:            'COT-' + Date.now().toString().slice(-6),
-    cliente_nombre:   state.cliente.nombre,
-    cliente_tel:      state.cliente.tel,
-    cliente_direccion:state.cliente.direccion,
-    cliente_fecha:    state.cliente.fecha,
-    cliente_hora:     state.cliente.hora,
-    config_texto:     configTexto,
-  }).then(function() {
-    console.info('Notificación enviada correctamente a la oficina.');
-  }).catch(function(err) {
-    console.warn('EmailJS error:', err);
-  });
-}
-
-/* ═══════════════════════════════════════════════════════
-   WHATSAPP (copy for the client — optional)
+   WHATSAPP
 ═══════════════════════════════════════════════════════ */
 function sendWhatsApp() {
-  var allMods = [].concat(MODULE_CATALOG.bajos, MODULE_CATALOG.altos, MODULE_CATALOG.especiales);
-  var modLines = Object.entries(state.modules)
-    .filter(function(e){ return e[1] > 0; })
-    .map(function(e){
-      var mod = allMods.find(function(m){ return m.id === e[0]; });
-      return '  • ' + (mod ? mod.name : e[0]) + ' x' + e[1];
+  const allMods = [...MODULE_CATALOG.bajos, ...MODULE_CATALOG.altos, ...MODULE_CATALOG.especiales];
+  const modLines = Object.entries(state.modules)
+    .filter(([,q]) => q > 0)
+    .map(([id, q]) => {
+      const m = allMods.find(x => x.id === id);
+      return `  • ${m ? m.name : id} x${q}`;
     }).join('\n') || '  • (Sin módulos especificados)';
 
-  var extrasActivos = ['led','isla','campana','mueble_auxiliar']
-    .filter(function(k){ return state.extras[k]; })
-    .map(function(k){ return ({led:'LED', isla:'Isla', campana:'Campana', mueble_auxiliar:'Mueble auxiliar'})[k]; })
+  const extrasActivos = ['led','isla','campana','mueble_auxiliar']
+    .filter(k => state.extras[k])
+    .map(k => ({ led:'LED', isla:'Isla', campana:'Campana', mueble_auxiliar:'Mueble auxiliar' })[k])
     .join(', ') || 'Ninguno';
 
-  var msg = '*NUEVA CONFIGURACIÓN — COCINA INTEGRAL*\n\n'
-    + '*Cliente:* ' + state.cliente.nombre + '\n'
-    + '*Teléfono:* ' + state.cliente.tel + '\n'
-    + '*Dirección:* ' + state.cliente.direccion + '\n'
-    + '*Levantamiento:* ' + state.cliente.fecha + '  ' + state.cliente.hora + '\n\n'
-    + '*CONFIGURACIÓN*\n'
-    + '• Situación: ' + (state.has_kitchen === 'no' ? 'Nueva cocina' : 'Renovación') + '\n'
-    + '• Gama: ' + (GAMA_LABELS[state.gama] || state.gama) + '\n'
-    + '• Interior: ' + (INT_LABELS[state.interior_color] || state.interior_color) + '\n'
-    + '• Frentes: ' + (FRENTE_LABELS[state.frente_tipo] || state.frente_tipo) + (state.frente_color ? ' — ' + state.frente_color : '') + '\n'
-    + '• Cubierta: ' + (CUB_LABELS[state.cubierta] || state.cubierta) + '\n'
-    + '• Herraje: ' + (HER_LABELS[state.herraje] || state.herraje) + '\n\n'
-    + '*MÓDULOS*\n' + modLines + '\n\n'
-    + '*EXTRAS:* ' + extrasActivos + '\n\n'
-    + '_Configuración enviada desde el sitio web_';
+  const msg = `*NUEVA CONFIGURACIÓN — COCINA INTEGRAL*
 
-  window.open('https://wa.me/5212717041499?text=' + encodeURIComponent(msg), '_blank');
+*Cliente:* ${state.cliente.nombre}
+*Teléfono:* ${state.cliente.tel}
+*Dirección:* ${state.cliente.direccion}
+*Levantamiento:* ${state.cliente.fecha}  ${state.cliente.hora}
+
+*CONFIGURACIÓN*
+• Situación: ${state.has_kitchen === 'no' ? 'Nueva cocina' : 'Renovación'}
+• Gama: ${GAMA_LABELS[state.gama] || state.gama}
+• Interior: ${INT_LABELS[state.interior_color] || state.interior_color}
+• Frentes: ${FRENTE_LABELS[state.frente_tipo] || state.frente_tipo}${state.frente_color ? ' — ' + state.frente_color : ''}
+• Cubierta: ${CUB_LABELS[state.cubierta] || state.cubierta}
+• Herraje: ${HER_LABELS[state.herraje] || state.herraje}
+
+*MÓDULOS*
+${modLines}
+
+*EXTRAS:* ${extrasActivos}
+
+_Configuración enviada desde el sitio web_`;
+
+  window.open(`https://wa.me/5212717041499?text=${encodeURIComponent(msg)}`, '_blank');
 }
