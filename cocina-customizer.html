@@ -4,1594 +4,483 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configurador de Cocina | MHG Arquitectos</title>
-  <meta name="description" content="Configura tu cocina integral a medida con MHG Arquitectos. Selecciona módulos, materiales y agenda tu levantamiento." />
-  <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="img/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    /* ─── DESIGN TOKENS (matching landing page) ─── */
     :root {
-      --green:       #1a4f2e;
-      --green-mid:   #22643a;
-      --green-light: #2d7a48;
-      --green-fade:  rgba(26, 79, 46, 0.06);
-      --dark:        #0f1210;
-      --mid:         #3a4240;
-      --muted:       #7a8480;
-      --border:      #e4e7e5;
-      --border-dark: #cdd2cf;
-      --white:       #ffffff;
-      --off-white:   #f9faf9;
-      --light:       #f0f2f1;
-      --font-body:   'Inter', system-ui, sans-serif;
-      --font-display:'Cormorant Garamond', Georgia, serif;
-      --radius-sm:   4px;
-      --radius-md:   8px;
-      --radius-lg:   12px;
-      --radius-xl:   18px;
-      --shadow-sm:   0 1px 4px rgba(0,0,0,.05);
-      --shadow-md:   0 4px 20px rgba(0,0,0,.07);
-      --shadow-lg:   0 12px 40px rgba(0,0,0,.10);
-      --transition:  0.28s cubic-bezier(.4,0,.2,1);
-      --sidebar-w:   260px;
+      --green:      #1a4f2e;
+      --green-l:    #2d7a4a;
+      --green-fade: #f0f5f2;
+      --gold:       #b49450;
+      --dark:       #0f1210;
+      --body:       #f9faf9;
+      --light:      #f2f4f3;
+      --border:     #e2e6e4;
+      --border-d:   #c8d0cc;
+      --muted:      #7a8480;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans:  'Inter', system-ui, sans-serif;
+      --radius:     10px;
+      --tr:         .22s ease;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; font-size: 15px; }
-    body {
-      font-family: var(--font-body);
-      color: var(--dark);
-      background: var(--off-white);
-      line-height: 1.6;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    img { display: block; width: 100%; height: 100%; object-fit: cover; }
-    button { font-family: var(--font-body); }
+    body { font-family: var(--font-sans); background: var(--body); color: var(--dark); min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* ─── LAYOUT ─── */
-    .app-wrap {
-      display: flex;
-      min-height: 100vh;
-    }
+    /* TOP BAR */
+    .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; padding: 0 24px; height: 56px; }
+    .top-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .top-logo img { height: 30px; width: auto; }
+    .top-logo-text { font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--green); }
+    .top-progress-wrap { flex: 1; display: flex; align-items: center; gap: 12px; }
+    .top-progress-bar { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .top-progress-fill { height: 100%; background: var(--green); border-radius: 99px; transition: width .4s ease; width: 0%; }
+    .top-counter { font-size: .72rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
+    .top-back { font-size: .75rem; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color var(--tr); }
+    .top-back:hover { color: var(--green); }
 
-    /* ══════════════════════════════════
-       SIDEBAR
-    ══════════════════════════════════ */
-    .app-sidebar {
-      width: var(--sidebar-w);
-      flex-shrink: 0;
-      background: var(--white);
-      border-right: 1px solid var(--border);
-      position: fixed;
-      top: 0; left: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      z-index: 100;
-      overflow-y: auto;
-    }
+    /* LAYOUT */
+    .configurator-wrap { display: flex; min-height: 100vh; padding-top: 56px; }
 
-    .sidebar-brand {
-      padding: 24px 20px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 12px;
-      flex-shrink: 0;
-    }
-    .sidebar-brand img {
-      width: 36px; height: 36px;
-      border-radius: var(--radius-sm);
-      object-fit: cover;
-    }
-    .sidebar-brand-text {
-      display: flex; flex-direction: column;
-    }
-    .sidebar-brand-name {
-      font-family: var(--font-display);
-      font-size: 1rem; font-weight: 500;
-      color: var(--dark); line-height: 1.1;
-    }
-    .sidebar-brand-name em { color: var(--green); font-style: normal; }
-    .sidebar-brand-sub {
-      font-size: 0.65rem; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.1em;
-      margin-top: 2px;
-    }
+    /* SIDEBAR */
+    .sidebar { width: 230px; flex-shrink: 0; background: #fff; border-right: 1px solid var(--border); position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 28px 0; }
+    .sidebar-step { display: flex; align-items: flex-start; gap: 12px; padding: 10px 20px; border-left: 3px solid transparent; transition: background var(--tr), border-color var(--tr); }
+    .sidebar-step.active { background: var(--green-fade); border-left-color: var(--green); }
+    .sidebar-step.done { opacity: .6; }
+    .step-bullet { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border-d); display: flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 600; color: var(--muted); flex-shrink: 0; margin-top: 1px; transition: all var(--tr); }
+    .sidebar-step.active .step-bullet { background: var(--green); border-color: var(--green); color: #fff; }
+    .sidebar-step.done .step-bullet { background: var(--green-fade); border-color: var(--green); color: var(--green); }
+    .step-text { display: flex; flex-direction: column; gap: 2px; }
+    .step-text-label { font-size: .74rem; font-weight: 500; color: var(--dark); line-height: 1.3; }
+    .step-text-val { font-size: .66rem; color: var(--muted); }
 
-    /* Step list (KFC category style) */
-    .sidebar-steps {
-      padding: 20px 0;
-      flex: 1;
-    }
-    .sidebar-step {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 20px;
-      cursor: default;
-      transition: background var(--transition);
-      position: relative;
-      border-left: 3px solid transparent;
-    }
-    .sidebar-step.active {
-      background: var(--green-fade);
-      border-left-color: var(--green);
-    }
-    .sidebar-step.done {
-      opacity: 0.7;
-    }
-    .step-bullet {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border-dark);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.72rem; font-weight: 600; color: var(--muted);
-      flex-shrink: 0;
-      transition: all var(--transition);
-      background: var(--white);
-    }
-    .sidebar-step.active .step-bullet {
-      background: var(--green);
-      border-color: var(--green);
-      color: var(--white);
-    }
-    .sidebar-step.done .step-bullet {
-      background: var(--green-fade);
-      border-color: var(--green);
-      color: var(--green);
-    }
-    .step-text {
-      display: flex; flex-direction: column;
-    }
-    .step-text-label {
-      font-size: 0.78rem; font-weight: 500;
-      color: var(--mid);
-      line-height: 1.2;
-    }
-    .sidebar-step.active .step-text-label { color: var(--green); font-weight: 600; }
-    .step-text-val {
-      font-size: 0.68rem; color: var(--muted);
-      margin-top: 2px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      max-width: 160px;
-    }
+    /* CONTENT */
+    .content-area { flex: 1; display: flex; flex-direction: column; max-width: 860px; padding: 48px 48px 130px; }
+    .content-eyebrow { font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--green); margin-bottom: 8px; }
+    .content-title { font-family: var(--font-serif); font-size: 2rem; font-weight: 400; line-height: 1.2; margin-bottom: 6px; }
+    .content-title em { font-style: italic; color: var(--green); }
+    .content-subtitle { font-size: .85rem; color: var(--muted); margin-bottom: 36px; }
+    .step-panel { display: none; animation: fadeIn .3s ease; }
+    .step-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-    .sidebar-back {
-      padding: 16px 20px;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .sidebar-back a {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.78rem; color: var(--muted);
-      text-decoration: none;
-      transition: color var(--transition);
-    }
-    .sidebar-back a:hover { color: var(--green); }
-    .sidebar-back svg { flex-shrink: 0; }
-
-    /* ══════════════════════════════════
-       MAIN CONTENT
-    ══════════════════════════════════ */
-    .app-content {
-      margin-left: var(--sidebar-w);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    /* Thin progress bar at very top */
-    .top-progress {
-      height: 3px;
-      background: var(--border);
-      flex-shrink: 0;
-    }
-    .top-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--green-mid), var(--green-light));
-      transition: width 0.5s cubic-bezier(.4,0,.2,1);
-      width: 0%;
-    }
-
-    /* Content header */
-    .content-header {
-      padding: 36px 48px 24px;
-      background: var(--white);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .content-eyebrow {
-      font-size: 0.7rem; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--green); margin-bottom: 8px;
-    }
-    .content-title {
-      font-family: var(--font-display);
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
-      font-weight: 400; line-height: 1.15;
-      color: var(--dark); margin-bottom: 6px;
-    }
-    .content-title em { color: var(--green); font-style: italic; }
-    .content-subtitle {
-      font-size: 0.88rem; color: var(--muted);
-      max-width: 520px;
-    }
-
-    /* Scrollable body */
-    .content-body {
-      flex: 1;
-      padding: 32px 48px;
-      overflow-y: auto;
-    }
-
-    /* Step panels */
-    .step-panel { display: none; }
-    .step-panel.active {
-      display: block;
-      animation: panelIn 0.28s ease;
-    }
-    @keyframes panelIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ══════════════════════════════════
-       OPTION CARDS (horizontal: photo | info)
-    ══════════════════════════════════ */
-    .options-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* For 2-column layouts (gama, situacion) */
-    .options-list.cols-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .options-list.cols-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 16px;
-    }
-
-    .option-card {
-      display: flex;
-      background: var(--white);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      transition: all var(--transition);
-      cursor: pointer;
-    }
-    .option-card:hover {
-      border-color: var(--border-dark);
-      box-shadow: var(--shadow-md);
-      transform: translateY(-1px);
-    }
-    .option-card.selected {
-      border-color: var(--green);
-      box-shadow: 0 0 0 1px var(--green), var(--shadow-md);
-    }
-    .option-card.selected .option-info { background: var(--green-fade); }
-
-    /* Vertical card variant (for gama / 3-col) */
-    .option-card.card-vertical {
-      flex-direction: column;
-      cursor: pointer;
-    }
-    .option-card.card-vertical .option-photo {
-      width: 100%;
-      height: 180px;
-    }
-    .option-card.card-vertical .option-info {
-      width: 100%;
-      border-left: none;
-      border-top: 1px solid var(--border);
-    }
-
-    /* Photo section */
-    .option-photo {
-      width: 62%;
-      flex-shrink: 0;
-      position: relative;
-      height: 220px;        /* Fixed height — image never grows the card */
-      background: var(--light);
-      overflow: hidden;
-    }
-    .option-photo img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: center;
-      transition: transform 0.4s ease;
-    }
+    /* OPTION CARDS */
+    .options-list { display: flex; flex-direction: column; gap: 14px; }
+    .option-card { display: flex; background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color var(--tr), box-shadow var(--tr); position: relative; }
+    .option-card:hover { border-color: var(--green-l); box-shadow: 0 2px 14px rgba(26,79,46,.08); }
+    .option-card.selected { border-color: var(--green); box-shadow: 0 2px 16px rgba(26,79,46,.14); }
+    .option-photo { width: 62%; flex-shrink: 0; height: 200px; overflow: hidden; position: relative; background: var(--light); }
+    .option-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
     .option-card:hover .option-photo img { transform: scale(1.04); }
+    .photo-check { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity var(--tr); }
+    .option-card.selected .photo-check { opacity: 1; }
+    .option-info { flex: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px; }
+    .option-tag { font-size: .65rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--green); }
+    .option-name { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 500; color: var(--dark); line-height: 1.3; }
+    .option-desc { font-size: .78rem; color: var(--muted); line-height: 1.5; }
 
-    /* Photo placeholder */
-    .photo-placeholder {
-      width: 100%; height: 100%;
-      min-height: 220px;
-      background: linear-gradient(135deg, var(--light) 0%, #e8ebe9 100%);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 10px;
-    }
-    .photo-placeholder-icon {
-      width: 48px; height: 48px;
-      border: 1.5px solid var(--border-dark);
-      border-radius: var(--radius-md);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .photo-placeholder-icon svg { color: var(--muted); }
-    .photo-placeholder-text {
-      font-size: 0.7rem; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.1em;
-      text-align: center; line-height: 1.5; max-width: 120px;
-    }
+    /* MATERIAL GRID */
+    .material-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .material-card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color var(--tr), box-shadow var(--tr); position: relative; }
+    .material-card:hover { border-color: var(--green-l); box-shadow: 0 2px 12px rgba(26,79,46,.08); }
+    .material-card.selected { border-color: var(--green); box-shadow: 0 2px 14px rgba(26,79,46,.13); }
+    .material-card-swatch { height: 120px; position: relative; background: var(--light); }
+    .material-card-swatch img { width: 100%; height: 100%; object-fit: cover; }
+    .material-card-info { padding: 14px 16px; }
+    .material-card-name { font-family: var(--font-serif); font-size: 1rem; font-weight: 500; margin-bottom: 3px; }
+    .material-card-meta { font-size: .72rem; color: var(--muted); }
+    .material-check { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity var(--tr); }
+    .material-card.selected .material-check { opacity: 1; }
 
-    /* Zoom button */
-    .zoom-btn {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: rgba(255,255,255,0.92);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 6px 10px;
-      font-size: 0.7rem; font-weight: 500;
-      color: var(--mid); cursor: pointer;
-      display: flex; align-items: center; gap: 5px;
-      opacity: 0;
-      transition: all var(--transition);
-      z-index: 2;
-    }
-    .option-photo:hover .zoom-btn { opacity: 1; }
-    .zoom-btn:hover { background: var(--white); color: var(--green); }
+    /* FRENTES */
+    .frente-list { display: flex; flex-direction: column; gap: 10px; }
+    .frente-item { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color var(--tr); }
+    .frente-item.selected { border-color: var(--green); }
+    .frente-header { display: flex; align-items: center; gap: 14px; padding: 14px 18px; cursor: pointer; user-select: none; }
+    .frente-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--border-d); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all var(--tr); }
+    .frente-item.selected .frente-checkbox { background: var(--green); border-color: var(--green); }
+    .frente-checkbox svg { display: none; }
+    .frente-item.selected .frente-checkbox svg { display: block; }
+    .frente-header-info { flex: 1; }
+    .frente-name { font-family: var(--font-serif); font-size: 1rem; font-weight: 500; }
+    .frente-meta { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+    .frente-palette-wrap { padding: 0 18px 16px; display: none; }
+    .frente-item.selected .frente-palette-wrap { display: block; }
+    .frente-palette-label { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 10px; }
+    .frente-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+    .color-chip { width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: border-color var(--tr), transform var(--tr); position: relative; }
+    .color-chip:hover { transform: scale(1.12); }
+    .color-chip.sel { border-color: var(--green) !important; box-shadow: 0 0 0 2px rgba(26,79,46,.2); }
+    .color-chip-tooltip { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: .6rem; color: var(--muted); white-space: nowrap; opacity: 0; transition: opacity var(--tr); pointer-events: none; background: #fff; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--border); }
+    .color-chip:hover .color-chip-tooltip { opacity: 1; }
+    .frente-zone-note { font-size: .72rem; color: var(--muted); margin-top: 16px; font-style: italic; }
 
-    /* Selected checkmark over photo */
-    .photo-check {
-      position: absolute;
-      top: 10px; left: 10px;
-      background: var(--green);
-      color: var(--white);
-      border-radius: 50%;
-      width: 28px; height: 28px;
-      display: none; align-items: center; justify-content: center;
-      z-index: 2;
-    }
-    .option-card.selected .photo-check { display: flex; }
+    /* HERRAJES */
+    .herraje-section { margin-bottom: 8px; }
+    .herraje-section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--light); border: 1.5px solid var(--border); border-radius: var(--radius); cursor: pointer; user-select: none; transition: background var(--tr); }
+    .herraje-section-header:hover { background: #eaedeb; }
+    .herraje-section.open .herraje-section-header { border-radius: var(--radius) var(--radius) 0 0; border-bottom: none; }
+    .herraje-section-title { font-size: .85rem; font-weight: 600; }
+    .herraje-section-body { display: none; border: 1.5px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 14px; background: #fff; }
+    .herraje-section.open .herraje-section-body { display: block; }
+    .herraje-chevron { transition: transform var(--tr); color: var(--muted); flex-shrink: 0; }
+    .herraje-section.open .herraje-chevron { transform: rotate(180deg); }
+    .herraje-opts { display: flex; flex-direction: column; gap: 8px; }
+    .herraje-opt { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 7px; border: 1.5px solid var(--border); cursor: pointer; transition: border-color var(--tr), background var(--tr); }
+    .herraje-opt:hover { border-color: var(--green-l); background: var(--green-fade); }
+    .herraje-opt.selected { border-color: var(--green); background: var(--green-fade); }
+    .herraje-radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border-d); flex-shrink: 0; margin-top: 2px; transition: all var(--tr); }
+    .herraje-opt.selected .herraje-radio { background: var(--green); border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,79,46,.15); }
+    .herraje-opt-name { font-size: .82rem; font-weight: 500; }
+    .herraje-opt-desc { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+    .multi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0; }
+    .multi-opt { padding: 10px 12px; border-radius: 7px; border: 1.5px solid var(--border); cursor: pointer; transition: border-color var(--tr), background var(--tr); display: flex; align-items: center; gap: 8px; }
+    .multi-opt:hover { border-color: var(--green-l); background: var(--green-fade); }
+    .multi-opt.selected { border-color: var(--green); background: var(--green-fade); }
+    .multi-cb { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid var(--border-d); flex-shrink: 0; transition: all var(--tr); }
+    .multi-opt.selected .multi-cb { background: var(--green); border-color: var(--green); }
+    .multi-name { font-size: .8rem; font-weight: 500; }
 
-    /* Info section */
-    .option-info {
-      flex: 1;
-      padding: 24px;
-      display: flex; flex-direction: column;
-      border-left: 1px solid var(--border);
-      transition: background var(--transition);
-    }
-    .option-tag {
-      display: inline-block;
-      font-size: 0.65rem; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--green);
-      background: var(--green-fade);
-      border: 1px solid rgba(26,79,46,0.15);
-      border-radius: 20px;
-      padding: 3px 10px;
-      margin-bottom: 10px;
-      align-self: flex-start;
-    }
-    .option-name {
-      font-family: var(--font-display);
-      font-size: 1.4rem; font-weight: 400;
-      color: var(--dark); line-height: 1.2;
-      margin-bottom: 8px;
-    }
-    .option-desc {
-      font-size: 0.82rem; color: var(--muted);
-      line-height: 1.6; margin-bottom: 12px;
-      flex: 1;
-    }
-    .option-specs {
-      display: flex; flex-direction: column; gap: 4px;
-      margin-bottom: 16px;
-    }
-    .option-spec {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.75rem; color: var(--mid);
-    }
-    .option-spec::before {
-      content: '';
-      width: 4px; height: 4px;
-      border-radius: 50%;
-      background: var(--green);
-      flex-shrink: 0;
-    }
+    /* CUBIERTAS */
+    .cubierta-list { display: flex; flex-direction: column; gap: 10px; }
+    .cubierta-item { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; display: flex; align-items: stretch; transition: border-color var(--tr), box-shadow var(--tr); }
+    .cubierta-item:hover { border-color: var(--green-l); box-shadow: 0 2px 10px rgba(26,79,46,.07); }
+    .cubierta-item.selected { border-color: var(--green); box-shadow: 0 2px 12px rgba(26,79,46,.12); }
+    .cubierta-swatch { width: 80px; flex-shrink: 0; background: var(--light); }
+    .cubierta-swatch img { width: 100%; height: 100%; object-fit: cover; }
+    .cubierta-info { flex: 1; padding: 14px 18px; }
+    .cubierta-name { font-family: var(--font-serif); font-size: 1rem; font-weight: 500; margin-bottom: 4px; }
+    .cubierta-desc { font-size: .74rem; color: var(--muted); line-height: 1.5; }
+    .cubierta-price { font-size: .78rem; font-weight: 600; color: var(--green); margin-top: 6px; }
+    .cubierta-check { display: flex; align-items: center; padding: 0 16px; opacity: 0; transition: opacity var(--tr); }
+    .cubierta-item.selected .cubierta-check { opacity: 1; }
 
-    .select-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 18px;
-      background: transparent;
-      border: 1.5px solid var(--border-dark);
-      border-radius: var(--radius-md);
-      font-size: 0.8rem; font-weight: 500; color: var(--mid);
-      cursor: pointer; transition: all var(--transition);
-      align-self: flex-start;
-      margin-top: auto;
-    }
-    .select-btn:hover {
-      border-color: var(--green); color: var(--green);
-    }
-    .option-card.selected .select-btn {
-      background: var(--green); border-color: var(--green);
-      color: var(--white);
-    }
+    /* EXTRAS */
+    .extras-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .extra-card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: border-color var(--tr), background var(--tr); display: flex; align-items: flex-start; gap: 12px; }
+    .extra-card:hover { border-color: var(--green-l); background: var(--green-fade); }
+    .extra-card.active { border-color: var(--green); background: var(--green-fade); }
+    .extra-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background var(--tr); }
+    .extra-card.active .extra-icon { background: var(--green); }
+    .extra-card.active .extra-icon svg { stroke: #fff; }
+    .extra-name { font-size: .83rem; font-weight: 500; margin-bottom: 2px; }
+    .extra-desc { font-size: .71rem; color: var(--muted); }
 
-    /* ══════════════════════════════════
-       QTY CONTROL (modules step)
-    ══════════════════════════════════ */
-    .qty-row {
-      display: flex; align-items: center; gap: 12px;
-      margin-top: auto; padding-top: 14px;
-      border-top: 1px solid var(--border);
-    }
-    .qty-label {
-      font-size: 0.75rem; color: var(--muted); flex: 1;
-    }
-    .qty-control {
-      display: flex; align-items: center;
-      border: 1.5px solid var(--border-dark);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-    .qty-btn {
-      width: 32px; height: 32px;
-      background: var(--light);
-      border: none; cursor: pointer;
-      font-size: 1rem; font-weight: 500; color: var(--mid);
-      display: flex; align-items: center; justify-content: center;
-      transition: all var(--transition);
-    }
-    .qty-btn:hover { background: var(--green); color: var(--white); }
-    .qty-val {
-      min-width: 36px; text-align: center;
-      font-size: 0.88rem; font-weight: 600; color: var(--dark);
-      padding: 0 4px; border-inline: 1.5px solid var(--border-dark);
-    }
-    .qty-active-indicator {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--border-dark);
-      transition: background var(--transition);
-      flex-shrink: 0;
-    }
-    .option-card.in-cart .qty-active-indicator { background: var(--green); }
-
-    /* ══════════════════════════════════
-       COLOR SWATCHES
-    ══════════════════════════════════ */
-    .color-section {
-      margin-top: 16px; padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-    .color-section-label {
-      font-size: 0.68rem; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 10px;
-    }
-    .color-row {
-      display: flex; flex-wrap: wrap; gap: 8px;
-    }
-    .color-swatch {
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
-      cursor: pointer;
-    }
-    .swatch-dot {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 2px solid var(--border);
-      transition: all var(--transition);
-      position: relative;
-    }
-    .color-swatch:hover .swatch-dot { transform: scale(1.1); border-color: var(--border-dark); }
-    .color-swatch.selected .swatch-dot {
-      border-color: var(--green);
-      box-shadow: 0 0 0 2px rgba(26,79,46,0.25);
-    }
-    .color-swatch.selected .swatch-dot::after {
-      content: '';
-      position: absolute; inset: 4px;
-      background: transparent;
-      border: 2px solid rgba(255,255,255,0.8);
-      border-radius: 50%;
-    }
-    .swatch-name {
-      font-size: 0.62rem; color: var(--muted); text-align: center;
-      max-width: 44px; line-height: 1.2;
-    }
-
-    /* ══════════════════════════════════
-       TOGGLE ROWS (extras step)
-    ══════════════════════════════════ */
-    .toggle-card {
-      display: flex;
-      background: var(--white);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      transition: all var(--transition);
-      margin-bottom: 12px;
-    }
-    .toggle-card.active {
-      border-color: var(--green);
-      box-shadow: 0 0 0 1px var(--green);
-    }
-    .toggle-card-photo {
-      width: 200px; flex-shrink: 0;
-      background: var(--light);
-      min-height: 120px;
-      overflow: hidden;
-    }
-    .toggle-card-photo img { width: 100%; height: 100%; object-fit: cover; }
-    .toggle-card-body {
-      flex: 1; padding: 18px 20px;
-      display: flex; align-items: center; gap: 16px;
-      border-left: 1px solid var(--border);
-    }
-    .toggle-card-info { flex: 1; }
-    .toggle-card-name { font-size: 0.92rem; font-weight: 600; color: var(--dark); margin-bottom: 3px; }
-    .toggle-card-desc { font-size: 0.78rem; color: var(--muted); }
-    .toggle-switch-wrap { flex-shrink: 0; }
-    .toggle-switch {
-      width: 46px; height: 26px; border-radius: 13px;
-      background: var(--border-dark); border: none;
-      position: relative; cursor: pointer;
-      transition: background var(--transition);
-    }
-    .toggle-switch::after {
-      content: '';
-      position: absolute; top: 3px; left: 3px;
-      width: 20px; height: 20px; border-radius: 50%;
-      background: var(--white);
-      transition: left var(--transition);
-      box-shadow: 0 1px 4px rgba(0,0,0,.15);
-    }
-    .toggle-card.active .toggle-switch { background: var(--green); }
-    .toggle-card.active .toggle-switch::after { left: calc(100% - 23px); }
-
-    /* Sub-options for toggles */
-    .sub-options {
-      display: none;
-      padding: 16px 20px 16px 220px;
-      background: var(--green-fade);
-      border-top: 1px solid rgba(26,79,46,0.1);
-    }
-    .sub-options.visible { display: block; }
-    .sub-options-label {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
-    }
-    .sub-opts-row {
-      display: flex; flex-wrap: wrap; gap: 8px;
-    }
-    .sub-opt {
-      padding: 6px 14px;
-      background: var(--white);
-      border: 1.5px solid var(--border-dark);
-      border-radius: 100px;
-      font-size: 0.76rem; font-weight: 500; color: var(--mid);
-      cursor: pointer; transition: all var(--transition);
-    }
-    .sub-opt:hover { border-color: var(--green); color: var(--green); }
-    .sub-opt.selected { background: var(--green); border-color: var(--green); color: var(--white); }
-
-    /* ══════════════════════════════════
-       GAMA TIER BADGES
-    ══════════════════════════════════ */
-    .gama-badge {
-      display: inline-block;
-      font-size: 0.65rem; font-weight: 600;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      border-radius: 20px; padding: 3px 10px;
-      margin-bottom: 10px;
-    }
-    .gama-badge.basica  { background: #f0f2f1; color: var(--muted); border: 1px solid var(--border-dark); }
-    .gama-badge.media   { background: rgba(26,79,46,0.06); color: var(--green); border: 1px solid rgba(26,79,46,0.2); }
-    .gama-badge.premium { background: #fdf8ee; color: #8a6820; border: 1px solid #e8d5a0; }
-
-    /* ══════════════════════════════════
-       FORM (datos cliente)
-    ══════════════════════════════════ */
-    .form-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 32px;
-      max-width: 680px;
-    }
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-col { display: flex; flex-direction: column; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group.full { grid-column: 1 / -1; }
-    .form-label {
-      font-size: 0.72rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.07em;
-      color: var(--muted);
-    }
-    .form-label span { color: var(--green); }
-    .form-input, .form-select {
-      background: var(--off-white);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 11px 14px;
-      font-family: var(--font-body); font-size: 0.88rem; color: var(--dark);
-      transition: all var(--transition); outline: none; width: 100%;
-    }
-    .form-input:focus, .form-select:focus {
-      border-color: var(--green);
-      background: var(--white);
-      box-shadow: 0 0 0 3px rgba(26,79,46,0.08);
-    }
-    .form-input::placeholder { color: var(--muted); }
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator {
-      opacity: 0.5; cursor: pointer;
-    }
+    .form-label { font-size: .75rem; font-weight: 600; color: var(--dark); }
+    .form-label span { color: var(--muted); font-weight: 400; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 7px; background: #fff; font-family: var(--font-sans); font-size: .84rem; color: var(--dark); transition: border-color var(--tr), box-shadow var(--tr); outline: none; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,79,46,.1); }
+    .form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a8480' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .map-note { font-size: .72rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+    .map-note a { color: var(--green); text-decoration: none; }
 
-    /* ══════════════════════════════════
-       BOTTOM NAVIGATION
-    ══════════════════════════════════ */
-    .content-footer {
-      padding: 16px 48px;
-      background: var(--white);
-      border-top: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .step-counter {
-      font-size: 0.78rem; color: var(--muted);
-      text-align: center;
-    }
-    .step-counter strong { color: var(--dark); }
+    /* SUMMARY */
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .summary-box { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .summary-box-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--green); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .summary-row { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: .8rem; border-bottom: 1px solid var(--border); }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row-label { color: var(--muted); }
+    .summary-row-val { font-weight: 500; text-align: right; max-width: 60%; }
+    .total-box { background: var(--green); color: #fff; border-radius: var(--radius); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .total-label { font-size: .85rem; opacity: .85; }
+    .total-note { font-size: .7rem; opacity: .65; margin-top: 2px; }
+    .total-amount { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 500; }
 
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 22px;
-      border-radius: var(--radius-md);
-      font-family: var(--font-body); font-size: 0.85rem; font-weight: 500;
-      cursor: pointer; border: none; transition: all var(--transition);
-      text-decoration: none;
-    }
-    .btn-outline {
-      background: transparent;
-      border: 1.5px solid var(--border-dark);
-      color: var(--mid);
-    }
-    .btn-outline:hover { border-color: var(--green); color: var(--green); }
-    .btn-primary {
-      background: var(--green);
-      color: var(--white);
-      border: 1.5px solid var(--green);
-    }
-    .btn-primary:hover { background: var(--green-mid); }
-    .btn:disabled { opacity: 0.4; pointer-events: none; }
-    .btn svg { flex-shrink: 0; }
+    /* NAV */
+    .content-footer { position: fixed; bottom: 0; left: 230px; right: 0; background: rgba(255,255,255,.95); backdrop-filter: blur(8px); border-top: 1px solid var(--border); padding: 14px 48px; display: flex; align-items: center; justify-content: space-between; z-index: 50; }
+    .nav-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: 7px; font-family: var(--font-sans); font-size: .82rem; font-weight: 500; border: 1.5px solid var(--border); cursor: pointer; transition: all var(--tr); background: #fff; color: var(--dark); }
+    .nav-btn:hover { border-color: var(--border-d); background: var(--light); }
+    .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .nav-btn.primary { background: var(--green); color: #fff; border-color: var(--green); }
+    .nav-btn.primary:hover { background: var(--green-l); border-color: var(--green-l); }
+    .step-indicator { font-size: .78rem; color: var(--muted); }
 
-    /* ══════════════════════════════════
-       FINISH SCREEN
-    ══════════════════════════════════ */
-    .finish-wrap {
-      max-width: 560px;
-    }
-    .finish-line {
-      width: 48px; height: 2px;
-      background: var(--green); margin-bottom: 28px;
-    }
-    .finish-title {
-      font-family: var(--font-display);
-      font-size: 2.4rem; font-weight: 400;
-      line-height: 1.1; margin-bottom: 12px;
-    }
-    .finish-title em { color: var(--green); font-style: italic; }
-    .finish-desc { color: var(--muted); font-size: 0.92rem; margin-bottom: 32px; }
-    .finish-actions { display: flex; flex-direction: column; gap: 12px; }
-    .btn-gold {
-      background: linear-gradient(135deg, #c9a84c, #e0bb6a);
-      color: #3a2800; border: none; font-weight: 600;
-    }
-    .btn-gold:hover { background: linear-gradient(135deg, #b8972d, #c9a84c); }
-    .btn-lg { padding: 14px 28px; font-size: 0.92rem; }
+    /* ACTION BUTTONS */
+    .action-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .action-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; font-family: var(--font-sans); font-size: .84rem; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--dark); transition: all var(--tr); }
+    .action-btn:hover { border-color: var(--border-d); background: var(--light); }
+    .action-btn.green { background: var(--green); color: #fff; border-color: var(--green); }
+    .action-btn.green:hover { background: var(--green-l); border-color: var(--green-l); }
+    .action-btn.wa { background: #25d366; color: #fff; border-color: #25d366; }
+    .action-btn.wa:hover { background: #1eab54; border-color: #1eab54; }
 
-    /* ══════════════════════════════════
-       LIGHTBOX
-    ══════════════════════════════════ */
-    .lightbox {
-      display: none;
-      position: fixed; inset: 0; z-index: 9000;
-      background: rgba(0,0,0,0.88);
-      align-items: center; justify-content: center;
-      padding: 24px;
-    }
-    .lightbox.open { display: flex; }
-    .lightbox-inner {
-      position: relative;
-      max-width: 1000px; max-height: 80vh;
-      width: 100%;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-    .lightbox-inner img {
-      width: 100%; max-height: 80vh;
-      object-fit: contain;
-      border-radius: var(--radius-lg);
-    }
-    .lightbox-caption {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.7));
-      padding: 20px 24px 16px;
-      color: var(--white); font-size: 0.88rem;
-    }
-    .lightbox-close {
-      position: absolute; top: 16px; right: 16px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: var(--white);
-      width: 36px; height: 36px;
-      border-radius: 50%; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; transition: all var(--transition);
-    }
-    .lightbox-close:hover { background: rgba(255,255,255,0.25); }
-
-    /* Section divider in modules */
-    .module-section-head {
-      display: flex; align-items: center; gap: 12px;
-      margin: 28px 0 14px;
-    }
-    .module-section-head:first-child { margin-top: 0; }
-    .module-section-head h3 {
-      font-size: 0.72rem; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--muted); white-space: nowrap;
-    }
-    .module-section-head::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-
-    /* Info box */
-    .info-box {
-      background: var(--green-fade);
-      border: 1px solid rgba(26,79,46,0.15);
-      border-left: 3px solid var(--green);
-      border-radius: var(--radius-md);
-      padding: 12px 16px;
-      font-size: 0.8rem; color: var(--mid);
-      margin-bottom: 24px;
-    }
-
-    /* ══════════════════════════════════
-       RESPONSIVE
-    ══════════════════════════════════ */
-    @media (max-width: 900px) {
-      :root { --sidebar-w: 220px; }
-      .content-header { padding: 24px 28px 20px; }
-      .content-body { padding: 24px 28px; }
-      .content-footer { padding: 14px 28px; }
-      .options-list.cols-3 { grid-template-columns: 1fr 1fr; }
-      .option-photo { width: 50%; }
-    }
-    @media (max-width: 720px) {
-      .app-sidebar { display: none; }
-      .app-content { margin-left: 0; }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .content-footer { left: 0; padding: 12px 20px; }
+      .content-area { padding: 24px 20px 100px; }
+      .summary-grid, .form-grid, .material-grid, .extras-grid, .multi-grid { grid-template-columns: 1fr; }
+      .option-photo { width: 100%; height: 160px; }
       .option-card { flex-direction: column; }
-      .option-photo { width: 100%; min-height: 180px; }
-      .options-list.cols-2,
-      .options-list.cols-3 { grid-template-columns: 1fr; }
-      .content-header { padding: 20px 20px 16px; }
-      .content-body { padding: 20px; }
-      .content-footer { padding: 12px 20px; }
-      .form-grid { grid-template-columns: 1fr; }
-      .toggle-card-photo { display: none; }
-      .sub-options { padding: 14px 16px; }
-      .finish-title { font-size: 1.8rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ═══ APP LAYOUT ═══ -->
-  <div class="app-wrap">
-
-    <!-- ══ SIDEBAR ══ -->
-    <aside class="app-sidebar" id="appSidebar">
-      <div class="sidebar-brand">
-        <img src="img/logo.jpg" alt="MHG" />
-        <div class="sidebar-brand-text">
-          <div class="sidebar-brand-name">MHG <em>Arquitectos</em></div>
-          <div class="sidebar-brand-sub">Configurador de Cocina</div>
-        </div>
-      </div>
-
-      <nav class="sidebar-steps" id="sidebarSteps">
-        <!-- Generated by JS -->
-      </nav>
-
-      <div class="sidebar-back">
-        <a href="index.html">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-          Volver al sitio
-        </a>
-      </div>
-    </aside>
-
-    <!-- ══ MAIN CONTENT ══ -->
-    <main class="app-content">
-
-      <!-- Progress bar -->
-      <div class="top-progress">
-        <div class="top-progress-fill" id="topProgressFill"></div>
-      </div>
-
-      <!-- Step header -->
-      <header class="content-header" id="contentHeader">
-        <div class="content-eyebrow" id="contentEyebrow">Paso 1 de 9</div>
-        <h1 class="content-title" id="contentTitle">Bienvenido al <em>configurador</em></h1>
-        <p class="content-subtitle" id="contentSubtitle">Cuéntanos sobre tu situación para orientarte mejor.</p>
-      </header>
-
-      <!-- Step panels -->
-      <div class="content-body">
-
-        <!-- ════ STEP 0: ¿Tiene cocina? ════ -->
-        <div class="step-panel active" id="step-0">
-          <div class="options-list cols-2">
-
-            <div class="option-card" id="opt-no-cocina" onclick="selectCardOpt(this,'has_kitchen','no')">
-              <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80"
-                     alt="Cocina nueva"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                </div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina nueva')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="option-tag">Proyecto nuevo</span>
-                <h2 class="option-name">No tengo cocina</h2>
-                <p class="option-desc">Diseñaremos tu cocina integral desde cero, adaptada a las dimensiones y necesidades de tu espacio.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Levantamiento de medidas en sitio</div>
-                  <div class="option-spec">Diseño personalizado completo</div>
-                  <div class="option-spec">Entrega e instalación incluidas</div>
-                </div>
-                <button class="select-btn">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-                  Seleccionar
-                </button>
-              </div>
-            </div>
-
-            <div class="option-card" id="opt-si-cocina" onclick="selectCardOpt(this,'has_kitchen','si')">
-              <div class="option-photo">
-                <!-- Renovación — cocina existente siendo renovada/remodelada -->
-                <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&h=460&q=80"
-                     alt="Renovación de cocina"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                </div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Renovación de cocina')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="option-tag">Renovación</span>
-                <h2 class="option-name">Ya tengo cocina</h2>
-                <p class="option-desc">Renovamos o reemplazamos tu cocina actual, aprovechando el espacio existente con un diseño completamente nuevo.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Evaluación de estructura actual</div>
-                  <div class="option-spec">Propuesta de remodelación</div>
-                  <div class="option-spec">Instalación sin contratiempos</div>
-                </div>
-                <button class="select-btn">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-                  Seleccionar
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ════ STEP 1: GAMA ════ -->
-        <div class="step-panel" id="step-1">
-          <div class="info-box">
-            Cada gama incluye una configuración base que podrás ajustar en los pasos siguientes.
-          </div>
-          <div class="options-list">
-
-            <!-- Básica -->
-            <div class="option-card" id="gama-basica" onclick="selectGamaCard(this,'basica')">
-              <div class="option-photo">
-                <!-- Gama Básica — cocina blanca sencilla y funcional -->
-                <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&h=460&q=80"
-                     alt="Gama Básica"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                </div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina Gama Básica')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge basica">Gama Básica</span>
-                <h2 class="option-name">Básica</h2>
-                <p class="option-desc">Cocina funcional con materiales de calidad, diseño limpio y acabados estándar. La opción ideal para quienes buscan practicidad.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Módulos MDF en color blanco</div>
-                  <div class="option-spec">Herraje económico push-to-open</div>
-                  <div class="option-spec">Cubierta laminada de alta presión</div>
-                  <div class="option-spec">Sin isla ni iluminación LED</div>
-                </div>
-                <button class="select-btn">Seleccionar esta gama</button>
-              </div>
-            </div>
-
-            <!-- Media -->
-            <div class="option-card" id="gama-media" onclick="selectGamaCard(this,'media')">
-              <div class="option-photo">
-                <!-- Gama Media — cocina moderna con herrajes y cubierta de calidad -->
-                <img src="https://images.unsplash.com/photo-1484154133-d2d5ffe43ea1?auto=format&fit=crop&w=800&h=460&q=80"
-                     alt="Gama Media"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                </div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina Gama Media')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge media">Gama Media</span>
-                <h2 class="option-name">Media</h2>
-                <p class="option-desc">Excelente relación calidad-precio con materiales superiores, módulos extraíbles y cubierta de granito o cuarzo. Incluye iluminación LED.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Módulos MDF con extraíbles</div>
-                  <div class="option-spec">Herraje de cierre suave</div>
-                  <div class="option-spec">Cubierta de granito o cuarzo básico</div>
-                  <div class="option-spec">Frentes Araujo / Decolux + LED bajo muebles</div>
-                </div>
-                <button class="select-btn">Seleccionar esta gama</button>
-              </div>
-            </div>
-
-            <!-- Premium -->
-            <div class="option-card" id="gama-alta" onclick="selectGamaCard(this,'alta')">
-              <div class="option-photo">
-                <!-- Premium — cocina de lujo con isla y acabados de alto nivel -->
-                <img src="https://images.unsplash.com/photo-1556909172-8c2f041fca1e?auto=format&fit=crop&w=800&h=460&q=80"
-                     alt="Gama Premium"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                </div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cocina Premium')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge premium">Premium</span>
-                <h2 class="option-name">Premium</h2>
-                <p class="option-desc">Lo mejor en materiales, herrajes y acabados. Esquineros extraíbles, vitrinas, isla, cuarzo sinterizado y herraje Blum alemán. Experiencia sin compromisos.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Módulos premium con esquinero extraíble</div>
-                  <div class="option-spec">Herraje Blum (cierre suave amortiguado)</div>
-                  <div class="option-spec">Cuarzo o sinterizado de alta resistencia</div>
-                  <div class="option-spec">Frentes Transformad + LED perimetral + isla</div>
-                </div>
-                <button class="select-btn">Seleccionar esta gama</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ════ STEP 2: INTERIOR COLOR ════ -->
-        <div class="step-panel" id="step-2">
-          <div class="options-list">
-
-            <div class="option-card" id="int-blanco" onclick="selectCardOpt(this,'interior_color','blanco')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                  </div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="option-tag">Interior</span>
-                <h2 class="option-name">Blanco básico</h2>
-                <p class="option-desc">Melamina blanca clásica. Atemporal, limpia y luminosa. La opción más práctica para el interior de los muebles.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Color: Blanco puro</div>
-                  <div class="option-spec">Material: Melamina resistente</div>
-                  <div class="option-spec">Incluida en Gama Básica</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="int-gris" onclick="selectCardOpt(this,'interior_color','gris')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                  </div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="option-tag">Interior</span>
-                <h2 class="option-name">Sólido gris</h2>
-                <p class="option-desc">Melamina en tono gris moderno. Aporta profundidad y carácter al interior de cada mueble.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Color: Gris medio</div>
-                  <div class="option-spec">Material: Melamina mate</div>
-                  <div class="option-spec">Incluida en Gama Media</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="int-madera" onclick="selectCardOpt(this,'interior_color','madera')">
-              <div class="option-photo">
-                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80"
-                     alt="Interior madera"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Interior madera')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="option-tag">Interior</span>
-                <h2 class="option-name">Madera</h2>
-                <p class="option-desc">Melamina con acabado de veta natural. Aporta calidez y elegancia al interior de los muebles. Opción premium.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Color: Roble o nogal (a elegir)</div>
-                  <div class="option-spec">Material: Melamina texturizada</div>
-                  <div class="option-spec">Incluida en Gama Premium</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ════ STEP 3: FRENTES ════ -->
-        <div class="step-panel" id="step-3">
-          <div class="options-list" id="frentes-list">
-
-            <div class="option-card" id="fr-solido" onclick="selectFrenteCard(this,'solido')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="option-tag">Tipo de frente</span>
-                <h2 class="option-name">Sólido liso</h2>
-                <p class="option-desc">Acabado uniforme en un solo color. Diseño minimalista y fácil de limpiar. Disponible en amplia gama de colores.</p>
-                <div id="colors-solido" class="color-section" style="display:none"></div>
-                <button class="select-btn">Ver colores</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="fr-madera" onclick="selectFrenteCard(this,'madera')">
-              <div class="option-photo">
-                <!-- Frente madera — primer plano de puerta de cocina con veta madera -->
-                <img src="https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=800&h=460&q=80&sat=-20"
-                     alt="Frente tipo madera"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Frente tipo madera')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="option-tag">Tipo de frente</span>
-                <h2 class="option-name">Veta madera</h2>
-                <p class="option-desc">Acabado que imita la veta natural de la madera. Aporta calidez y un estilo contemporáneo sin el mantenimiento de la madera real.</p>
-                <div id="colors-madera" class="color-section" style="display:none"></div>
-                <button class="select-btn">Ver colores</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="fr-araujo" onclick="selectFrenteCard(this,'araujo')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge media">Gama Media</span>
-                <h2 class="option-name">Araujo</h2>
-                <p class="option-desc">Marca reconocida de tableros decorativos. Variedad de acabados lisos y texturizados, con buena durabilidad y presentación.</p>
-                <div id="colors-araujo" class="color-section" style="display:none"></div>
-                <button class="select-btn">Ver colores</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="fr-decolux" onclick="selectFrenteCard(this,'decolux')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge media">Gama Media-Alta</span>
-                <h2 class="option-name">Decolux</h2>
-                <p class="option-desc">Tableros de alta calidad con acabados en alto brillo y mate premium. Líneas modernas y colores actuales con excelente terminado.</p>
-                <div id="colors-decolux" class="color-section" style="display:none"></div>
-                <button class="select-btn">Ver colores</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="fr-transformad" onclick="selectFrenteCard(this,'transformad')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge premium">Premium</span>
-                <h2 class="option-name">Transformad</h2>
-                <p class="option-desc">Marca premium de frentes para cocina. Acabados de lujo con la mayor variedad de colores y texturas del mercado. Resistencia superior.</p>
-                <div id="colors-transformad" class="color-section" style="display:none"></div>
-                <button class="select-btn">Ver colores</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ════ STEP 4: MÓDULOS ════ -->
-        <div class="step-panel" id="step-4">
-          <div class="info-box">
-            Ajusta la cantidad de cada módulo. No te preocupes por las medidas exactas — el equipo las toma en el levantamiento.
-          </div>
-
-          <div class="module-section-head"><h3>Muebles Bajos</h3></div>
-          <div class="options-list" id="modules-bajos"></div>
-
-          <div class="module-section-head"><h3>Muebles Altos / Aéreos</h3></div>
-          <div class="options-list" id="modules-altos"></div>
-
-          <div class="module-section-head"><h3>Módulos Especiales</h3></div>
-          <div class="options-list" id="modules-especiales"></div>
-        </div>
-
-        <!-- ════ STEP 5: CUBIERTA ════ -->
-        <div class="step-panel" id="step-5">
-          <div class="options-list">
-
-            <div class="option-card" id="cub-laminado" onclick="selectCardOpt(this,'cubierta','laminado')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="10" rx="2"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge basica">Menor costo</span>
-                <h2 class="option-name">Laminado Alta Presión</h2>
-                <p class="option-desc">Superficie resistente al calor y rayones. Amplia variedad de colores y texturas. La opción más accesible con muy buena durabilidad.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Resistente al calor y humedad</div>
-                  <div class="option-spec">Amplia gama de colores y texturas</div>
-                  <div class="option-spec">Mantenimiento muy sencillo</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="cub-corian" onclick="selectCardOpt(this,'cubierta','corian')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="10" rx="2"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge media">Gama Media</span>
-                <h2 class="option-name">Corian® Superficie Sólida</h2>
-                <p class="option-desc">Material termomoldeado sin juntas visibles. Blanco puro, muy higiénico y completamente reparable en caso de rayaduras.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Sin juntas — completamente sellado</div>
-                  <div class="option-spec">Higiénico y fácil de limpiar</div>
-                  <div class="option-spec">Reparable con lija fina</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="cub-granito" onclick="selectCardOpt(this,'cubierta','granito')">
-              <div class="option-photo">
-                <!-- Granito — foto muy cercana de textura de granito natural -->
-                <img src="https://images.unsplash.com/photo-1608543292671-ec1562e0ef1c?auto=format&fit=crop&w=800&h=460&q=80"
-                     alt="Cubierta de granito"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Granito natural')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge media">Gama Media</span>
-                <h2 class="option-name">Granito Natural</h2>
-                <p class="option-desc">Piedra natural única, con veta irrepetible. Excelente durabilidad y resistencia al calor. Múltiples modelos disponibles según el stock.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Piedra 100% natural</div>
-                  <div class="option-spec">Alta resistencia al calor directo</div>
-                  <div class="option-spec">Varios modelos disponibles</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="cub-cuarzo" onclick="selectCardOpt(this,'cubierta','cuarzo')">
-              <div class="option-photo">
-                <!-- Cuarzo blanco — textura limpia de cuarzo engineered -->
-                <img src="https://images.unsplash.com/photo-1556909172-8c2f041fca1e?auto=format&fit=crop&w=800&h=460&q=80"
-                     alt="Cubierta de cuarzo"
-                     onerror="this.parentElement.innerHTML=placeholderHTML('Imagen de referencia')" />
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-                <button class="zoom-btn" onclick="openLightbox(event, this.closest('.option-card').querySelector('img'), 'Cuarzo Engineered')">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
-                  Ampliar
-                </button>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge premium">Premium</span>
-                <h2 class="option-name">Cuarzo Engineered</h2>
-                <p class="option-desc">Cuarzo compuesto de alta ingeniería. Color uniforme, superficie no porosa y altísima resistencia. Sin necesidad de sellador.</p>
-                <div class="option-specs">
-                  <div class="option-spec">No requiere sellado periódico</div>
-                  <div class="option-spec">Alta resistencia a manchas y rayones</div>
-                  <div class="option-spec">Colores uniformes y consistentes</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="cub-sinterizado" onclick="selectCardOpt(this,'cubierta','sinterizado')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M7 7V5M12 7V5M17 7V5"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge premium">Top Premium</span>
-                <h2 class="option-name">Cuarzo Sinterizado</h2>
-                <p class="option-desc">La tecnología más avanzada disponible. Resiste el calor directo, rayones UV y cambios extremos de temperatura. Ideal para uso intensivo.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Resistente al calor directo (ollas)</div>
-                  <div class="option-spec">Resistente a UV — no amarilla</div>
-                  <div class="option-spec">Durabilidad excepcional a largo plazo</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ════ STEP 6: HERRAJES ════ -->
-        <div class="step-panel" id="step-6">
-          <div class="options-list">
-
-            <div class="option-card" id="her-economico" onclick="selectCardOpt(this,'herraje','economico')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge basica">Gama Básica</span>
-                <h2 class="option-name">Herraje Económico</h2>
-                <p class="option-desc">Sistema push-to-open estándar. Apertura a presión, sin jaladores visibles. Funcional y duradero para uso diario regular.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Apertura por presión directa</div>
-                  <div class="option-spec">Sin jaladores externos</div>
-                  <div class="option-spec">Buena durabilidad para uso normal</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="her-suave" onclick="selectCardOpt(this,'herraje','cierre_suave')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge media">Gama Media</span>
-                <h2 class="option-name">Cierre Suave</h2>
-                <p class="option-desc">Las puertas y cajones se cierran automáticamente con suavidad. Elimina los golpes y prolonga la vida útil de los muebles.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Cierre automático sin golpes</div>
-                  <div class="option-spec">Mayor vida útil de bisagras</div>
-                  <div class="option-spec">Experiencia de uso silenciosa</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="her-blum" onclick="selectCardOpt(this,'herraje','blum')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge premium">Premium</span>
-                <h2 class="option-name">Blum Premium</h2>
-                <p class="option-desc">Marca alemana de referencia mundial en herrajes de cocina. Cierre suave amortiguado en puertas y cajones. Garantía de durabilidad superior.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Cierre suave con amortiguador integrado</div>
-                  <div class="option-spec">50,000+ ciclos de apertura garantizados</div>
-                  <div class="option-spec">Precisión y ajuste alemán</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-            <div class="option-card" id="her-oculto" onclick="selectCardOpt(this,'herraje','oculto')">
-              <div class="option-photo">
-                <div class="photo-placeholder">
-                  <div class="photo-placeholder-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><line x1="5" y1="7" x2="19" y2="7"/></svg></div>
-                  <div class="photo-placeholder-text">Imagen de referencia</div>
-                </div>
-                <div class="photo-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
-              </div>
-              <div class="option-info">
-                <span class="gama-badge premium">Diseño</span>
-                <h2 class="option-name">Sin jaladores (perfil oculto)</h2>
-                <p class="option-desc">Apertura mediante perfil de aluminio integrado o sistema toque. Estética completamente limpia y minimalista, sin elementos visibles.</p>
-                <div class="option-specs">
-                  <div class="option-spec">Perfil de aluminio o sistema toque</div>
-                  <div class="option-spec">Estética minimalista sin jaladores</div>
-                  <div class="option-spec">Complementa diseños contemporáneos</div>
-                </div>
-                <button class="select-btn">Seleccionar</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ════ STEP 7: EXTRAS ════ -->
-        <div class="step-panel" id="step-7">
-          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:24px;">Todo es opcional. Activa lo que desees incluir en tu cocina.</p>
-
-          <!-- LED -->
-          <div class="toggle-card" id="toggle-led" onclick="toggleExtraCard(this,'led')">
-            <div class="toggle-card-photo">
-              <!-- LED — tira led bajo muebles altos de cocina -->
-              <img src="https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=400&h=300&q=80"
-                   alt="Iluminación LED"
-                   onerror="this.style.display='none'" />
-            </div>
-            <div class="toggle-card-body">
-              <div class="toggle-card-info">
-                <div class="toggle-card-name">Iluminación LED</div>
-                <div class="toggle-card-desc">Luces LED integradas en muebles aéreos y zonas de trabajo</div>
-              </div>
-              <div class="toggle-switch-wrap">
-                <div class="toggle-switch"></div>
-              </div>
-            </div>
-          </div>
-          <div class="sub-options" id="sub-led">
-            <div class="sub-options-label">Tipo de iluminación</div>
-            <div class="sub-opts-row">
-              <button class="sub-opt" onclick="selectSubOpt(this,'led_tipo','bajo_muebles')">Bajo muebles altos</button>
-              <button class="sub-opt" onclick="selectSubOpt(this,'led_tipo','cinta_perimetral')">Cinta perimetral</button>
-              <button class="sub-opt" onclick="selectSubOpt(this,'led_tipo','spot')">Spot empotrado</button>
-            </div>
-          </div>
-
-          <!-- Isla -->
-          <div class="toggle-card" id="toggle-isla" onclick="toggleExtraCard(this,'isla')">
-            <div class="toggle-card-photo">
-              <!-- Isla de cocina con bancos y cubierta -->
-              <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=400&h=300&q=80"
-                   alt="Isla de cocina"
-                   onerror="this.style.display='none'" />
-            </div>
-            <div class="toggle-card-body">
-              <div class="toggle-card-info">
-                <div class="toggle-card-name">Isla / Barra</div>
-                <div class="toggle-card-desc">Módulo central con opción de bancos y parrilla integrada</div>
-              </div>
-              <div class="toggle-switch-wrap">
-                <div class="toggle-switch"></div>
-              </div>
-            </div>
-          </div>
-          <div class="sub-options" id="sub-isla">
-            <div class="sub-options-label">Opciones de isla</div>
-            <div class="sub-opts-row">
-              <button class="sub-opt" onclick="selectSubOpt(this,'bancos',true)">Con bancos (cubierta volada)</button>
-              <button class="sub-opt" onclick="selectSubOpt(this,'parrilla_isla',true)">Con parrilla integrada</button>
-            </div>
-          </div>
-
-          <!-- Campana -->
-          <div class="toggle-card" id="toggle-campana" onclick="toggleExtraCard(this,'campana')">
-            <div class="toggle-card-photo">
-              <div class="photo-placeholder" style="min-height:120px;">
-                <div class="photo-placeholder-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20h16M4 20l4-8h8l4 8M12 4v8"/></svg></div>
-              </div>
-            </div>
-            <div class="toggle-card-body">
-              <div class="toggle-card-info">
-                <div class="toggle-card-name">Campana extractora</div>
-                <div class="toggle-card-desc">Extracción de humos y olores. Varios tipos disponibles</div>
-              </div>
-              <div class="toggle-switch-wrap">
-                <div class="toggle-switch"></div>
-              </div>
-            </div>
-          </div>
-          <div class="sub-options" id="sub-campana">
-            <div class="sub-options-label">Tipo de campana</div>
-            <div class="sub-opts-row">
-              <button class="sub-opt" onclick="selectSubOpt(this,'campana_tipo','pared')">A pared</button>
-              <button class="sub-opt" onclick="selectSubOpt(this,'campana_tipo','isla_campana')">Tipo isla</button>
-              <button class="sub-opt" onclick="selectSubOpt(this,'campana_tipo','empotrada')">Empotrada</button>
-            </div>
-          </div>
-
-          <!-- Mueble auxiliar -->
-          <div class="toggle-card" id="toggle-mueble_auxiliar" onclick="toggleExtraCard(this,'mueble_auxiliar')">
-            <div class="toggle-card-photo">
-              <div class="photo-placeholder" style="min-height:120px;">
-                <div class="photo-placeholder-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div>
-              </div>
-            </div>
-            <div class="toggle-card-body">
-              <div class="toggle-card-info">
-                <div class="toggle-card-name">Mueble auxiliar</div>
-                <div class="toggle-card-desc">Mueble complementario para almacenamiento adicional fuera de la cocina principal</div>
-              </div>
-              <div class="toggle-switch-wrap">
-                <div class="toggle-switch"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════ STEP 8: DATOS DEL CLIENTE ════ -->
-        <div class="step-panel" id="step-8">
-          <div class="form-card">
-            <form id="client-form" onsubmit="return false;">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label class="form-label" for="c-nombre">Nombre completo <span>*</span></label>
-                  <input class="form-input" type="text" id="c-nombre" placeholder="Nombre y apellido" required />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="c-tel">Teléfono <span>*</span></label>
-                  <input class="form-input" type="tel" id="c-tel" placeholder="+52 271 000 0000" required />
-                </div>
-                <div class="form-group full">
-                  <label class="form-label" for="c-dir">Dirección / Municipio <span>*</span></label>
-                  <input class="form-input" type="text" id="c-dir" placeholder="Colonia, Municipio, Estado" required />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="c-fecha">Fecha de levantamiento <span>*</span></label>
-                  <input class="form-input" type="date" id="c-fecha" required />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="c-hora">Hora preferida <span>*</span></label>
-                  <input class="form-input" type="time" id="c-hora" required />
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- ════ STEP 9: DONE ════ -->
-        <div class="step-panel" id="step-9">
-          <div class="finish-wrap">
-            <div class="finish-line"></div>
-            <h1 class="finish-title">Configuración <em>lista</em></h1>
-            <p class="finish-desc">Tu cocina está diseñada. Descarga tu resumen en PDF y envía los detalles al equipo de MHG para confirmar tu cita de levantamiento.</p>
-            <div class="finish-actions">
-              <button class="btn btn-gold btn-lg" onclick="downloadPDF()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                Descargar cotización en PDF
-              </button>
-              <button class="btn btn-primary btn-lg" onclick="sendWhatsApp()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                Enviar resumen por WhatsApp
-              </button>
-              <a href="index.html" class="btn btn-outline btn-lg">Volver al sitio</a>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /content-body -->
-
-      <!-- Bottom navigation -->
-      <footer class="content-footer" id="contentFooter">
-        <button class="btn btn-outline" id="btnPrev" onclick="prevStep()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-          Anterior
-        </button>
-        <div class="step-counter">
-          Paso <strong id="counterCurrent">1</strong> de <strong>9</strong>
-        </div>
-        <button class="btn btn-primary" id="btnNext" onclick="nextStep()">
-          Siguiente
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
-      </footer>
-
-    </main><!-- /app-content -->
-  </div><!-- /app-wrap -->
-
-  <!-- ═══ LIGHTBOX ═══ -->
-  <div class="lightbox" id="lightbox" onclick="closeLightboxOnBg(event)">
-    <div class="lightbox-inner">
-      <img id="lightboxImg" src="" alt="" />
-      <div class="lightbox-caption" id="lightboxCaption"></div>
-      <button class="lightbox-close" onclick="closeLightbox()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
+<header class="top-bar">
+  <a href="index.html" class="top-logo">
+    <img src="img/logo.jpg" alt="MHG" onerror="this.style.display='none'" />
+    <span class="top-logo-text">Configurador · MHG Cocinas</span>
+  </a>
+  <div class="top-progress-wrap">
+    <div class="top-progress-bar"><div class="top-progress-fill" id="topProgressFill"></div></div>
+    <span class="top-counter">Paso <span id="counterCurrent">1</span> de 8</span>
   </div>
+  <a href="index.html" class="top-back">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Volver al sitio
+  </a>
+</header>
 
-  <script src="cotizador.js"></script>
+<div class="configurator-wrap">
+  <nav class="sidebar" id="sidebarSteps"></nav>
+  <main class="content-area">
+    <p class="content-eyebrow" id="contentEyebrow">Paso 1 de 8</p>
+    <h1 class="content-title" id="contentTitle">Tus <em>datos</em></h1>
+    <p class="content-subtitle" id="contentSubtitle">Empieza con tu información de contacto para personalizar tu cotización.</p>
+
+    <!-- PASO 1: CLIENTE -->
+    <section class="step-panel active" id="panel-0">
+      <div class="form-grid">
+        <div class="form-col">
+          <div class="form-group">
+            <label class="form-label" for="c-nombre">Nombre completo</label>
+            <input type="text" id="c-nombre" class="form-input" placeholder="María González" autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-tel">Teléfono</label>
+            <input type="tel" id="c-tel" class="form-input" placeholder="271 700 0000" autocomplete="tel" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-fecha">Fecha de levantamiento</label>
+            <input type="date" id="c-fecha" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-hora">Hora</label>
+            <input type="time" id="c-hora" class="form-input" value="10:00" />
+          </div>
+        </div>
+        <div class="form-col">
+          <div class="form-group">
+            <label class="form-label" for="c-sucursal">Sucursal</label>
+            <select id="c-sucursal" class="form-select">
+              <option value="">Selecciona sucursal...</option>
+              <option value="Fortin">Fortín de las Flores</option>
+              <option value="Tuxtepec">Tuxtepec</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-asesor">Atendido por <span>(opcional)</span></label>
+            <select id="c-asesor" class="form-select">
+              <option value="">Cotización en línea</option>
+              <option value="Asesor 1">Asesor 1</option>
+              <option value="Asesor 2">Asesor 2</option>
+              <option value="Asesor 3">Asesor 3</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-dir">Dirección de instalación</label>
+            <input type="text" id="c-dir" class="form-input" placeholder="Calle, Número, Colonia..." autocomplete="street-address" />
+            <div class="map-note">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <a href="https://maps.google.com" target="_blank" rel="noopener">Abrir Google Maps</a> y pega tu ubicación
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-obs">Observaciones <span>(opcional)</span></label>
+            <textarea id="c-obs" class="form-textarea" placeholder="Medidas aproximadas, detalles del espacio..."></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASO 2: SITUACION -->
+    <section class="step-panel" id="panel-1">
+      <div class="options-list">
+        <div class="option-card" id="sit-0" onclick="selectSituation(this,'sin-cocina')">
+          <div class="option-photo">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=700&h=320&q=80" alt="Espacio vacío" />
+            <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+          </div>
+          <div class="option-info">
+            <span class="option-tag">Instalación nueva</span>
+            <h3 class="option-name">No tengo cocina</h3>
+            <p class="option-desc">El espacio está vacío o sin cocina instalada. Diseñamos y fabricamos todo desde cero, adaptado a tus medidas.</p>
+          </div>
+        </div>
+        <div class="option-card" id="sit-1" onclick="selectSituation(this,'barra-concreto')">
+          <div class="option-photo">
+            <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=700&h=320&q=80" alt="Base de concreto existente" />
+            <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+          </div>
+          <div class="option-info">
+            <span class="option-tag">Estructura existente</span>
+            <h3 class="option-name">Cuento con base o tarja de concreto</h3>
+            <p class="option-desc">Hay una base construida pero sin muebles ni frentes. Integramos los módulos a la estructura existente para optimizar el espacio.</p>
+          </div>
+        </div>
+        <div class="option-card" id="sit-2" onclick="selectSituation(this,'remodelacion')">
+          <div class="option-photo">
+            <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=700&h=320&q=80" alt="Cocina a remodelar" />
+            <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+          </div>
+          <div class="option-info">
+            <span class="option-tag">Remodelación</span>
+            <h3 class="option-name">Tengo cocina y quiero renovarla</h3>
+            <p class="option-desc">Ya hay una cocina instalada pero deseas cambiar materiales, frentes o incorporar nuevos módulos. Evaluamos lo existente y proponemos la mejor solución.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASO 3: TABLEROS INTERIORES -->
+    <section class="step-panel" id="panel-2">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Este acabado se aplicará al interior de todos los muebles.</p>
+      <div class="material-grid">
+        <div class="material-card" id="int-0" onclick="selectInterior(this,'blanco-frosty')">
+          <div class="material-card-swatch" style="background:#f5f4f0;">
+            <div class="material-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+          </div>
+          <div class="material-card-info">
+            <div class="material-card-name">Blanco Frosty</div>
+            <div class="material-card-meta">15 mm · Línea Arauco · $750 / tablero</div>
+          </div>
+        </div>
+        <div class="material-card" id="int-1" onclick="selectInterior(this,'gris-oxford')">
+          <div class="material-card-swatch" style="background:#888a86;">
+            <div class="material-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+          </div>
+          <div class="material-card-info">
+            <div class="material-card-name">Gris Oxford</div>
+            <div class="material-card-meta">15 mm · Línea Arauco · $1,500 / tablero</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASO 4: FRENTES -->
+    <section class="step-panel" id="panel-3">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Selecciona una o más líneas. Puedes combinar colores y líneas por zonas.</p>
+      <div class="frente-list" id="frenteList"></div>
+    </section>
+
+    <!-- PASO 5: HERRAJES -->
+    <section class="step-panel" id="panel-4">
+      <div id="herrajeContainer"></div>
+    </section>
+
+    <!-- PASO 6: CUBIERTAS -->
+    <section class="step-panel" id="panel-5">
+      <div class="cubierta-list" id="cubiertas-list">
+        <div class="cubierta-item" id="cub-solida" onclick="selectCubierta(this,'solida','Superficie sólida / Arena Blanca Nueco','$3,800 / m lineal')">
+          <div class="cubierta-swatch" style="background:#e8e4dc;"></div>
+          <div class="cubierta-info">
+            <div class="cubierta-name">Superficie sólida / Arena Blanca Nueco</div>
+            <div class="cubierta-desc">Material de alta durabilidad, aspecto homogéneo. Sin porosidad, fácil mantenimiento.</div>
+            <div class="cubierta-price">$3,800 / m lineal</div>
+          </div>
+          <div class="cubierta-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+        </div>
+        <div class="cubierta-item" id="cub-granito" onclick="selectCubierta(this,'granito','Granito natural','Desde $8,500 / m lineal')">
+          <div class="cubierta-swatch" style="background:#8c8880;"></div>
+          <div class="cubierta-info">
+            <div class="cubierta-name">Granito natural</div>
+            <div class="cubierta-desc">Piedra natural con veta única. Alta resistencia al calor y rayaduras. Varios colores disponibles.</div>
+            <div class="cubierta-price">Desde $8,500 / m lineal</div>
+          </div>
+          <div class="cubierta-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+        </div>
+        <div class="cubierta-item" id="cub-cuarzo" onclick="selectCubierta(this,'cuarzo','Cuarzo engineered','$10,500 / m lineal')">
+          <div class="cubierta-swatch" style="background:#e0dbd2;"></div>
+          <div class="cubierta-info">
+            <div class="cubierta-name">Cuarzo engineered</div>
+            <div class="cubierta-desc">Piedra reconstituida no porosa. Acabado uniforme, mayor resistencia a manchas que el granito.</div>
+            <div class="cubierta-price">$10,500 / m lineal</div>
+          </div>
+          <div class="cubierta-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+        </div>
+        <div class="cubierta-item" id="cub-sinterizado" onclick="selectCubierta(this,'sinterizado','Piedra sinterizada','$11,500 – $21,000 / m lineal')">
+          <div class="cubierta-swatch" style="background:#a8a4a0;"></div>
+          <div class="cubierta-info">
+            <div class="cubierta-name">Piedra sinterizada</div>
+            <div class="cubierta-desc">Material premium de última generación. Resistente al calor, impacto y rayos UV.</div>
+            <div class="cubierta-price">$11,500 – $21,000 / m lineal</div>
+          </div>
+          <div class="cubierta-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASO 7: EXTRAS -->
+    <section class="step-panel" id="panel-6">
+      <div class="extras-grid">
+        <div class="extra-card" id="ext-led" onclick="toggleExtra(this,'led','Iluminación LED')">
+          <div class="extra-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
+          <div><div class="extra-name">Iluminación LED</div><div class="extra-desc">Tiras LED bajo muebles altos o en zoclo inferior.</div></div>
+        </div>
+        <div class="extra-card" id="ext-isla" onclick="toggleExtra(this,'isla','Isla / Barra')">
+          <div class="extra-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="2" y="8" width="20" height="8" rx="2"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg></div>
+          <div><div class="extra-name">Isla / Barra</div><div class="extra-desc">Módulo central independiente, con opción de bancos y parrilla.</div></div>
+        </div>
+        <div class="extra-card" id="ext-alacena" onclick="toggleExtra(this,'alacena','Alacena')">
+          <div class="extra-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="2" width="18" height="20" rx="2"/><path d="M3 10h18M12 2v20"/></svg></div>
+          <div><div class="extra-name">Alacena</div><div class="extra-desc">Módulo despensero de piso a techo para almacenamiento adicional.</div></div>
+        </div>
+        <div class="extra-card" id="ext-contactos" onclick="toggleExtra(this,'contactos','Torre de contactos')">
+          <div class="extra-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 7h4M10 11h4M10 15h4"/></svg></div>
+          <div><div class="extra-name">Torre de contactos</div><div class="extra-desc">Toma de corriente integrada en la cubierta o módulo.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASO 8: RESUMEN -->
+    <section class="step-panel" id="panel-7">
+      <div class="total-box">
+        <div>
+          <div class="total-label">Estimado de inversión</div>
+          <div class="total-note">Precio referencial basado en materiales seleccionados. Cotización final tras levantamiento.</div>
+        </div>
+        <div class="total-amount" id="totalAmount">A confirmar</div>
+      </div>
+      <div class="summary-grid" id="summaryGrid"></div>
+      <div class="action-row">
+        <button class="action-btn green" onclick="downloadPDF()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar PDF
+        </button>
+        <button class="action-btn wa" onclick="sendWhatsApp()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          Enviar por WhatsApp
+        </button>
+        <button class="action-btn" onclick="renderStep(0)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+          Nueva configuración
+        </button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="content-footer" id="contentFooter">
+  <button class="nav-btn" id="btnPrev" onclick="prevStep()" disabled>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Anterior
+  </button>
+  <span class="step-indicator" id="stepIndicator">Paso 1 de 8</span>
+  <button class="nav-btn primary" id="btnNext" onclick="nextStep()">
+    Siguiente
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </button>
+</footer>
+
+<script src="cotizador.js"></script>
 </body>
 </html>
