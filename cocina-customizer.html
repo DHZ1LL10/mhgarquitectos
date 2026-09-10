@@ -128,6 +128,8 @@
     .herraje-section.open .herraje-section-body { display: block; }
     .herraje-chevron { transition: transform var(--tr); color: var(--muted); flex-shrink: 0; }
     .herraje-section.open .herraje-chevron { transform: rotate(180deg); }
+    .frente-chevron { transition: transform var(--tr); flex-shrink: 0; }
+    .frente-item.selected .frente-chevron { transform: rotate(180deg); }
     .herraje-opts { display: flex; flex-direction: column; gap: 8px; }
     .herraje-opt { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 7px; border: 1.5px solid var(--border); cursor: pointer; transition: border-color var(--tr), background var(--tr); }
     .herraje-opt:hover { border-color: var(--green-l); background: var(--green-fade); }
@@ -137,10 +139,10 @@
     .herraje-opt-name { font-size: .82rem; font-weight: 500; }
     .herraje-opt-desc { font-size: .72rem; color: var(--muted); margin-top: 2px; }
     .multi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0; }
-    .multi-opt { padding: 10px 12px; border-radius: 7px; border: 1.5px solid var(--border); cursor: pointer; transition: border-color var(--tr), background var(--tr); display: flex; align-items: center; gap: 8px; }
+    .multi-opt { padding: 10px 12px; border-radius: 7px; border: 1.5px solid var(--border); cursor: pointer; transition: border-color var(--tr), background var(--tr); display: flex; align-items: flex-start; gap: 10px; }
     .multi-opt:hover { border-color: var(--green-l); background: var(--green-fade); }
     .multi-opt.selected { border-color: var(--green); background: var(--green-fade); }
-    .multi-cb { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid var(--border-d); flex-shrink: 0; transition: all var(--tr); }
+    .multi-cb { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid var(--border-d); flex-shrink: 0; margin-top: 2px; transition: all var(--tr); }
     .multi-opt.selected .multi-cb { background: var(--green); border-color: var(--green); }
     .multi-name { font-size: .8rem; font-weight: 500; }
 
