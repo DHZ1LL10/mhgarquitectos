@@ -554,9 +554,9 @@ a { text-decoration: none; color: inherit; }
 .proj-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr;
-  grid-auto-rows: 600px;
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 380px;
+  gap: 6px;
   grid-auto-flow: dense;
 }
 
@@ -1159,8 +1159,8 @@ a { text-decoration: none; color: inherit; }
   .proj-panel { flex-direction: column; }
   .proj-sidebar { width: 100%; position: static; }
   .proj-grid {
-    grid-template-columns: 1fr;
-    grid-auto-rows: 500px;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 200px;
   }
 
   .branches-grid { grid-template-columns: 1fr; }
@@ -1169,7 +1169,7 @@ a { text-decoration: none; color: inherit; }
 @media (max-width: 480px) {
   .hero-title { font-size: clamp(2rem, 14vw, 3.5rem); }
   .hero-actions { flex-direction: column; align-items: flex-start; }
-  .proj-grid { grid-template-columns: 1fr; grid-auto-rows: 400px; }
+  .proj-grid { grid-template-columns: 1fr; grid-auto-rows: 260px; }
   .proj-tabs { gap: 6px; }
   .proj-tab { padding: 7px 14px; font-size: .72rem; }
   .trust-badge-card { position: static; margin-top: 16px; }
