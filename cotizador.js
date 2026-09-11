@@ -87,9 +87,9 @@ var HERRAJE_SECTIONS = [
     opts:[
       {
         id:'bis-hettich',
-        label:'Marco Hettich — Bisagra oculta cierre suave',
+        label:'Bisagra cierre suave',
         desc:'Bisagra de cazoleta con cierre amortiguado. Apertura 110°. Estándar en todas las líneas.',
-        val:'Hettich oculta cierre suave',
+        val:'Bisagra cierre suave',
       },
     ],
   },
@@ -169,7 +169,6 @@ var HERRAJE_SECTIONS = [
       { id:'mod-esq', label:'Esquinero extraíble',       desc:'Sistema giratorio para aprovechar las esquinas ciegas.',  val:'Esquinero extraíble' },
       { id:'mod-hor', label:'Torre de horno',            desc:'Módulo vertical para horno empotrado a la medida.',       val:'Torre de horno' },
       { id:'mod-gar', label:'Módulo extraíble garrafón', desc:'Cajón profundo con guías especiales para garrafón.',      val:'Módulo garrafón' },
-      { id:'mod-tar', label:'Módulo tarja',              desc:'Módulo bajo de mesón con tarja integrada.',               val:'Módulo tarja' },
     ],
   },
 ];
@@ -286,7 +285,13 @@ function escQ(s) { return s.replace(/'/g, "\\'"); }
 
 function toggleHerrajeSection(id) {
   var el = document.getElementById(id);
-  if (el) el.classList.toggle('open');
+  var isOpen = el.classList.contains('open');
+  document.querySelectorAll('.herraje-section').forEach(function(sec) {
+    sec.classList.remove('open');
+  });
+  if (!isOpen) {
+    el.classList.add('open');
+  }
 }
 
 function selectHerrajeOpt(el, key, val) {
