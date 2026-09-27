@@ -1,0 +1,74 @@
+[
+  {
+    "hardwareOptions": 14,
+    "photos": 17,
+    "cornerPhotos": 4
+  },
+  "All four extras: photographs, zoom, selection and no filters/overlays OK",
+  "Front cards and four palettes: hero, zoom and modal restoration OK",
+  "Countertop collection/variant and shared gallery OK",
+  "Summary, PDF text calls and WhatsApp URL OK",
+  "Native Enter, arrow and Escape keys OK; focus and state preserved",
+  "Native mobile swipe OK",
+  "Native pointer click on Extras zoom does not select the card",
+  "Eight steps next/previous OK",
+  {
+    "width": 1440,
+    "steps": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "photoRatio": 0.83
+  },
+  {
+    "width": 768,
+    "steps": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "photoRatio": 0.85
+  },
+  {
+    "width": 390,
+    "steps": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "photoRatio": 0.79
+  },
+  {
+    "width": 320,
+    "steps": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "photoRatio": 0.75
+  },
+  {
+    "decodedHardwareAndExtraImages": 21
+  }
+]

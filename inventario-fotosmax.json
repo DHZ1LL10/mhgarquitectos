@@ -1,0 +1,66 @@
+[
+  {
+    "archivo": "basurerocompleto.jpg",
+    "bytes": 97936,
+    "destino": "img/customizer/herrajes/basurerocompleto.jpg",
+    "opcion_id": "bas-la",
+    "opcion": "Basurero Línea Alta / módulo completo",
+    "sha256": "9ca0541099da0a79596a93617c13914a8c445af99d14035cf721a3f580aca625"
+  },
+  {
+    "archivo": "especiero1.jpg",
+    "bytes": 104332,
+    "destino": "img/customizer/herrajes/especiero1.jpg",
+    "opcion_id": "esp-si",
+    "opcion": "Especiero",
+    "sha256": "d3185894399f59dd4e1e32b496aa0ab7af75cba1f7f41dda11133de991bdef11"
+  },
+  {
+    "archivo": "esquineroextraible1.jpeg",
+    "bytes": 95984,
+    "destino": "img/customizer/herrajes/esquineroextraible1.jpeg",
+    "opcion_id": "mod-esq",
+    "opcion": "Esquinero extraíble",
+    "sha256": "770019fc99030e83072f4c36617b092ec5f06952036cb63fc17cd09b36af7be5"
+  },
+  {
+    "archivo": "esquineroextraible2.jpg",
+    "bytes": 101763,
+    "destino": "img/customizer/herrajes/esquineroextraible2.jpg",
+    "opcion_id": "mod-esq",
+    "opcion": "Esquinero extraíble",
+    "sha256": "38936a83dbf8ca07866a857e422190cc6e248bbe781551bfa8a11918771b8ea3"
+  },
+  {
+    "archivo": "esquineroextraible3.jpg",
+    "bytes": 95545,
+    "destino": "img/customizer/herrajes/esquineroextraible3.jpg",
+    "opcion_id": "mod-esq",
+    "opcion": "Esquinero extraíble",
+    "sha256": "59910e87cc02db26f89043d396b0852e37237e863fbe3950e4c7e08de4ee17df"
+  },
+  {
+    "archivo": "esquineroextraible4.jpg",
+    "bytes": 105749,
+    "destino": "img/customizer/herrajes/esquineroextraible4.jpg",
+    "opcion_id": "mod-esq",
+    "opcion": "Esquinero extraíble",
+    "sha256": "5abbc03bb0616d01c88dc16277eb19c3667cf7a84c62dc45c9c27791b7197501"
+  },
+  {
+    "archivo": "modulogarrafon.jpg",
+    "bytes": 82088,
+    "destino": "img/customizer/herrajes/modulogarrafon.jpg",
+    "opcion_id": "mod-gar",
+    "opcion": "Módulo extraíble garrafón",
+    "sha256": "96269a08adfcb5aa4ca6882f68b4276be7ac877ad45d31f92f8bfc55efcb6994"
+  },
+  {
+    "archivo": "torredecontactos.jpg",
+    "bytes": 69942,
+    "destino": "img/customizer/extras/torredecontactos.jpg",
+    "opcion_id": "ext-contactos",
+    "opcion": "Torre de contactos",
+    "sha256": "688e9b4d25e940b91e34360da970f4c32eb1de9db0f0a8a20203dbb4cbece414"
+  }
+]

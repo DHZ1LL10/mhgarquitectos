@@ -1,0 +1,1571 @@
+{
+  "archivos_origen": 130,
+  "variantes_anteriores": 11,
+  "total": 62,
+  "por_coleccion": {
+    "luxury": 12,
+    "marmol": 17,
+    "stone": 25,
+    "urbano": 8
+  },
+  "pendientes": [
+    "Statuario"
+  ],
+  "copiadas": [
+    "amazonite-seagreen-02.webp",
+    "AMAZONITE_-horizontal-rbzaxflm3a0vq1s2hp1yzbwwe579rpbnin77sqazik.jpg",
+    "ANKARA-768x573.webp",
+    "AS_ANKARA_B_3200x1600_RGB_11zon-scaled-e1788852943830-2048x1024.webp",
+    "AS_AURA_LUX_WHITE_A_3200X1600_RGB_ALTA_MOD_2_11zon-1-scaled-e1768988912116-2048x1024.webp",
+    "ASCALE_AURA-AMB-3-SECUNDARIA_11zon.webp",
+    "cover-crystal-lux-white-5120-2048x1038.webp",
+    "cover-labradorite-royalblue-1-2048x1023.webp",
+    "labradorite-royalblue-01.webp",
+    "AS_MYSTIC_SILVER_B_3200X1600_RGB_11zon_11zon-2-2048x1024.webp",
+    "MYSTIC-SILVER-160X320_4_11zon.webp",
+    "amb-14-onice-black_1_11zon.webp",
+    "ONICE_BLACK_A_3200X1600_RGB_PZA1-scaled-e1750938961304-2048x1024.jpg.webp",
+    "ONICE-BLUE-MATT-160X320-A_WEB-scaled-e1756453006285-2048x1024.webp",
+    "Onice_Blue_web.webp",
+    "11zon_amb-17-onice-lux-white.webp",
+    "ONICE-SEAGREEN-2-1.jpg",
+    "ONICE_SEAGREEN_A_1600X3200_RGB_ALTA_3_11zon-scaled-e1767806053996-2048x1023.webp",
+    "cover-patagonia-5120-2048x1023.webp",
+    "patagonia-gold-01.webp",
+    "AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp",
+    "alpiwhite.webp",
+    "alpiwhitecocina.webp",
+    "APPENNINO-GOLD-160X320_3_11zon.webp",
+    "AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-2048x1024.webp",
+    "AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-scaled-rinl51m2yrkgggukrcknypdjb0q0arye37rqib4vnw.webp",
+    "ASCALE_APPENINO-cocinawebp.webp",
+    "Casa-Caujaral-Lungomare-Meson-e-isla-Gramarston®-Belvedere-Black-01-gramar.jpg",
+    "cover-belvedere-black-5120-2048x1024.webp",
+    "amb-28-crotone-pulpis_v2_3_11zon.webp",
+    "CROTONE_PULPIS_160X320_RGB_PZA3-min-scaled-e1748426594481-2048x1024.jpg.webp",
+    "Cocina-principal-Modula-Line-Meson-salpicadero-e-isla-Gramarston®-Ducal-Gold-01-gramar.jpg",
+    "cover-ducal-gold-5120-2048x1034.webp",
+    "amb-25-grassi-white_v2_2_11zon.webp",
+    "cover-grassi-white-5120-1-2048x1024.jpg.webp",
+    "cover-lasa-white-1-2048x1024.webp",
+    "lasa-white-06.webp",
+    "cover-laurent-black-5120-2048x1024.webp",
+    "laurent-black-05.webp",
+    "cover-lucca-gold-5120-2048x1022.webp",
+    "lucca-gold-01.webp",
+    "AMBIENTE-LUMINA-COLOR.webp",
+    "AS_LUMINA_A_1760X3525_RGB-1-scaled-e1788857200779-2048x1024.webp",
+    "cover-macchia-vecchia-2048x1022.webp",
+    "macchia-vecchia-gold-05.webp",
+    "26-Marquina-Ascale-01-scaled.webp",
+    "MARQUINA_BLACK_A_1600X3200_RGB_1_11zon-scaled-e1767870529832-2048x1024.webp",
+    "montblanc-white-04.webp",
+    "MONTBLANC_WHITE_A_3200X1600_RGB_1_11zon-1-scaled-e1767870093852-2048x1024.webp",
+    "cover-new-torano-h-2048x1024.webp",
+    "ASCALE_AMB-5-TAJ-MAHAL-VARIANTE.jpg",
+    "cover-taj-mahal-almond-5120-2048x1024.webp",
+    "VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp",
+    "ASCALE_COCINA-VERSO-SECUNDARIA-1_ALTA-copia.webp",
+    "VERSO_GOLD_A_RGB_PZA1_1-copia-2-2048x1025.webp",
+    "amayalimen.webp",
+    "amayalimencocina.webp",
+    "antalya-sand-06.webp",
+    "H-ANTALYA_SAND_3200X1600_RGB_PZA1_MASCARAS-2048x1024.webp",
+    "ASCALE_ARMANI-SILVER-SECUNDARIA_1-copia.webp",
+    "cover-armani-silver-2048x1024.webp",
+    "BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp",
+    "ASCALE_BOREAL-UMBER-webp.webp",
+    "BOREAL_UMBER_1600X3200_PZA3_R__-2048x1024.webp",
+    "AS_BRERA_BONE_3200X1600_RGB_PZA1-copia-1-scaled-e1786521553192-2048x1024.webp",
+    "ASCALE_COCINA-BRERA-BONE-DET_BAJA.webp",
+    "AS_BRERA_DARK_3200X1600_RGB_PZA1-copia-1-scaled-e1786531464521-2048x1024.webp",
+    "webp-ASCALE_COCINA-BRERA-DARK_detalle.webp",
+    "AS_BRERA_LIGHT_3200X1600_RGB_PZA1-copia-1-scaled-e1786526164382-2048x1024.webp",
+    "ASCALE_BANO-BRERA-LIGHT_BAJA_3.webp",
+    "CEPPO-DI-GRE_320X160-4.jpg",
+    "CEPPO_DI_GRE_SILVER_1-e1747297291567-2048x1021.jpg.webp",
+    "AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp",
+    "amb-01-foresta-blue-120x280_1_11zon.webp",
+    "FORESTABLUE-2048x1024.webp",
+    "Apt-Modelo-Sta-Maria-de-los-Cerros-Cocina-Quadra-Laminada-Gramarston®-Grum-Black-02.webp",
+    "cover-grum-black-5120-2048x1024.webp",
+    "PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp",
+    "AMB_PORTLAND-PEARL-1.jpg",
+    "PORTLAND_PEARL_1600X3200_RGB_PZA1_MASCARAS-copia-1-2048x1024.webp",
+    "amb-05-tivoli-strata-100x300-copia.webp",
+    "TIVOLI_WHITE-STRATA_1000X3000_RGB_PZA1-1-scaled-e1786957418322-2048x683.webp",
+    "tivolistratacocina.webp",
+    "tivoliwhitestrata.webp",
+    "ASCALE_COSMOPOLITA-BROWN-DET.jpg",
+    "COSMOPOLITA_BROWN_3200X1600_RGB_PZA2_2_11zon_2_11zon-1-scaled-e1767868643310-2048x1024.webp",
+    "ASCALE_COSMOPOLITA-DARK_11zon.webp",
+    "COSMOPOLITA_GREY_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+    "Det_Cosmopolita-Gray.webp",
+    "11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp",
+    "ASCALE_COSMOPOLITA-LIGHT.jpg",
+    "COSMOPOLITA_LIGHT_3200X1600_PZA1_RGB_ALTA_11zon_11zon-1-1-2048x1018.webp",
+    "ASCALE_COSMOPOLITA-SILVER.jpg",
+    "COSMOPOLITA_SILVER_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+    "amb-15-urban-white_1_11zon.webp",
+    "URBAN_WHITE_1200X2800_RGB_PZA3-min-scaled-e1747387097587-2048x878.jpg.webp"
+  ],
+  "inventario": [
+    {
+      "archivo": "11zon_amb-17-onice-lux-white.webp",
+      "bytes": 439346,
+      "acabado": "Onice Lux White",
+      "copiada": true
+    },
+    {
+      "archivo": "11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp",
+      "bytes": 20696,
+      "acabado": "Cosmopolita Ivory",
+      "copiada": true
+    },
+    {
+      "archivo": "26-Marquina-Ascale-01-scaled.webp",
+      "bytes": 739310,
+      "acabado": "Marquina",
+      "copiada": true
+    },
+    {
+      "archivo": "6.jpg",
+      "bytes": 1671483,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "allure-black-cocina.webp",
+      "bytes": 218842,
+      "acabado": "Allure Black",
+      "copiada": false
+    },
+    {
+      "archivo": "alpiwhite.webp",
+      "bytes": 2074,
+      "acabado": "Alpi White",
+      "copiada": true
+    },
+    {
+      "archivo": "alpiwhitecocina.webp",
+      "bytes": 286814,
+      "acabado": "Alpi White",
+      "copiada": true
+    },
+    {
+      "archivo": "amayalimen.webp",
+      "bytes": 248844,
+      "acabado": "Amaya Linen",
+      "copiada": true
+    },
+    {
+      "archivo": "amayalimencocina.webp",
+      "bytes": 359772,
+      "acabado": "Amaya Linen",
+      "copiada": true
+    },
+    {
+      "archivo": "amazonite-seagreen-02.webp",
+      "bytes": 143706,
+      "acabado": "Amazonite",
+      "copiada": true
+    },
+    {
+      "archivo": "AMAZONITE_-horizontal-rbzaxflm3a0vq1s2hp1yzbwwe579rpbnin77sqazik.jpg",
+      "bytes": 333669,
+      "acabado": "Amazonite",
+      "copiada": true
+    },
+    {
+      "archivo": "amb-01-foresta-blue-120x280_1_11zon.webp",
+      "bytes": 1402474,
+      "acabado": "Foresta Blue",
+      "copiada": true
+    },
+    {
+      "archivo": "amb-03-dakota-copia-WEBP.webp",
+      "bytes": 268294,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "amb-05-tivoli-strata-100x300-copia.webp",
+      "bytes": 442626,
+      "acabado": "Tivoli White Strata",
+      "copiada": true
+    },
+    {
+      "archivo": "amb-14-onice-black_1_11zon.webp",
+      "bytes": 819326,
+      "acabado": "Onice Black",
+      "copiada": true
+    },
+    {
+      "archivo": "amb-15-urban-white_1_11zon.webp",
+      "bytes": 1237438,
+      "acabado": "Urban White",
+      "copiada": true
+    },
+    {
+      "archivo": "amb-25-grassi-white_v2_2_11zon.webp",
+      "bytes": 576596,
+      "acabado": "Grassi White",
+      "copiada": true
+    },
+    {
+      "archivo": "amb-28-crotone-pulpis_v2_3_11zon.webp",
+      "bytes": 633096,
+      "acabado": "Crotone Pulpis",
+      "copiada": true
+    },
+    {
+      "archivo": "AMB_PORTLAND-PEARL-1.jpg",
+      "bytes": 1360315,
+      "acabado": "Portland Pearl",
+      "copiada": true
+    },
+    {
+      "archivo": "AMBIENTE-LUMINA-COLOR.webp",
+      "bytes": 157776,
+      "acabado": "Lumina",
+      "copiada": true
+    },
+    {
+      "archivo": "Ambte-1_Vagli-Gold-Crotone-Pulpis-1.webp",
+      "bytes": 604862,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "ANKARA-768x573.webp",
+      "bytes": 62416,
+      "acabado": "Ankara",
+      "copiada": true
+    },
+    {
+      "archivo": "antalya-sand-06.webp",
+      "bytes": 181376,
+      "acabado": "Antalya Sand",
+      "copiada": true
+    },
+    {
+      "archivo": "APPENNINO-GOLD-160X320_3_11zon.webp",
+      "bytes": 153128,
+      "acabado": "Appennino Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "Apt-Modelo-Sta-Maria-de-los-Cerros-Cocina-Quadra-Laminada-Gramarston®-Grum-Black-02.webp",
+      "bytes": 109326,
+      "acabado": "Grum Black",
+      "copiada": true
+    },
+    {
+      "archivo": "ARENA-SAND_3200x1600-1-scaled-e1787067193492-rs3dwvk0oocwt2kmugcuqvz84ul2oud0d0bwydkhu4.webp",
+      "bytes": 30390,
+      "acabado": "Arena Sand",
+      "copiada": false
+    },
+    {
+      "archivo": "arizona-sand-cocina.webp",
+      "bytes": 253542,
+      "acabado": "Arizona Sand",
+      "copiada": false
+    },
+    {
+      "archivo": "arizonasand.webp",
+      "bytes": 20350,
+      "acabado": "Arizona Sand",
+      "copiada": false
+    },
+    {
+      "archivo": "AS_ANKARA_B_3200x1600_RGB_11zon-scaled-e1788852943830-2048x1024.webp",
+      "bytes": 439570,
+      "acabado": "Ankara",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-2048x1024.webp",
+      "bytes": 205540,
+      "acabado": "Appennino Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-scaled-rinl51m2yrkgggukrcknypdjb0q0arye37rqib4vnw.webp",
+      "bytes": 127660,
+      "acabado": "Appennino Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_AURA_LUX_WHITE_A_3200X1600_RGB_ALTA_MOD_2_11zon-1-scaled-e1768988912116-2048x1024.webp",
+      "bytes": 101866,
+      "acabado": "Aura Lux White",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_BRERA_BONE_3200X1600_RGB_PZA1-copia-1-scaled-e1786521553192-2048x1024.webp",
+      "bytes": 270912,
+      "acabado": "Brera Bone",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_BRERA_DARK_3200X1600_RGB_PZA1-copia-1-scaled-e1786531464521-2048x1024.webp",
+      "bytes": 202902,
+      "acabado": "Brera Dark",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_BRERA_LIGHT_3200X1600_RGB_PZA1-copia-1-scaled-e1786526164382-2048x1024.webp",
+      "bytes": 154820,
+      "acabado": "Brera Light",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp",
+      "bytes": 76520,
+      "acabado": "Denver",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_LUMINA_A_1760X3525_RGB-1-scaled-e1788857200779-2048x1024.webp",
+      "bytes": 171090,
+      "acabado": "Lumina",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_MYSTIC_SILVER_B_3200X1600_RGB_11zon_11zon-2-2048x1024.webp",
+      "bytes": 274354,
+      "acabado": "Mystic Silver",
+      "copiada": true
+    },
+    {
+      "archivo": "AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp",
+      "bytes": 232098,
+      "acabado": "Versilis",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_AMB-5-TAJ-MAHAL-VARIANTE.jpg",
+      "bytes": 421079,
+      "acabado": "Taj Mahal",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_APPENINO-cocinawebp.webp",
+      "bytes": 140132,
+      "acabado": "Appennino Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_ARENA-SAND-COCINA.webp",
+      "bytes": 31496,
+      "acabado": "Arena Sand",
+      "copiada": false
+    },
+    {
+      "archivo": "ASCALE_ARMANI-SILVER-SECUNDARIA_1-copia.webp",
+      "bytes": 347304,
+      "acabado": "Armani Silver",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_AURA-AMB-3-SECUNDARIA_11zon.webp",
+      "bytes": 147296,
+      "acabado": "Aura Lux White",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_BANO-BRERA-LIGHT_BAJA_3.webp",
+      "bytes": 209746,
+      "acabado": "Brera Light",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_BOREAL-UMBER-webp.webp",
+      "bytes": 397162,
+      "acabado": "Boreal Umber",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_COCINA-BRERA-BONE-DET_BAJA.webp",
+      "bytes": 248362,
+      "acabado": "Brera Bone",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_COCINA-VERSO-SECUNDARIA-1_ALTA-copia.webp",
+      "bytes": 167706,
+      "acabado": "Verso Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_COSMOPOLITA-BROWN-DET.jpg",
+      "bytes": 490643,
+      "acabado": "Cosmopolita Brown",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_COSMOPOLITA-DARK_11zon.webp",
+      "bytes": 84218,
+      "acabado": "Cosmopolita Dark",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_COSMOPOLITA-LIGHT.jpg",
+      "bytes": 385410,
+      "acabado": "Cosmopolita Light",
+      "copiada": true
+    },
+    {
+      "archivo": "ASCALE_COSMOPOLITA-SILVER.jpg",
+      "bytes": 321688,
+      "acabado": "Cosmopolita Silver",
+      "copiada": true
+    },
+    {
+      "archivo": "BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp",
+      "bytes": 127700,
+      "acabado": "Boreal Sand",
+      "copiada": true
+    },
+    {
+      "archivo": "BOREAL_UMBER_1600X3200_PZA3_R__-2048x1024.webp",
+      "bytes": 136592,
+      "acabado": "Boreal Umber",
+      "copiada": true
+    },
+    {
+      "archivo": "cajonlateralescristal.webp",
+      "bytes": 32458,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "cajontiraaluminio.webp",
+      "bytes": 7648,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "Casa-Caujaral-Lungomare-Meson-e-isla-Gramarston®-Belvedere-Black-01-gramar.jpg",
+      "bytes": 287347,
+      "acabado": "Belvedere",
+      "copiada": true
+    },
+    {
+      "archivo": "CEPPO-DI-GRE_320X160-4.jpg",
+      "bytes": 13424734,
+      "acabado": "Ceppo di Gre",
+      "copiada": true
+    },
+    {
+      "archivo": "CEPPO_DI_GRE_SILVER_1-e1747297291567-2048x1021.jpg.webp",
+      "bytes": 630756,
+      "acabado": "Ceppo di Gre",
+      "copiada": true
+    },
+    {
+      "archivo": "Cocina-principal-Modula-Line-Meson-salpicadero-e-isla-Gramarston®-Ducal-Gold-01-gramar.jpg",
+      "bytes": 310546,
+      "acabado": "Ducal Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "cocinanebulabrown.webp",
+      "bytes": 132208,
+      "acabado": "Nebula Brown",
+      "copiada": false
+    },
+    {
+      "archivo": "cocinapalomastone.webp",
+      "bytes": 104798,
+      "acabado": "Palomastone",
+      "copiada": false
+    },
+    {
+      "archivo": "cocinasavannaterra.webp",
+      "bytes": 155912,
+      "acabado": "Savanna Terra",
+      "copiada": false
+    },
+    {
+      "archivo": "COSMOPOLITA_BLACK_3200X1600_RGB_PZA1_11zon-1-scaled-e1769613007227-2048x1024.webp",
+      "bytes": 61066,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "COSMOPOLITA_BROWN_3200X1600_RGB_PZA2_2_11zon_2_11zon-1-scaled-e1767868643310-2048x1024.webp",
+      "bytes": 42600,
+      "acabado": "Cosmopolita Brown",
+      "copiada": true
+    },
+    {
+      "archivo": "COSMOPOLITA_GREY_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+      "bytes": 15694,
+      "acabado": "Cosmopolita Gray",
+      "copiada": true
+    },
+    {
+      "archivo": "COSMOPOLITA_LIGHT_3200X1600_PZA1_RGB_ALTA_11zon_11zon-1-1-2048x1018.webp",
+      "bytes": 8558,
+      "acabado": "Cosmopolita Light",
+      "copiada": true
+    },
+    {
+      "archivo": "COSMOPOLITA_SILVER_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+      "bytes": 16410,
+      "acabado": "Cosmopolita Silver",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-allure-black-5120-r2gymp4dl8rbxg35bumde3s4bdi0h9dlwlan9r9aka.webp",
+      "bytes": 41386,
+      "acabado": "Allure Black",
+      "copiada": false
+    },
+    {
+      "archivo": "cover-armani-silver-2048x1024.webp",
+      "bytes": 233306,
+      "acabado": "Armani Silver",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-belvedere-black-5120-2048x1024.webp",
+      "bytes": 221326,
+      "acabado": "Belvedere",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-crystal-lux-white-5120-2048x1038.webp",
+      "bytes": 114726,
+      "acabado": "Crystal Lux White",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-ducal-gold-5120-2048x1034.webp",
+      "bytes": 67648,
+      "acabado": "Ducal Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-grassi-white-5120-1-2048x1024.jpg.webp",
+      "bytes": 45478,
+      "acabado": "Grassi White",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-grum-black-5120-2048x1024.webp",
+      "bytes": 6960,
+      "acabado": "Grum Black",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-labradorite-royalblue-1-2048x1023.webp",
+      "bytes": 644616,
+      "acabado": "Labradorite",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-lasa-white-1-2048x1024.webp",
+      "bytes": 16714,
+      "acabado": "Lasa",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-laurent-black-5120-2048x1024.webp",
+      "bytes": 148860,
+      "acabado": "Laurent",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-lucca-gold-5120-2048x1022.webp",
+      "bytes": 83094,
+      "acabado": "Lucca Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-macchia-vecchia-2048x1022.webp",
+      "bytes": 129230,
+      "acabado": "Macchia Vecchia",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-new-torano-h-2048x1024.webp",
+      "bytes": 73222,
+      "acabado": "New Torano",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-patagonia-5120-2048x1023.webp",
+      "bytes": 309408,
+      "acabado": "Patagonia",
+      "copiada": true
+    },
+    {
+      "archivo": "cover-taj-mahal-almond-5120-2048x1024.webp",
+      "bytes": 132386,
+      "acabado": "Taj Mahal",
+      "copiada": true
+    },
+    {
+      "archivo": "CROTONE_PULPIS_160X320_RGB_PZA3-min-scaled-e1748426594481-2048x1024.jpg.webp",
+      "bytes": 99726,
+      "acabado": "Crotone Pulpis",
+      "copiada": true
+    },
+    {
+      "archivo": "Det_Cosmopolita-Gray.webp",
+      "bytes": 420514,
+      "acabado": "Cosmopolita Gray",
+      "copiada": true
+    },
+    {
+      "archivo": "ESPACIO_NOCHE-1-copia.webp",
+      "bytes": 120724,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "etnablack.webp",
+      "bytes": 58890,
+      "acabado": "Etna Black",
+      "copiada": false
+    },
+    {
+      "archivo": "etnablackcocina.jpg",
+      "bytes": 2923540,
+      "acabado": "Etna Black",
+      "copiada": false
+    },
+    {
+      "archivo": "FORESTABLUE-2048x1024.webp",
+      "bytes": 320066,
+      "acabado": "Foresta Blue",
+      "copiada": true
+    },
+    {
+      "archivo": "Foto-Portland-min.jpg",
+      "bytes": 1871752,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "galeria-new-torano-statuario.webp",
+      "bytes": 353862,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "H-ANTALYA_SAND_3200X1600_RGB_PZA1_MASCARAS-2048x1024.webp",
+      "bytes": 251230,
+      "acabado": "Antalya Sand",
+      "copiada": true
+    },
+    {
+      "archivo": "JPEG-DalmauInteriors-RubenMilena-ALTA-13.jpg",
+      "bytes": 3880695,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "labradorite-royalblue-01.webp",
+      "bytes": 177250,
+      "acabado": "Labradorite",
+      "copiada": true
+    },
+    {
+      "archivo": "lasa-white-06.webp",
+      "bytes": 65774,
+      "acabado": "Lasa",
+      "copiada": true
+    },
+    {
+      "archivo": "laurent-black-05.webp",
+      "bytes": 45934,
+      "acabado": "Laurent",
+      "copiada": true
+    },
+    {
+      "archivo": "lucca-gold-01.webp",
+      "bytes": 157376,
+      "acabado": "Lucca Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "macchia-vecchia-gold-05.webp",
+      "bytes": 228974,
+      "acabado": "Macchia Vecchia",
+      "copiada": true
+    },
+    {
+      "archivo": "MARQUINA_BLACK_A_1600X3200_RGB_1_11zon-scaled-e1767870529832-2048x1024.webp",
+      "bytes": 63396,
+      "acabado": "Marquina",
+      "copiada": true
+    },
+    {
+      "archivo": "MG_3592dAA_8_11zon.webp",
+      "bytes": 134496,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "montblanc-white-04.webp",
+      "bytes": 101196,
+      "acabado": "Montblanc",
+      "copiada": true
+    },
+    {
+      "archivo": "MONTBLANC_WHITE_A_3200X1600_RGB_1_11zon-1-scaled-e1767870093852-2048x1024.webp",
+      "bytes": 49986,
+      "acabado": "Montblanc",
+      "copiada": true
+    },
+    {
+      "archivo": "moon-black-cocina.webp",
+      "bytes": 238272,
+      "acabado": "Moon Black",
+      "copiada": false
+    },
+    {
+      "archivo": "moonblack.webp",
+      "bytes": 203316,
+      "acabado": "Moon Black",
+      "copiada": false
+    },
+    {
+      "archivo": "MYSTIC-SILVER-160X320_4_11zon.webp",
+      "bytes": 852626,
+      "acabado": "Mystic Silver",
+      "copiada": true
+    },
+    {
+      "archivo": "nebulabrown.webp",
+      "bytes": 181260,
+      "acabado": "Nebula Brown",
+      "copiada": false
+    },
+    {
+      "archivo": "ONICE-BLUE-MATT-160X320-A_WEB-scaled-e1756453006285-2048x1024.webp",
+      "bytes": 126738,
+      "acabado": "Onice Blue",
+      "copiada": true
+    },
+    {
+      "archivo": "ONICE-SEAGREEN-2-1.jpg",
+      "bytes": 1034096,
+      "acabado": "Onice Seagreen",
+      "copiada": true
+    },
+    {
+      "archivo": "ONICE-WHITE-MATT-160X320-JPG-scaled-e1750938818807-2048x1024.jpg.webp",
+      "bytes": 33210,
+      "acabado": null,
+      "copiada": false
+    },
+    {
+      "archivo": "ONICE_BLACK_A_3200X1600_RGB_PZA1-scaled-e1750938961304-2048x1024.jpg.webp",
+      "bytes": 56462,
+      "acabado": "Onice Black",
+      "copiada": true
+    },
+    {
+      "archivo": "Onice_Blue_web.webp",
+      "bytes": 535674,
+      "acabado": "Onice Blue",
+      "copiada": true
+    },
+    {
+      "archivo": "ONICE_SEAGREEN_A_1600X3200_RGB_ALTA_3_11zon-scaled-e1767806053996-2048x1023.webp",
+      "bytes": 72848,
+      "acabado": "Onice Seagreen",
+      "copiada": true
+    },
+    {
+      "archivo": "palomastone.webp",
+      "bytes": 87754,
+      "acabado": "Palomastone",
+      "copiada": false
+    },
+    {
+      "archivo": "patagonia-gold-01.webp",
+      "bytes": 92780,
+      "acabado": "Patagonia",
+      "copiada": true
+    },
+    {
+      "archivo": "PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp",
+      "bytes": 57890,
+      "acabado": "Portland Linen",
+      "copiada": true
+    },
+    {
+      "archivo": "PORTLAND_PEARL_1600X3200_RGB_PZA1_MASCARAS-copia-1-2048x1024.webp",
+      "bytes": 76192,
+      "acabado": "Portland Pearl",
+      "copiada": true
+    },
+    {
+      "archivo": "savannaterra.webp",
+      "bytes": 117332,
+      "acabado": "Savanna Terra",
+      "copiada": false
+    },
+    {
+      "archivo": "TIVOLI_WHITE-STRATA_1000X3000_RGB_PZA1-1-scaled-e1786957418322-2048x683.webp",
+      "bytes": 226058,
+      "acabado": "Tivoli White Strata",
+      "copiada": true
+    },
+    {
+      "archivo": "tivolistratacocina.webp",
+      "bytes": 442626,
+      "acabado": "Tivoli White Strata",
+      "copiada": true
+    },
+    {
+      "archivo": "tivoliwhite.webp",
+      "bytes": 141520,
+      "acabado": "Tivoli White",
+      "copiada": false
+    },
+    {
+      "archivo": "tivoliwhitecocina.webp",
+      "bytes": 448632,
+      "acabado": "Tivoli White",
+      "copiada": false
+    },
+    {
+      "archivo": "tivoliwhitestrata.webp",
+      "bytes": 141240,
+      "acabado": "Tivoli White Strata",
+      "copiada": true
+    },
+    {
+      "archivo": "toffeebrown.webp",
+      "bytes": 42636,
+      "acabado": "Toffee Brown",
+      "copiada": false
+    },
+    {
+      "archivo": "toffeebrowncocina.webp",
+      "bytes": 219012,
+      "acabado": "Toffee Brown",
+      "copiada": false
+    },
+    {
+      "archivo": "treviwhite.webp",
+      "bytes": 37160,
+      "acabado": "Trevi White",
+      "copiada": false
+    },
+    {
+      "archivo": "treviwhitecocina.jpg",
+      "bytes": 393048,
+      "acabado": "Trevi White",
+      "copiada": false
+    },
+    {
+      "archivo": "URBAN_WHITE_1200X2800_RGB_PZA3-min-scaled-e1747387097587-2048x878.jpg.webp",
+      "bytes": 72064,
+      "acabado": "Urban White",
+      "copiada": true
+    },
+    {
+      "archivo": "VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp",
+      "bytes": 57398,
+      "acabado": "Vagli Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "VERSO_GOLD_A_RGB_PZA1_1-copia-2-2048x1025.webp",
+      "bytes": 40632,
+      "acabado": "Verso Gold",
+      "copiada": true
+    },
+    {
+      "archivo": "webp-ASCALE_COCINA-BRERA-DARK_detalle.webp",
+      "bytes": 817012,
+      "acabado": "Brera Dark",
+      "copiada": true
+    }
+  ],
+  "variantes": [
+    {
+      "id": "sinterizado-amazonite",
+      "nombre": "Amazonite",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/amazonite-seagreen-02.webp",
+      "muestra": "img/customizer/piedrasinterizada/AMAZONITE_-horizontal-rbzaxflm3a0vq1s2hp1yzbwwe579rpbnin77sqazik.jpg",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amazonite-seagreen-02.webp",
+        "img/customizer/piedrasinterizada/AMAZONITE_-horizontal-rbzaxflm3a0vq1s2hp1yzbwwe579rpbnin77sqazik.jpg"
+      ]
+    },
+    {
+      "id": "sinterizado-ankara",
+      "nombre": "Ankara",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/ANKARA-768x573.webp",
+      "muestra": "img/customizer/piedrasinterizada/ANKARA-768x573.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ANKARA-768x573.webp",
+        "img/customizer/piedrasinterizada/AS_ANKARA_B_3200x1600_RGB_11zon-scaled-e1788852943830-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-aura-lux-white",
+      "nombre": "Aura Lux White",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_AURA-AMB-3-SECUNDARIA_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_AURA_LUX_WHITE_A_3200X1600_RGB_ALTA_MOD_2_11zon-1-scaled-e1768988912116-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_AURA-AMB-3-SECUNDARIA_11zon.webp",
+        "img/customizer/piedrasinterizada/AS_AURA_LUX_WHITE_A_3200X1600_RGB_ALTA_MOD_2_11zon-1-scaled-e1768988912116-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-crystal-lux-white",
+      "nombre": "Crystal Lux White",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/cover-crystal-lux-white-5120-2048x1038.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-crystal-lux-white-5120-2048x1038.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cover-crystal-lux-white-5120-2048x1038.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-labradorite",
+      "nombre": "Labradorite",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/labradorite-royalblue-01.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-labradorite-royalblue-1-2048x1023.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/labradorite-royalblue-01.webp",
+        "img/customizer/piedrasinterizada/cover-labradorite-royalblue-1-2048x1023.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-mystic-silver",
+      "nombre": "Mystic Silver",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/MYSTIC-SILVER-160X320_4_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_MYSTIC_SILVER_B_3200X1600_RGB_11zon_11zon-2-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/MYSTIC-SILVER-160X320_4_11zon.webp",
+        "img/customizer/piedrasinterizada/AS_MYSTIC_SILVER_B_3200X1600_RGB_11zon_11zon-2-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-black",
+      "nombre": "Onice Black",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/amb-14-onice-black_1_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/ONICE_BLACK_A_3200X1600_RGB_PZA1-scaled-e1750938961304-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-14-onice-black_1_11zon.webp",
+        "img/customizer/piedrasinterizada/ONICE_BLACK_A_3200X1600_RGB_PZA1-scaled-e1750938961304-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-blue",
+      "nombre": "Onice Blue",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/Onice_Blue_web.webp",
+      "muestra": "img/customizer/piedrasinterizada/ONICE-BLUE-MATT-160X320-A_WEB-scaled-e1756453006285-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Onice_Blue_web.webp",
+        "img/customizer/piedrasinterizada/ONICE-BLUE-MATT-160X320-A_WEB-scaled-e1756453006285-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-lux-white",
+      "nombre": "Onice Lux White",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/11zon_amb-17-onice-lux-white.webp",
+      "muestra": "img/customizer/piedrasinterizada/11zon_amb-17-onice-lux-white.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/11zon_amb-17-onice-lux-white.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-seagreen",
+      "nombre": "Onice Seagreen",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/ONICE-SEAGREEN-2-1.jpg",
+      "muestra": "img/customizer/piedrasinterizada/ONICE_SEAGREEN_A_1600X3200_RGB_ALTA_3_11zon-scaled-e1767806053996-2048x1023.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ONICE-SEAGREEN-2-1.jpg",
+        "img/customizer/piedrasinterizada/ONICE_SEAGREEN_A_1600X3200_RGB_ALTA_3_11zon-scaled-e1767806053996-2048x1023.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-patagonia",
+      "nombre": "Patagonia",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/patagonia-gold-01.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-patagonia-5120-2048x1023.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/patagonia-gold-01.webp",
+        "img/customizer/piedrasinterizada/cover-patagonia-5120-2048x1023.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-versilis",
+      "nombre": "Versilis",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-alpi-white",
+      "nombre": "Alpi White",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/alpiwhitecocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/alpiwhite.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/alpiwhitecocina.webp",
+        "img/customizer/piedrasinterizada/alpiwhite.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-appennino-gold",
+      "nombre": "Appennino Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_APPENINO-cocinawebp.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_APPENINO-cocinawebp.webp",
+        "img/customizer/piedrasinterizada/APPENNINO-GOLD-160X320_3_11zon.webp",
+        "img/customizer/piedrasinterizada/AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-2048x1024.webp",
+        "img/customizer/piedrasinterizada/AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-scaled-rinl51m2yrkgggukrcknypdjb0q0arye37rqib4vnw.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-belvedere",
+      "nombre": "Belvedere",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/Casa-Caujaral-Lungomare-Meson-e-isla-Gramarston®-Belvedere-Black-01-gramar.jpg",
+      "muestra": "img/customizer/piedrasinterizada/cover-belvedere-black-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Casa-Caujaral-Lungomare-Meson-e-isla-Gramarston®-Belvedere-Black-01-gramar.jpg",
+        "img/customizer/piedrasinterizada/cover-belvedere-black-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-crotone-pulpis",
+      "nombre": "Crotone Pulpis",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/amb-28-crotone-pulpis_v2_3_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/CROTONE_PULPIS_160X320_RGB_PZA3-min-scaled-e1748426594481-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-28-crotone-pulpis_v2_3_11zon.webp",
+        "img/customizer/piedrasinterizada/CROTONE_PULPIS_160X320_RGB_PZA3-min-scaled-e1748426594481-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-ducal-gold",
+      "nombre": "Ducal Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/Cocina-principal-Modula-Line-Meson-salpicadero-e-isla-Gramarston®-Ducal-Gold-01-gramar.jpg",
+      "muestra": "img/customizer/piedrasinterizada/cover-ducal-gold-5120-2048x1034.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Cocina-principal-Modula-Line-Meson-salpicadero-e-isla-Gramarston®-Ducal-Gold-01-gramar.jpg",
+        "img/customizer/piedrasinterizada/cover-ducal-gold-5120-2048x1034.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-grassi-white",
+      "nombre": "Grassi White",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/amb-25-grassi-white_v2_2_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-grassi-white-5120-1-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-25-grassi-white_v2_2_11zon.webp",
+        "img/customizer/piedrasinterizada/cover-grassi-white-5120-1-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-lasa",
+      "nombre": "Lasa",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/lasa-white-06.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-lasa-white-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/lasa-white-06.webp",
+        "img/customizer/piedrasinterizada/cover-lasa-white-1-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-laurent",
+      "nombre": "Laurent",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/laurent-black-05.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-laurent-black-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/laurent-black-05.webp",
+        "img/customizer/piedrasinterizada/cover-laurent-black-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-lucca-gold",
+      "nombre": "Lucca Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/lucca-gold-01.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-lucca-gold-5120-2048x1022.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/lucca-gold-01.webp",
+        "img/customizer/piedrasinterizada/cover-lucca-gold-5120-2048x1022.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-lumina",
+      "nombre": "Lumina",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/AMBIENTE-LUMINA-COLOR.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_LUMINA_A_1760X3525_RGB-1-scaled-e1788857200779-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AMBIENTE-LUMINA-COLOR.webp",
+        "img/customizer/piedrasinterizada/AS_LUMINA_A_1760X3525_RGB-1-scaled-e1788857200779-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-macchia-vecchia",
+      "nombre": "Macchia Vecchia",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/macchia-vecchia-gold-05.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-macchia-vecchia-2048x1022.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/macchia-vecchia-gold-05.webp",
+        "img/customizer/piedrasinterizada/cover-macchia-vecchia-2048x1022.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-marquina",
+      "nombre": "Marquina",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/26-Marquina-Ascale-01-scaled.webp",
+      "muestra": "img/customizer/piedrasinterizada/MARQUINA_BLACK_A_1600X3200_RGB_1_11zon-scaled-e1767870529832-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/26-Marquina-Ascale-01-scaled.webp",
+        "img/customizer/piedrasinterizada/MARQUINA_BLACK_A_1600X3200_RGB_1_11zon-scaled-e1767870529832-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-montblanc",
+      "nombre": "Montblanc",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/montblanc-white-04.webp",
+      "muestra": "img/customizer/piedrasinterizada/MONTBLANC_WHITE_A_3200X1600_RGB_1_11zon-1-scaled-e1767870093852-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/montblanc-white-04.webp",
+        "img/customizer/piedrasinterizada/MONTBLANC_WHITE_A_3200X1600_RGB_1_11zon-1-scaled-e1767870093852-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-new-torano",
+      "nombre": "New Torano",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/cover-new-torano-h-2048x1024.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-new-torano-h-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cover-new-torano-h-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-taj-mahal",
+      "nombre": "Taj Mahal",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_AMB-5-TAJ-MAHAL-VARIANTE.jpg",
+      "muestra": "img/customizer/piedrasinterizada/cover-taj-mahal-almond-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_AMB-5-TAJ-MAHAL-VARIANTE.jpg",
+        "img/customizer/piedrasinterizada/cover-taj-mahal-almond-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-vagli-gold",
+      "nombre": "Vagli Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp",
+      "muestra": "img/customizer/piedrasinterizada/VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-verso-gold",
+      "nombre": "Verso Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COCINA-VERSO-SECUNDARIA-1_ALTA-copia.webp",
+      "muestra": "img/customizer/piedrasinterizada/VERSO_GOLD_A_RGB_PZA1_1-copia-2-2048x1025.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COCINA-VERSO-SECUNDARIA-1_ALTA-copia.webp",
+        "img/customizer/piedrasinterizada/VERSO_GOLD_A_RGB_PZA1_1-copia-2-2048x1025.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-allure-black",
+      "nombre": "Allure Black",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/allure-black-cocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-allure-black-5120-r2gymp4dl8rbxg35bumde3s4bdi0h9dlwlan9r9aka.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/allure-black-cocina.webp",
+        "img/customizer/piedrasinterizada/cover-allure-black-5120-r2gymp4dl8rbxg35bumde3s4bdi0h9dlwlan9r9aka.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-amaya-linen",
+      "nombre": "Amaya Linen",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/amayalimencocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/amayalimen.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amayalimencocina.webp",
+        "img/customizer/piedrasinterizada/amayalimen.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-antalya-sand",
+      "nombre": "Antalya Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/antalya-sand-06.webp",
+      "muestra": "img/customizer/piedrasinterizada/H-ANTALYA_SAND_3200X1600_RGB_PZA1_MASCARAS-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/antalya-sand-06.webp",
+        "img/customizer/piedrasinterizada/H-ANTALYA_SAND_3200X1600_RGB_PZA1_MASCARAS-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-arena-sand",
+      "nombre": "Arena Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_ARENA-SAND-COCINA.webp",
+      "muestra": "img/customizer/piedrasinterizada/ARENA-SAND_3200x1600-1-scaled-e1787067193492-rs3dwvk0oocwt2kmugcuqvz84ul2oud0d0bwydkhu4.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_ARENA-SAND-COCINA.webp",
+        "img/customizer/piedrasinterizada/ARENA-SAND_3200x1600-1-scaled-e1787067193492-rs3dwvk0oocwt2kmugcuqvz84ul2oud0d0bwydkhu4.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-arizona-sand",
+      "nombre": "Arizona Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/arizona-sand-cocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/arizonasand.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/arizona-sand-cocina.webp",
+        "img/customizer/piedrasinterizada/arizonasand.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-armani-silver",
+      "nombre": "Armani Silver",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_ARMANI-SILVER-SECUNDARIA_1-copia.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-armani-silver-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_ARMANI-SILVER-SECUNDARIA_1-copia.webp",
+        "img/customizer/piedrasinterizada/cover-armani-silver-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-boreal-sand",
+      "nombre": "Boreal Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp",
+      "muestra": "img/customizer/piedrasinterizada/BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-boreal-umber",
+      "nombre": "Boreal Umber",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_BOREAL-UMBER-webp.webp",
+      "muestra": "img/customizer/piedrasinterizada/BOREAL_UMBER_1600X3200_PZA3_R__-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_BOREAL-UMBER-webp.webp",
+        "img/customizer/piedrasinterizada/BOREAL_UMBER_1600X3200_PZA3_R__-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-brera-bone",
+      "nombre": "Brera Bone",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COCINA-BRERA-BONE-DET_BAJA.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_BRERA_BONE_3200X1600_RGB_PZA1-copia-1-scaled-e1786521553192-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COCINA-BRERA-BONE-DET_BAJA.webp",
+        "img/customizer/piedrasinterizada/AS_BRERA_BONE_3200X1600_RGB_PZA1-copia-1-scaled-e1786521553192-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-brera-dark",
+      "nombre": "Brera Dark",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/webp-ASCALE_COCINA-BRERA-DARK_detalle.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_BRERA_DARK_3200X1600_RGB_PZA1-copia-1-scaled-e1786531464521-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/webp-ASCALE_COCINA-BRERA-DARK_detalle.webp",
+        "img/customizer/piedrasinterizada/AS_BRERA_DARK_3200X1600_RGB_PZA1-copia-1-scaled-e1786531464521-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-brera-light",
+      "nombre": "Brera Light",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_BANO-BRERA-LIGHT_BAJA_3.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_BRERA_LIGHT_3200X1600_RGB_PZA1-copia-1-scaled-e1786526164382-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_BANO-BRERA-LIGHT_BAJA_3.webp",
+        "img/customizer/piedrasinterizada/AS_BRERA_LIGHT_3200X1600_RGB_PZA1-copia-1-scaled-e1786526164382-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-ceppo-di-gre",
+      "nombre": "Ceppo di Gre",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/CEPPO-DI-GRE_320X160-4.jpg",
+      "muestra": "img/customizer/piedrasinterizada/CEPPO_DI_GRE_SILVER_1-e1747297291567-2048x1021.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/CEPPO-DI-GRE_320X160-4.jpg",
+        "img/customizer/piedrasinterizada/CEPPO_DI_GRE_SILVER_1-e1747297291567-2048x1021.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-denver",
+      "nombre": "Denver",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-etna-black",
+      "nombre": "Etna Black",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/etnablackcocina.jpg",
+      "muestra": "img/customizer/piedrasinterizada/etnablack.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/etnablackcocina.jpg",
+        "img/customizer/piedrasinterizada/etnablack.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-foresta-blue",
+      "nombre": "Foresta Blue",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/amb-01-foresta-blue-120x280_1_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/amb-01-foresta-blue-120x280_1_11zon.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-01-foresta-blue-120x280_1_11zon.webp",
+        "img/customizer/piedrasinterizada/FORESTABLUE-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-grum-black",
+      "nombre": "Grum Black",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/Apt-Modelo-Sta-Maria-de-los-Cerros-Cocina-Quadra-Laminada-Gramarston®-Grum-Black-02.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-grum-black-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Apt-Modelo-Sta-Maria-de-los-Cerros-Cocina-Quadra-Laminada-Gramarston®-Grum-Black-02.webp",
+        "img/customizer/piedrasinterizada/cover-grum-black-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-nebula-brown",
+      "nombre": "Nebula Brown",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/cocinanebulabrown.webp",
+      "muestra": "img/customizer/piedrasinterizada/nebulabrown.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cocinanebulabrown.webp",
+        "img/customizer/piedrasinterizada/nebulabrown.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-paloma-stone",
+      "nombre": "Palomastone",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/cocinapalomastone.webp",
+      "muestra": "img/customizer/piedrasinterizada/palomastone.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cocinapalomastone.webp",
+        "img/customizer/piedrasinterizada/palomastone.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-portland-linen",
+      "nombre": "Portland Linen",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp",
+      "muestra": "img/customizer/piedrasinterizada/PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-portland-pearl",
+      "nombre": "Portland Pearl",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/AMB_PORTLAND-PEARL-1.jpg",
+      "muestra": "img/customizer/piedrasinterizada/PORTLAND_PEARL_1600X3200_RGB_PZA1_MASCARAS-copia-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AMB_PORTLAND-PEARL-1.jpg",
+        "img/customizer/piedrasinterizada/PORTLAND_PEARL_1600X3200_RGB_PZA1_MASCARAS-copia-1-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-savanna-terra",
+      "nombre": "Savanna Terra",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/cocinasavannaterra.webp",
+      "muestra": "img/customizer/piedrasinterizada/savannaterra.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cocinasavannaterra.webp",
+        "img/customizer/piedrasinterizada/savannaterra.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-tivoli-white",
+      "nombre": "Tivoli White",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/tivoliwhitecocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/tivoliwhite.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/tivoliwhitecocina.webp",
+        "img/customizer/piedrasinterizada/tivoliwhite.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-tivoli-white-strata",
+      "nombre": "Tivoli White Strata",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/tivolistratacocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/amb-05-tivoli-strata-100x300-copia.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/tivolistratacocina.webp",
+        "img/customizer/piedrasinterizada/TIVOLI_WHITE-STRATA_1000X3000_RGB_PZA1-1-scaled-e1786957418322-2048x683.webp",
+        "img/customizer/piedrasinterizada/tivoliwhitestrata.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-toffee-brown",
+      "nombre": "Toffee Brown",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/toffeebrowncocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/toffeebrown.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/toffeebrowncocina.webp",
+        "img/customizer/piedrasinterizada/toffeebrown.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-trevi-white",
+      "nombre": "Trevi White",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/treviwhitecocina.jpg",
+      "muestra": "img/customizer/piedrasinterizada/treviwhite.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/treviwhitecocina.jpg",
+        "img/customizer/piedrasinterizada/treviwhite.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-brown",
+      "nombre": "Cosmopolita Brown",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-BROWN-DET.jpg",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_BROWN_3200X1600_RGB_PZA2_2_11zon_2_11zon-1-scaled-e1767868643310-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-BROWN-DET.jpg",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_BROWN_3200X1600_RGB_PZA2_2_11zon_2_11zon-1-scaled-e1767868643310-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-dark",
+      "nombre": "Cosmopolita Dark",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-DARK_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-DARK_11zon.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-DARK_11zon.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-gray",
+      "nombre": "Cosmopolita Gray",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/Det_Cosmopolita-Gray.webp",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_GREY_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Det_Cosmopolita-Gray.webp",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_GREY_3200X1600_PZA1-copia-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-ivory",
+      "nombre": "Cosmopolita Ivory",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp",
+      "muestra": "img/customizer/piedrasinterizada/11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-light",
+      "nombre": "Cosmopolita Light",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-LIGHT.jpg",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_LIGHT_3200X1600_PZA1_RGB_ALTA_11zon_11zon-1-1-2048x1018.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-LIGHT.jpg",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_LIGHT_3200X1600_PZA1_RGB_ALTA_11zon_11zon-1-1-2048x1018.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-silver",
+      "nombre": "Cosmopolita Silver",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-SILVER.jpg",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_SILVER_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-SILVER.jpg",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_SILVER_3200X1600_PZA1-copia-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-moon-black",
+      "nombre": "Moon Black",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/moon-black-cocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/moonblack.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/moon-black-cocina.webp",
+        "img/customizer/piedrasinterizada/moonblack.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-urban-white",
+      "nombre": "Urban White",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/amb-15-urban-white_1_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/URBAN_WHITE_1200X2800_RGB_PZA3-min-scaled-e1747387097587-2048x878.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-15-urban-white_1_11zon.webp",
+        "img/customizer/piedrasinterizada/URBAN_WHITE_1200X2800_RGB_PZA3-min-scaled-e1747387097587-2048x878.jpg.webp"
+      ]
+    }
+  ]
+}

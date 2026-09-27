@@ -1185,3 +1185,44 @@ a { text-decoration: none; color: inherit; }
 }
 
 
+
+.color-chip img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.color-chip.has-img { border: none; padding: 0; }
+
+.material-card-swatch { height: 250px; }
+.material-card-swatch img { object-fit: cover; width: 100%; height: 100%; }
+
+.frente-color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 16px; }
+.frente-color-card { background: #fff; border: 2px solid transparent; border-radius: 8px; cursor: pointer; overflow: hidden; transition: all var(--tr); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.frente-color-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.frente-color-card.sel { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+.frente-color-card-img { height: 110px; background: var(--light); position: relative; }
+.frente-color-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.frente-color-card-name { font-size: .75rem; font-weight: 500; text-align: center; padding: 8px 4px; color: var(--dark); line-height: 1.2; }
+.frente-color-check { position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity var(--tr); }
+.frente-color-card.sel .frente-color-check { opacity: 1; }
+
+.frente-color-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.frente-color-card-img { height: 90px; }
+.frente-zone-selector { display: none; margin-top: 16px; padding: 16px; background: #fafafa; border: 1px solid var(--border); border-radius: 8px; }
+.frente-zone-selector.active { display: block; }
+.frente-zone-title { font-size: .85rem; font-weight: 600; margin-bottom: 12px; }
+.frente-zone-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.frente-zone-btn { padding: 8px 16px; border: 1px solid var(--border-d); border-radius: 6px; background: #fff; font-size: .75rem; cursor: pointer; transition: all var(--tr); }
+.frente-zone-btn:hover { border-color: var(--green); }
+.frente-zone-btn.sel { background: var(--green); color: #fff; border-color: var(--green); }
+.frente-zone-status { font-size: .75rem; color: var(--muted); }
+
+/* FRENTE MODAL */
+.frente-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; padding: 20px; }
+.frente-modal.active { display: flex; opacity: 1; }
+.frente-modal-content { background: #fff; width: 100%; max-width: 1100px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateY(20px); transition: transform 0.3s ease; }
+.frente-modal.active .frente-modal-content { transform: translateY(0); }
+.frente-modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fff; }
+.frente-modal-header h2 { margin: 0; font-size: 1.25rem; font-family: var(--font-serif); font-weight: 500; color: var(--dark); }
+.frente-modal-close { background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; border-radius: 4px; transition: background 0.2s, color 0.2s; }
+.frente-modal-close:hover { background: var(--light); color: var(--dark); }
+.frente-modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+.frente-modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #fdfdfd; }
+.frente-modal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; }
+.frente-modal-grid .frente-color-card-img { height: 100px; }
