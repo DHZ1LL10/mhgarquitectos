@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { site } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "MHG Arquitectos",
+  metadataBase: new URL(site.url),
+  icons: { icon: "/img/logo.jpg" },
   robots: { index: false, follow: false },
 };
 
