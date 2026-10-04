@@ -1,0 +1,125 @@
+/* Photographs retain their original light; compact text panels stay separate. */
+.photo-ampliar {
+  position: absolute; z-index: 5; top: 10px; right: 48px;
+  min-height: 36px; padding: 7px 11px; border: 1px solid rgba(26,79,46,.16);
+  border-radius: 22px; background: rgba(255,255,255,.94); color: var(--green);
+  font: 500 .75rem var(--font-sans); cursor: zoom-in;
+  box-shadow: 0 2px 10px rgba(13,20,16,.09);
+}
+.photo-ampliar[hidden], #lightbox [hidden] { display: none; }
+.photo-ampliar:focus-visible, .herr-gallery button:focus-visible, #lightbox button:focus-visible {
+  outline: 3px solid #70aa83; outline-offset: 3px;
+}
+
+/* Extras: full photograph above a low, clear footer. */
+.extra-card, .extra-card.active {
+  display: flex; flex-direction: column; height: auto; padding: 0; gap: 0;
+  align-items: stretch; background: #fff;
+}
+.extra-card-photo { position: relative; aspect-ratio: 16 / 9; min-height: 230px; max-height: 360px; overflow: hidden; background: #f5f6f3; }
+.extra-card .extra-card-img, .extra-card:hover .extra-card-img, .extra-card.active .extra-card-img {
+  position: static; display: block; width: 100%; height: 100%; object-fit: contain;
+  filter: none; transform: none;
+}
+.extra-card-body { position: static; padding: 8px 14px 9px; color: var(--dark); background: #fff; }
+.extra-card-name { font-size: 1.16rem; line-height: 1.2; }
+.extra-card-desc { max-width: none; margin-top: 4px; font-size: .77rem; line-height: 1.35; opacity: 1; color: #526057; }
+.extra-card.active { box-shadow: 0 3px 14px rgba(26,79,46,.1); outline-width: 1px; }
+
+/* Interior boards share the Extras presentation; the entire card selects. */
+.material-card-swatch { height: auto; aspect-ratio: 16 / 9; min-height: 230px; max-height: 360px; background: #f5f6f3; }
+.material-card .material-card-swatch img,
+.material-card:hover .material-card-swatch img { display: block; object-fit: contain; filter: none; transform: none; cursor: pointer; }
+.material-card-info { display: block; padding: 8px 14px 9px; background: #fff; }
+.material-card-name { font-size: 1.16rem; line-height: 1.2; }
+.material-card-meta { margin-top: 4px; text-align: left; font-size: .77rem; line-height: 1.35; color: #526057; }
+.material-card.selected { box-shadow: 0 3px 14px rgba(26,79,46,.1); outline-width: 1px; }
+
+/* Hardware keeps its large showroom photographs and compact, readable names. */
+.herr-card { min-height: 0; background: #fff; }
+.herr-card:only-child { width: 100%; max-width: 640px; justify-self: center; }
+#esp-si { max-width: 520px; }
+#esp-si .herr-card-photo { height: clamp(300px, 32vw, 420px); }
+#esp-si .herr-card-photo > img { object-fit: cover; object-position: center 75%; }
+.herr-card-photo { position: relative; inset: auto; height: clamp(290px, 28vw, 370px); background: #f4f5f2; }
+.herr-card-photo::after { display: none; }
+.herr-card-photo > img { display: block; object-fit: contain; filter: none; }
+#bis-hettich .herr-card-photo { height: auto; aspect-ratio: 3.2 / 1; min-height: 150px; }
+#bis-hettich .herr-card-photo > img { object-fit: cover; }
+.herr-card:hover .herr-card-photo img { transform: none; }
+.herr-card-body { position: static; padding: 10px 13px 12px; color: var(--dark); background: #fff; }
+.herr-card-name { color: var(--dark); font-size: 1.13rem; line-height: 1.2; }
+.herr-card-desc { color: #526057; font-size: .75rem; line-height: 1.35; }
+.herr-opt { align-self: start; }
+.herr-gallery {
+  position: absolute; z-index: 5; bottom: 10px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; max-width: calc(100% - 16px);
+  padding: 4px; border: 1px solid rgba(26,79,46,.12); border-radius: 9px;
+  background: rgba(255,255,255,.93);
+}
+.herr-gallery-count { font-size: .65rem; color: var(--green); padding: 0 3px; white-space: nowrap; }
+.herr-gallery button { flex: 0 0 36px; width: 36px; height: 40px; padding: 2px; border: 1px solid transparent; border-radius: 5px; background: #fff; cursor: pointer; }
+.herr-gallery button img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
+.herr-gallery button[aria-pressed="true"] { border: 2px solid var(--green); }
+
+/* Front cards: original brightness, localized pale text panel. */
+.frente-line-card { height: clamp(290px, 29vw, 350px); }
+.frente-line-card .frente-line-card-img,
+.frente-line-card:hover .frente-line-card-img,
+.frente-line-card.selected .frente-line-card-img { filter: none; transform: none; }
+.frente-line-card-overlay { display: none; }
+.frente-line-card-body { padding: 10px 15px 12px; color: var(--dark); background: rgba(255,255,255,.95); }
+.frente-line-card-name { font-size: 1.32rem; line-height: 1.2; }
+.frente-line-card-label { font-size: .76rem; letter-spacing: .05em; opacity: 1; color: #526057; }
+.frente-line-card-price { font-size: .84rem; opacity: 1; color: var(--green); }
+.frente-line-card-edit { color: var(--green); background: rgba(255,255,255,.95); border-color: rgba(26,79,46,.15); font-size: .76rem; opacity: 1; }
+.frente-line-card.selected .frente-line-card-edit { color: #fff; }
+.frente-line-card .photo-ampliar { top: auto; bottom: 104px; right: 10px; }
+
+/* Keep the front modal's large left hero and readable swatches on the right. */
+.modal-preview-img-wrap::after { display: none !important; }
+.modal-preview-img-wrap .photo-ampliar { top: auto; bottom: 12px; right: 12px; }
+.modal-preview-img-wrap img { filter: none; }
+.frente-modal-current { font-size: 1.3rem; font-weight: 600; line-height: 1.3; margin: 4px 0 8px; }
+.frente-modal-help { font-size: .8rem; margin-bottom: 12px; }
+.frente-modal-grid { grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); gap: 8px; }
+.frente-color-card-img { height: 86px; }
+.frente-color-card-name { padding: 8px 5px 9px; font-size: .86rem; line-height: 1.3; overflow-wrap: anywhere; }
+.frente-color-check { inset: 6px 6px auto auto; width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: #fff; }
+.frente-modal-grid-label { font-size: .76rem; }
+
+/* One accessible gallery for legacy single images and multiple photographs. */
+#lightbox {
+  position: fixed; inset: 0; z-index: 9999; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  padding: 54px 18px 14px; background: rgba(13,20,16,.95);
+  backdrop-filter: blur(8px); box-sizing: border-box;
+}
+.lb-stage { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; flex: 1; min-height: 0; }
+#lbImg { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 6px; }
+#lightbox button { cursor: pointer; font-family: var(--font-sans); }
+.lb-close, .lb-nav { position: absolute; z-index: 2; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; background: rgba(13,20,16,.7); font-size: 1.8rem; line-height: 1; }
+.lb-close { top: 8px; right: 14px; }
+.lb-nav { top: 50%; transform: translateY(-50%); }
+.lb-prev { left: 0; }
+.lb-next { right: 0; }
+#lbCaption { flex: 0 0 auto; max-width: 100%; margin: 0; color: #fff; font-size: .85rem; line-height: 1.35; text-align: center; overflow-wrap: anywhere; }
+#lbThumbnails { flex: 0 0 auto; display: flex; gap: 6px; max-width: min(680px, 100%); overflow-x: auto; padding: 3px; scrollbar-width: thin; }
+#lbThumbnails button { flex: 0 0 54px; width: 54px; height: 48px; padding: 2px; border: 2px solid transparent; border-radius: 5px; background: rgba(255,255,255,.15); }
+#lbThumbnails button[aria-pressed="true"] { border-color: #97ceaa; }
+#lbThumbnails img { width: 100%; height: 100%; object-fit: cover; border-radius: 2px; }
+@media (max-width: 768px) {
+  .extra-card-photo { height: auto; }
+  .frente-line-card { height: 320px; }
+  .frente-line-card-name { font-size: 1.25rem; }
+  .herr-card-photo { height: clamp(300px, 94vw, 390px); }
+  .photo-ampliar { min-height: 44px; }
+  .frente-modal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .frente-color-card-name { font-size: .84rem; }
+  .herr-gallery button { flex-basis: 40px; width: 40px; height: 44px; }
+  #lightbox { padding: 54px 10px max(12px, env(safe-area-inset-bottom)); gap: 8px; }
+  #lbThumbnails button { flex-basis: 48px; width: 48px; }
+}
+@media (max-width: 360px) {
+  .frente-modal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -5,11 +5,13 @@
   "type": "module",
   "engines": { "node": "24.x" },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npm run verify:legacy && next dev",
+    "build": "npm run verify:legacy && next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint . --max-warnings=0"
+    "lint": "eslint . --max-warnings=0",
+    "sync:legacy": "node scripts/sync-legacy-assets.mjs",
+    "verify:legacy": "node scripts/verify-legacy-assets.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
