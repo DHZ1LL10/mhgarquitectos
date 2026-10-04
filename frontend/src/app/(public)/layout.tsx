@@ -1,10 +1,13 @@
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import FloatingWhatsApp from "@/components/site/FloatingWhatsApp";
+import SiteInteractions from "@/components/site/SiteInteractions";
+import ServiceQuoteModal from "@/components/site/ServiceQuoteModal";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return <>
     {/* Keep the original CSS and fonts during the visual migration. */}
+    {/* eslint-disable-next-line @next/next/no-css-tags */}
     <link rel="stylesheet" href="/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -14,5 +17,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     {children}
     <SiteFooter />
     <FloatingWhatsApp />
+    <ServiceQuoteModal />
+    <SiteInteractions />
   </>;
 }
