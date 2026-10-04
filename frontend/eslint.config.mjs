@@ -1,0 +1,17 @@
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+export default defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  globalIgnores([".next/**", "public/**", "next-env.d.ts", "coverage/**"]),
+  {
+    files: ["src/**/*.tsx"],
+    rules: {
+      // Preserve original image geometry and full-document legacy navigation.
+      "@next/next/no-img-element": "off",
+      "@next/next/no-html-link-for-pages": "off",
+    },
+  },
+]);
