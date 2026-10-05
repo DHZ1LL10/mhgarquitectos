@@ -1,0 +1,29 @@
+.shell { min-height: 100vh; padding: 40px 24px 72px; color: #0f1210; background: #f9faf9; font: 400 15px/1.6 Inter, system-ui, sans-serif; }
+.shell *, .shell *::before, .shell *::after { box-sizing: border-box; }
+.container { max-width: 1200px; margin: 0 auto; }
+.heading { font: 500 clamp(1.8rem, 4vw, 2.5rem)/1.2 Georgia, serif; margin: 20px 0 12px; }
+.navigation { display: flex; flex-wrap: wrap; gap: 20px; }
+.navigation a { color: #1a4f2e; text-decoration: underline; text-underline-offset: 4px; }
+.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin: 28px 0; }
+.button { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 18px; border: 1px solid #1a4f2e; border-radius: 8px; background: #1a4f2e; color: #fff; font: inherit; cursor: pointer; }
+.secondary { background: #fff; color: #1a4f2e; }
+.button:focus-visible, .form input:focus-visible, .form select:focus-visible, .form textarea:focus-visible { outline: 3px solid #2d7a48; outline-offset: 3px; }
+.layout { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.5fr); gap: 28px; align-items: start; }
+.list { display: grid; gap: 12px; }
+.record { background: #fff; padding: 20px; border: 1px solid #dce3de; border-radius: 8px; }
+.record h2 { font-size: 1.1rem; margin: 0 0 10px; }
+.record p { margin: 8px 0; overflow-wrap: anywhere; }
+.badge { display: inline-block; padding: 3px 10px; background: #eef4f0; color: #1a4f2e; border-radius: 20px; font-size: .8rem; }
+.panel { background: #fff; padding: 28px; border: 1px solid #dce3de; border-radius: 8px; min-width: 0; }
+.panel h2 { margin-top: 0; font-size: 1.3rem; }
+.form { display: grid; gap: 18px; }
+.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-weight: 500; }
+.field input, .field select, .field textarea { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #bac8bf; border-radius: 6px; font: inherit; font-weight: 400; color: #0f1210; background: #fff; }
+.field textarea { min-height: 130px; resize: vertical; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.message { padding: 12px 16px; background: #eef4f0; border-radius: 6px; color: #1a4f2e; }
+.errors { padding: 16px 24px; background: #fff0ed; color: #8c2a18; border: 1px solid #ebbbb0; border-radius: 6px; }
+.hint { color: #53605a; font-size: .88rem; margin: 0; }
+@media (max-width: 850px) { .layout { grid-template-columns: 1fr; } .shell { padding: 24px 16px 56px; } }
+@media (max-width: 480px) { .row { grid-template-columns: 1fr; } .panel { padding: 20px; } }
