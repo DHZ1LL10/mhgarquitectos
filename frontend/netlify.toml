@@ -1,0 +1,14 @@
+# For a NEW test site with base directory frontend only.
+# Do not connect this configuration to the existing production site.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24.21.0"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
