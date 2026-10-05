@@ -1,5 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export default function SiteFooter() {
   const pathname = usePathname();
@@ -17,6 +18,7 @@ export default function SiteFooter() {
         </div>
         <nav className="footer-nav" aria-label="Navegación del footer">
           <a href={home ? "#proyectos" : "/#proyectos"}>Proyectos</a>
+          <Link href="/propiedades">Propiedades</Link>
           <a href={home ? "#servicios" : "/#servicios"}>Servicios</a>
           <a href={home ? "#nosotros" : "/#nosotros"}>Nosotros</a>
           <a href={home ? "#sucursales" : "/#sucursales"}>Sucursales</a>

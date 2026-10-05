@@ -1,5 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export default function SiteHeader() {
       </button>
       <nav className="nav-menu" id="nav-menu">
         <a href={home ? "#proyectos" : "/#proyectos"} className="nav-link">Proyectos</a>
+        <Link href="/propiedades" className="nav-link" aria-current={pathname.startsWith("/propiedades") ? "page" : undefined}>Propiedades</Link>
         <a href={home ? "#servicios" : "/#servicios"} className="nav-link">Servicios</a>
         <a href={home ? "#nosotros" : "/#nosotros"} className="nav-link">Nosotros</a>
         <a href={home ? "#sucursales" : "/#sucursales"} className="nav-link">Sucursales</a>
