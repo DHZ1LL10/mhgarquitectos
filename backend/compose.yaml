@@ -1,0 +1,90 @@
+name: mhg-core
+x-db-env: &db-env
+  DB_HOST: db
+  DB_PORT: 5432
+  DB_NAME: ${DB_NAME:-mhg}
+  DB_USER: ${DB_USER:-mhg}
+  DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in backend/.env}
+
+services:
+  db:
+    image: postgres:17.11-bookworm@sha256:04ea508c0ea323b679fbab075463b800b33337253768ad3feccfbc8005c644aa
+    environment:
+      POSTGRES_DB: ${DB_NAME:-mhg}
+      POSTGRES_USER: ${DB_USER:-mhg}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in backend/.env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      target: base
+    environment: *db-env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      target: base
+    environment:
+      <<: *db-env
+      ENABLE_ADMIN_ENDPOINTS: ${ENABLE_ADMIN_ENDPOINTS:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  test-db:
+    profiles: ["test"]
+    image: postgres:17.11-bookworm@sha256:04ea508c0ea323b679fbab075463b800b33337253768ad3feccfbc8005c644aa
+    environment:
+      POSTGRES_DB: mhg_test
+      POSTGRES_USER: mhg_test
+      POSTGRES_PASSWORD: test-only-password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mhg_test -d mhg_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  tests:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    environment:
+      DB_HOST: test-db
+      DB_PORT: 5432
+      DB_NAME: mhg_test
+      DB_USER: mhg_test
+      DB_PASSWORD: test-only-password
+      ENABLE_ADMIN_ENDPOINTS: "true"
+    depends_on:
+      test-db:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
