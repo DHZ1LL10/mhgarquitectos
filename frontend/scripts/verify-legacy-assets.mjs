@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import vm from "node:vm";
-import { baseline, repository, publicDirectory, publicFiles, originalBytes, sha256, walk } from "./legacy-assets.mjs";
+import { baseline, repository, publicDirectory, publicFiles, originalBytes, expectedPublicHash, sha256, walk } from "./legacy-assets.mjs";
 
 for (const name of Object.keys(baseline.files)) await originalBytes(name);
 for (const name of publicFiles) {
-  assert.equal(sha256(await readFile(path.join(publicDirectory, name))), baseline.files[name], `Copy differs: ${name}`);
+  assert.equal(sha256(await readFile(path.join(publicDirectory, name))), expectedPublicHash(name), `Copy differs: ${name}`);
 }
 const actual = (await walk(publicDirectory)).map(file => path.relative(publicDirectory, file).replaceAll("\\", "/")).sort();
 assert.deepEqual(actual, [...publicFiles].sort(), "Unexpected or missing files in public/");

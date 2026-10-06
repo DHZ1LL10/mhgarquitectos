@@ -53,7 +53,10 @@
 
     /* SIDEBAR */
     .sidebar { width: 240px; flex-shrink: 0; background: #fff; border-right: 1px solid var(--border); position: sticky; top: 58px; height: calc(100vh - 58px); overflow-y: auto; padding: 24px 0; }
-    .sidebar-step { display: flex; align-items: flex-start; gap: 12px; padding: 10px 22px; border-left: 3px solid transparent; cursor: default; transition: background var(--tr), border-color var(--tr); }
+    .sidebar-step { display: flex; align-items: flex-start; gap: 12px; padding: 10px 22px; border-left: 3px solid transparent; cursor: pointer; transition: background var(--tr), border-color var(--tr), opacity var(--tr), transform var(--tr); }
+    .sidebar-step { width: 100%; border-top: 0; border-right: 0; border-bottom: 0; background: transparent; font: inherit; text-align: left; }
+    .sidebar-step:hover { background: var(--light); }
+    .sidebar-step:focus-visible { outline: 2px solid var(--green); outline-offset: -3px; }
     .sidebar-step.active { background: var(--green-fade); border-left-color: var(--green); }
     .sidebar-step.done { opacity: .55; }
     .step-bullet { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border-d); display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 600; color: var(--muted); flex-shrink: 0; margin-top: 1px; transition: all var(--tr); }
@@ -202,6 +205,8 @@
     .cubierta-modal[hidden] { display: none; }
     .cubierta-modal { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(13,20,16,.58); backdrop-filter: blur(6px); }
     .cubierta-modal-dialog { width: min(1560px, 100%); height: 92vh; height: 92dvh; min-width: 0; display: flex; flex-direction: column; background: #fff; border-radius: 18px; box-shadow: 0 24px 90px rgba(13,20,16,.3); overflow: hidden; }
+    .cubierta-modal-dialog { opacity: 1; transform: translateY(0); transition: opacity .18s ease, transform .18s ease; }
+    #cubiertaModal.is-closing .cubierta-modal-dialog { opacity: 0; transform: translateY(8px); }
     .cubierta-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 26px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .cubierta-modal-header h2 { margin: 0; font: 1.7rem var(--font-serif); color: var(--dark); }
     .cubierta-modal-close { width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 50%; background: #fff; color: var(--green); cursor: pointer; font-size: 1.6rem; }
@@ -301,6 +306,18 @@
     .form-textarea { resize: vertical; min-height: 84px; }
     .map-note { font-size: .7rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
     .map-note a { color: var(--green); text-decoration: none; }
+    .map-picker-button { border: 0; padding: 0; background: none; color: var(--green); font: inherit; cursor: pointer; text-decoration: underline; }
+    .map-picker-button:hover { color: var(--green-l); }
+    .map-picker-modal { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(13,20,16,.62); visibility: hidden; pointer-events: none; opacity: 0; transition: opacity .2s ease, visibility .2s ease; }
+    .map-picker-modal.active { visibility: visible; pointer-events: auto; opacity: 1; }
+    .map-picker-dialog { width: min(900px, 100%); background: #fff; border-radius: 12px; overflow: hidden; transform: translateY(8px); transition: transform .2s ease; }
+    .map-picker-modal.active .map-picker-dialog { transform: translateY(0); }
+    .map-picker-header, .map-picker-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; }
+    .map-picker-header { border-bottom: 1px solid var(--border); }
+    .map-picker-header h2 { margin: 0; font: 500 1.2rem var(--font-serif); }
+    .map-picker-map { height: min(62vh, 520px); min-height: 300px; background: var(--light); }
+    .map-picker-status { margin: 0; color: var(--muted); font-size: .75rem; }
+    .map-picker-footer { border-top: 1px solid var(--border); }
 
     /* SUMMARY */
     .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
@@ -547,8 +564,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      :is(.option-card, .material-card, .frente-line-card, .herr-card, .cubierta-item, .extra-card),
-      :is(.option-photo img, .material-card-swatch img, .frente-line-card-img, .herr-card-photo img, .cubierta-swatch img, .extra-card-img) { transition: none; }
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
 
     /* Modal de frentes: misma jerarquía visual que Cubiertas. */
@@ -629,11 +645,11 @@
   <nav class="sidebar" id="sidebarSteps"></nav>
   <main class="content-area">
     <p class="content-eyebrow" id="contentEyebrow">Paso 1 de 8</p>
-    <h1 class="content-title" id="contentTitle">Tus <em>datos</em></h1>
-    <p class="content-subtitle" id="contentSubtitle">Empieza con tu información de contacto para personalizar tu cotización.</p>
+    <h1 class="content-title" id="contentTitle"><em>Situación</em> actual</h1>
+    <p class="content-subtitle" id="contentSubtitle">Cuéntanos cómo está el espacio hoy para ajustar la propuesta.</p>
 
-    <!-- PASO 1: CLIENTE -->
-    <section class="step-panel active" id="panel-0">
+    <!-- PASO 7: DATOS DEL CLIENTE -->
+    <section class="step-panel" id="panel-6">
       <div class="form-grid">
         <div class="form-col">
           <div class="form-group">
@@ -676,7 +692,7 @@
             <input type="text" id="c-dir" class="form-input" placeholder="Calle, Número, Colonia..." autocomplete="street-address" />
             <div class="map-note">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <a href="https://maps.google.com" target="_blank" rel="noopener">Abrir Google Maps</a> y pega tu ubicación
+              <button type="button" class="map-picker-button" onclick="openLocationMap()">Seleccionar ubicación en mapa</button>
             </div>
           </div>
           <div class="form-group">
@@ -687,8 +703,8 @@
       </div>
     </section>
 
-    <!-- PASO 2: SITUACION -->
-    <section class="step-panel" id="panel-1">
+    <!-- PASO 1: SITUACION -->
+    <section class="step-panel active" id="panel-0">
       <div class="options-list">
         <div class="option-card" id="sit-0" onclick="selectSituation(this,'sin-cocina')">
           <div class="option-photo">
@@ -726,8 +742,8 @@
       </div>
     </section>
 
-    <!-- PASO 3: TABLEROS INTERIORES -->
-    <section class="step-panel" id="panel-2">
+    <!-- PASO 2: TABLEROS INTERIORES -->
+    <section class="step-panel" id="panel-1">
       <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Este acabado se aplicará al interior de todos los muebles.</p>
       <div class="material-grid">
         <div class="material-card" id="int-0" onclick="selectInterior(this,'blanco-frosty')">
@@ -753,19 +769,19 @@
       </div>
     </section>
 
-    <!-- PASO 4: FRENTES -->
-    <section class="step-panel" id="panel-3">
+    <!-- PASO 3: FRENTES -->
+    <section class="step-panel" id="panel-2">
       <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Selecciona una o más líneas. Puedes combinar colores y líneas por zonas.</p>
       <div class="frente-list" id="frenteList"></div>
     </section>
 
-    <!-- PASO 5: HERRAJES -->
-    <section class="step-panel" id="panel-4">
+    <!-- PASO 4: HERRAJES -->
+    <section class="step-panel" id="panel-3">
       <div id="herrajeContainer"></div>
     </section>
 
-    <!-- PASO 6: CUBIERTAS -->
-    <section class="step-panel" id="panel-5">
+    <!-- PASO 5: CUBIERTAS -->
+    <section class="step-panel" id="panel-4">
       <div class="cubierta-list" id="cubiertas-list">
         <div class="cubierta-item" id="cub-solida" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="cubiertaModal" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }" onclick="selectCubierta(this,'solida')">
           <div class="cubierta-swatch"><img src="img/customizer/superficiesolida.jpg" alt="Base sólida Corian" /></div>
@@ -807,8 +823,8 @@
       <p id="cubiertaSelectionStatus" class="cubierta-page-selection" role="status"></p>
     </section>
 
-    <!-- PASO 7: EXTRAS -->
-    <section class="step-panel" id="panel-6">
+    <!-- PASO 6: EXTRAS -->
+    <section class="step-panel" id="panel-5">
       <div class="extras-grid">
         <div class="extra-card" id="ext-led" onclick="toggleExtra(this,'led','Iluminación LED')">
           <div class="extra-card-photo"><img class="extra-card-img" src="img/customizer/iluminacionled.jpg" alt="Iluminación LED" /></div>
@@ -943,6 +959,14 @@
   </section>
 </div>
 
+<div class="map-picker-modal" id="locationMapModal" aria-hidden="true" onclick="if(event.target === this) closeLocationMap()">
+  <section class="map-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="locationMapTitle">
+    <header class="map-picker-header"><h2 id="locationMapTitle">Selecciona la ubicación</h2><button type="button" class="action-btn" onclick="closeLocationMap()" aria-label="Cerrar mapa">×</button></header>
+    <div class="map-picker-map" id="locationMap" role="application" aria-label="Mapa de Google para elegir la ubicación"></div>
+    <footer class="map-picker-footer"><p class="map-picker-status" id="locationMapStatus" aria-live="polite">Haz clic en el mapa para colocar el pin.</p><div class="frente-modal-actions"><button type="button" class="action-btn" onclick="closeLocationMap()">Cancelar</button><button type="button" class="action-btn green" onclick="confirmLocationMap()">Confirmar ubicación</button></div></footer>
+  </section>
+</div>
+
 <!-- LIGHTBOX -->
 <div id="lightbox" role="dialog" aria-modal="true" aria-label="Galería de imágenes" style="display:none" onclick="if(event.target === this) closeLightbox()">
   <button type="button" id="lbClose" class="lb-close" aria-label="Cerrar imagen ampliada">×</button>
@@ -955,6 +979,7 @@
   <div id="lbThumbnails" aria-label="Miniaturas de la galería" hidden></div>
 </div>
 
+<script src="maps-config.js"></script>
 <script src="cotizador.js"></script>
 <script src="galeria-configurador.js"></script>
 </body>

@@ -48,7 +48,7 @@ export default function SiteInteractions() {
       const observer = observe(([entry]) => { if (entry.isIntersecting) { load(); observer.disconnect(); } }, { rootMargin: "200px" });
       observer.observe(wrap); restores.push(() => { if (iframe?.parentNode === wrap) wrap.replaceChild(placeholder, iframe); });
     });
-    const reveals = document.querySelectorAll<HTMLElement>(".service-card, .proj-item, .proj-cta-card, .contact-card, .trust-img-wrap, .trust-content, .trust-badge-card, .map-wrap, .social-row, .btn-full, .branch-card");
+    const reveals = document.querySelectorAll<HTMLElement>(".section-header, .service-card, .proj-item, .proj-cta-card, .contact-card, .trust-img-wrap, .trust-content, .trust-badge-card, .map-wrap, .social-row, .btn-full, .branch-card");
     const revealObserver = observe(entries => entries.forEach(entry => {
       if (!entry.isIntersecting) return;
       const siblings = Array.from(entry.target.parentElement?.children ?? []);

@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { once } from "node:events";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { frontend, baseline, sha256 } from "./legacy-assets.mjs";
+import { frontend, sha256, expectedPublicHash } from "./legacy-assets.mjs";
 
 // HTTP requests only. This script never launches or controls a browser.
 const probe = createServer();
@@ -47,7 +47,7 @@ try {
       assert.match(html, /href="\/cocina-customizer\.html"/);
       assert.match(html, /href="\/propiedades"/);
       const original = await readFile(path.join(frontend, "../index.html"), "utf8");
-      const originalImages = [...original.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => "/" + match[1]);
+      const originalImages = [...original.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)].map(match => match[0].includes('alt="Proyecto residencial terminado') ? "/img/construccion/nosotros-led.jpg" : "/" + match[1]);
       const migratedImages = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
       assert.deepEqual(migratedImages, originalImages, "Corporate images and their order must be unchanged");
       assert.equal([...html.matchAll(/class="proj-item"/g)].length, 23);
@@ -79,9 +79,9 @@ try {
     assert.equal((await get(route)).status, 404, route);
     results.push(`404: ${route}`);
   }
-  for (const name of ["cocina-customizer.html", "style.css", "cotizador.js", "galeria-configurador.js", "configurador-galeria.css", "img/logo.jpg"]) {
+  for (const name of ["cocina-customizer.html", "style.css", "cotizador.js", "galeria-configurador.js", "configurador-galeria.css", "maps-config.js", "img/logo.jpg", "img/construccion/nosotros-led.jpg"]) {
     const response = await get("/" + name); assert.equal(response.status, 200, name);
-    const bytes = Buffer.from(await response.arrayBuffer()); assert.equal(sha256(bytes), baseline.files[name], `HTTP bytes: ${name}`);
+    const bytes = Buffer.from(await response.arrayBuffer()); assert.equal(sha256(bytes), expectedPublicHash(name), `HTTP bytes: ${name}`);
     assert.match(response.headers.get("x-robots-tag") || "", /noindex/);
     if (name.endsWith(".html")) assert.doesNotMatch(bytes.toString("utf8"), /\/_next\//);
     results.push(`200 + exact SHA-256: /${name}`);

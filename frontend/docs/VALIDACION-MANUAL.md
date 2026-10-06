@@ -12,9 +12,9 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 
 ## Portada: equivalencia visual
 
-- [ ] Comparar lado a lado logo, tipografías, hero, imagen, overlay, títulos y botones.
+- [ ] Comparar lado a lado logo, tipografías, hero, imagen, overlay, títulos y botones; el H1 debe decir exactamente “Diseñamos Construimos Equipamos”.
 - [ ] Comparar las seis secciones en orden: inicio, proyectos, servicios, nosotros, sucursales y contacto.
-- [ ] Comparar fotografías, recortes, espacios, colores, bordes, footer y botón flotante.
+- [ ] Comparar fotografías, recortes, espacios, colores, bordes, footer y botón flotante; en Nosotros confirmar la imagen LED nueva y únicamente la métrica 6.5 años.
 - [ ] Confirmar ausencia de desbordamiento horizontal y texto tapado en todos los anchos.
 - [ ] Revisar el header con el único enlace nuevo, Propiedades; comprobar que cabe a 1024 y 850 px.
 - [ ] Desplazarse: la navegación debe pasar de transparente a sólida igual que el original.
@@ -39,24 +39,28 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 
 - [ ] Desde Servicios → Cocinas, confirmar navegación completa a `/cocina-customizer.html`.
 - [ ] Abrir esa URL directamente y recargar: sigue funcionando como página independiente.
-- [ ] Paso 1: intentar continuar vacío; después usar `Cliente de prueba`, teléfono ficticio, dirección ficticia, fecha, hora y sucursal.
-- [ ] Pasos 2 y 3: seleccionar situación e interior; comprobar selección y avance.
-- [ ] Paso 4: abrir cada una de las cuatro líneas; elegir color, cancelar y comprobar que no se guardó; repetir aplicando y confirmar que sí se guardó.
+- [ ] Confirmar el orden exacto: 1 Situación actual, 2 Tableros interiores, 3 Frentes exteriores, 4 Herrajes, 5 Cubierta, 6 Extras, 7 Datos del cliente, 8 Resumen.
+- [ ] Intentar avanzar y saltar desde el menú sin seleccionar situación, interior o frentes; debe aplicar las mismas validaciones que Siguiente.
+- [ ] En Situación e Interior seleccionar una opción y comprobar selección/avance; usar el menú lateral y Anterior para volver sin perder elecciones.
+- [ ] En Frentes abrir cada una de las cuatro líneas; elegir color, cancelar y comprobar que no se guardó; repetir aplicando y confirmar que sí se guardó.
 - [ ] Seleccionar varias líneas; al reabrir una, comprobar su acabado y previsualización.
 - [ ] Abrir Ampliar desde tarjetas y desde modales; cerrar y comprobar que se conserva la selección y el modal inferior.
-- [ ] Paso 5: elegir corredera y basurero; activar/desactivar cajones y módulos múltiples. Revisar galerías de esquinero y basurero completo.
-- [ ] Paso 6: recorrer Base sólida, Granito, Cuarzo y Piedra sinterizada. Comprobar precios contra el original.
+- [ ] En Herrajes elegir corredera y basurero; activar/desactivar cajones y módulos múltiples. En “Línea Alta · Módulo completo” confirmar una foto y ausencia de miniaturas con una sola imagen.
+- [ ] En Cubierta recorrer Base sólida, Granito, Cuarzo y Piedra sinterizada. Comprobar precios contra el original.
 - [ ] En sinterizadas: probar las cuatro colecciones, elegir acabado y cambiar de colección/categoría; comparar limpieza de selección con el original.
-- [ ] Paso 7: activar y desactivar los cuatro extras; Ampliar no debe cambiar selección.
-- [ ] Paso 8: revisar cliente, materiales, herrajes, variantes y extras del resumen.
+- [ ] En Extras activar y desactivar los cuatro extras; Ampliar no debe cambiar selección.
+- [ ] En Datos del cliente, comprobar campos, abrir el mapa y colocar/mover el pin. Sin clave debe aparecer el aviso de configuración pendiente y seguir disponible la dirección manual.
+- [ ] Con una clave posteriormente autorizada y restringida en Google Cloud, confirmar el pin, reabrirlo, cambiarlo, editar manualmente la dirección y confirmar otra vez.
+- [ ] En Resumen comprobar dirección y coordenadas; descargar PDF y comprobarlas; revisar el enlace de mapa del mensaje de WhatsApp sin enviarlo.
 - [ ] Descargar un PDF REAL con conexión al CDN de jsPDF. Abrirlo y revisar logo, contenido, páginas y nombre del archivo; no usar solo una simulación.
 - [ ] Probar datos largos y varias selecciones; documentar el truncado heredado si aparece, sin confundirlo con una regresión.
 - [ ] Abrir WhatsApp desde el resumen; revisar número y mensaje sin enviarlo.
-- [ ] Recorrer Anterior/Siguiente por los ocho pasos y comparar la conservación de datos.
-- [ ] “Nueva configuración” vuelve al paso 1 y conserva datos, como el original; no se cambió ese comportamiento.
+- [ ] Recorrer Anterior/Siguiente y navegación lateral por los ocho pasos; comprobar que toda selección y dato se conserva.
+- [ ] “Nueva configuración” vuelve al paso 1 Situación y conserva datos, como el original; no se cambió ese comportamiento.
+- [ ] Activar reducción de movimiento del sistema y repetir pasos, selección, secciones y modales; las animaciones deben reducirse.
 - [ ] Volver al sitio mediante el enlace original `/index.html`: debe mostrar la portada Next.js.
 - [ ] Probar teclado y gestos táctiles de la galería; documentar controles que ya carecían de teclado en el original.
-- [ ] Confirmar que la única referencia ausente conocida sigue siendo `img/favicon.ico`; no se añadió ni cambió ese archivo.
+- [ ] Confirmar que la única referencia legacy ausente conocida sigue siendo `img/favicon.ico`.
 
 ## Propiedades
 
@@ -92,4 +96,4 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 - [ ] Aprobar equivalencia visual y registrar diferencias pendientes.
 - [ ] Revisar instrucciones del sitio Netlify independiente; no reutilizar producción.
 - [ ] Comprobar manualmente la integración de Netlify cuando se autorice, ya que no fue desplegada aquí.
-- [ ] Mantener el customizador intacto hasta una autorización específica para migrarlo o corregirlo.
+- [ ] Mantener el customizador como documento legacy independiente; cualquier migración futura requiere su propio alcance.

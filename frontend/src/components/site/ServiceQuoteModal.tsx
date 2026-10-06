@@ -66,7 +66,7 @@ export default function ServiceQuoteModal() {
     close();
   };
 
-  return <div id="modal-overlay" style={{ display: service ? "block" : "none", position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,.85)", backdropFilter: "blur(8px)", overflowY: "auto" }} onClick={e => { if (e.target === e.currentTarget) close(); }}>
+  return <div id="modal-overlay" style={{ display: service ? "block" : "none", position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,.85)", backdropFilter: "blur(8px)", overflowY: "auto", animation: "mhgModalIn .2s ease" }} onClick={e => { if (e.target === e.currentTarget) close(); }}>
     <div ref={box} id="modal-box" style={{ background: "#0f0f0f", border: "1px solid rgba(46,204,113,.2)", borderRadius: 20, maxWidth: 620, width: "90%", margin: "40px auto", position: "relative", overflow: "hidden", transition: "transform .3s cubic-bezier(.4,0,.2,1), opacity .3s ease" }}>
       <div style={{ height: 4, background: "linear-gradient(90deg,#1a7a43,#2ecc71)" }} />
       <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>

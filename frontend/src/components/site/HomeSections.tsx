@@ -10,9 +10,8 @@ export default function HomeSections() {
     <div className="hero-content">
       <span className="hero-line"></span>
       <h1 className="hero-title">
-        Tu espacio ideal,<br />
-        <em>diseñado y construido</em><br />
-        con precisión.
+        Diseñamos Construimos<br />
+        <em>Equipamos</em>
       </h1>
       <p className="hero-sub">
         Diseñamos. Construimos. Equipamos.<br />
@@ -274,14 +273,7 @@ export default function HomeSections() {
     <div className="container trust-container">
       <div className="trust-visual">
         <div className="trust-img-wrap">
-          <img src="/img/construccion/fachada-1.jpg" alt="Proyecto residencial terminado — MHG Arquitectos" className="trust-img" loading="lazy" />
-        </div>
-        <div className="trust-badge-card">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <div>
-            <strong>+1,500</strong>
-            <span>seguidores</span>
-          </div>
+          <img src="/img/construccion/nosotros-led.jpg" alt="Diseño de cocina con iluminación LED — MHG Arquitectos" className="trust-img" loading="lazy" />
         </div>
       </div>
       <div className="trust-content">
@@ -298,14 +290,6 @@ export default function HomeSections() {
           <div>
             <span className="trust-stat-num">6.5</span>
             <span className="trust-stat-label">Años de experiencia</span>
-          </div>
-          <div>
-            <span className="trust-stat-num">2</span>
-            <span className="trust-stat-label">Sucursales en Veracruz</span>
-          </div>
-          <div>
-            <span className="trust-stat-num">+1.5K</span>
-            <span className="trust-stat-label">Seguidores en redes</span>
           </div>
         </div>
         <a href="https://wa.me/5212711055612?text=Hola%2C%20quisiera%20platicar%20sobre%20mi%20proyecto%20con%20MHG%20Arquitectos." className="btn btn-primary" target="_blank" rel="noopener noreferrer" id="trust-whatsapp-btn">

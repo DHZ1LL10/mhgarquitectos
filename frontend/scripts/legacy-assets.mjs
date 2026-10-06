@@ -7,11 +7,13 @@ export const frontend = fileURLToPath(new URL("../", import.meta.url));
 export const repository = path.resolve(frontend, "..");
 export const publicDirectory = path.join(frontend, "public");
 export const baseline = JSON.parse(await readFile(path.join(frontend, "docs/legacy-baseline.json"), "utf8"));
+export const customization = JSON.parse(await readFile(path.join(frontend, "docs/legacy-customizations.json"), "utf8"));
 const documents = new Set([
   "cocina-customizer.html", "cotizador.js", "galeria-configurador.js",
   "configurador-galeria.css", "style.css",
 ]);
-export const publicFiles = Object.keys(baseline.files).filter(name => documents.has(name) || name.startsWith("img/"));
+export const publicFiles = [...Object.keys(baseline.files).filter(name => documents.has(name) || name.startsWith("img/")), ...Object.keys(customization.additions)];
+export function expectedPublicHash(name) { return customization.modified[name] || customization.additions[name] || baseline.files[name]; }
 export function sha256(bytes) { return createHash("sha256").update(bytes).digest("hex"); }
 export async function originalBytes(name) {
   const bytes = await readFile(path.join(repository, name));

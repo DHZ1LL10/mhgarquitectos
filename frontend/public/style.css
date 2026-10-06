@@ -754,6 +754,9 @@ a { text-decoration: none; color: inherit; }
   align-items: center;
 }
 
+.trust-stats { justify-content: flex-start; }
+.trust-stats > div { min-width: 190px; }
+
 .trust-visual { position: relative; }
 
 .trust-img-wrap {
@@ -1183,6 +1186,14 @@ a { text-decoration: none; color: inherit; }
   border: none;
   padding: 0;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity .42s ease, transform .42s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+@keyframes mhgModalIn { from { opacity: 0; } to { opacity: 1; } }
 
 
 

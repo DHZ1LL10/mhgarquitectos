@@ -29,9 +29,9 @@ No se hizo push ni deploy. No se consultó ni modificó la configuración remota
 | `npm run build` | Correcto; 9 páginas generadas en el build |
 | `npm run typecheck` | Correcto |
 | `npm run lint` | Correcto, cero warnings |
-| `npm test` | 11 pruebas Node correctas |
-| `npm run verify:legacy` | 415 originales y 412 copias con SHA-256 correcto; sintaxis legacy correcta |
-| `npm run verify:routes` | Rutas, HTML inicial, metadata, 404, headers y bytes legacy correctos mediante HTTP local |
+| `npm test` | 13 pruebas Node correctas tras los ajustes de customizador |
+| `npm run verify:legacy` | 415 originales comprobados, 414 archivos públicos verificados por SHA-256 (412 copias del baseline, 4 personalizaciones y 2 adiciones); sintaxis legacy correcta |
+| `npm run verify:routes` | Rutas, HTML inicial, metadata, 404, headers y SHA-256 de legacy, configuración de Maps e imagen nueva mediante HTTP local |
 | Referencias de imágenes | Coincidencia exacta de nombres y mayúsculas; único faltante conocido: favicon legacy |
 | Originales frente al commit de referencia | Sin diferencias en HTML, CSS, JS, imágenes ni perfil de navegador |
 | `.browser-validation/` | 116 archivos previamente trackeados; no borrados ni desindexados; fuera de public/ y del artefacto nuevo |
@@ -52,7 +52,14 @@ También se comprobó el sitemap, robots y la misma secuencia de 27 imágenes y 
 
 Ocho archivos de raíz: `index.html`, `script.js`, `modals.js`, `cocina-customizer.html`, `cotizador.js`, `galeria-configurador.js`, `configurador-galeria.css`, `style.css`; más las 407 imágenes de `img/`.
 
-Las copias públicas son cinco de esos documentos (customizador, cotizador, galería JS, galería CSS y style.css) y las 407 imágenes. El manifiesto con cada hash se encuentra en `legacy-baseline.json`.
+Las copias públicas contienen cinco documentos legacy y 407 imágenes. Los originales siguen verificados contra `legacy-baseline.json`. Las personalizaciones autorizadas de `cocina-customizer.html`, `cotizador.js`, `configurador-galeria.css` y `style.css`, más los dos assets nuevos, tienen hashes en `legacy-customizations.json`. Los archivos de raíz no se modificaron.
+
+## Ajustes posteriores solicitados
+
+- La portada ahora usa la imagen LED entregada en `public/img/construccion/nosotros-led.jpg`, el H1 acordado y una sola métrica en Nosotros.
+- El customizador preserva sus catálogos, precios y cálculos mientras usa el flujo solicitado de ocho pasos, navegación lateral con validación y una foto en el módulo de bote de basura.
+- El selector Google Maps está preparado con `public/maps-config.js` vacío. No hay API key en Git. Maps JavaScript API, Geocoding API, facturación y restricciones por referrer requieren configuración del propietario en Google Cloud; los pasos están en `GOOGLE-MAPS.md`.
+- Las animaciones usan CSS/JavaScript existentes y respetan `prefers-reduced-motion`. Apariencia, mapa con clave real, PDF real y comunicación externa quedan para la checklist manual.
 
 ## Commits de implementación
 

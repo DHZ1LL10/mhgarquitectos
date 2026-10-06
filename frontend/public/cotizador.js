@@ -5,7 +5,7 @@
 
 /* ─── STATE ─── */
 var state = {
-  cliente:   { nombre:'', tel:'', fecha:'', hora:'', sucursal:'', asesor:'', dir:'', obs:'' },
+  cliente:   { nombre:'', tel:'', fecha:'', hora:'', sucursal:'', asesor:'', dir:'', obs:'', lat:null, lng:null },
   situacion: null,
   interior:  null,
   frentes:   {},
@@ -24,24 +24,24 @@ var state = {
 
 /* ─── STEPS META ─── */
 var STEPS = [
-  { label:'Datos del cliente',   short: function(){ return state.cliente.nombre || ''; } },
   { label:'Situación actual',    short: function(){ var m={'sin-cocina':'Sin cocina','barra-concreto':'Base de concreto','remodelacion':'Remodelación'}; return m[state.situacion]||''; } },
   { label:'Tableros interiores', short: function(){ return state.interior ? (state.interior==='blanco-frosty'?'Blanco Frosty':'Gris Oxford') : ''; } },
   { label:'Frentes exteriores',  short: function(){ var k=Object.keys(state.frentes); return k.length ? k.length+' línea'+(k.length!==1?'s':'') : ''; } },
   { label:'Herrajes',            short: function(){ return state.corredera ? state.corredera.split(' ').slice(0,2).join(' ') : ''; } },
   { label:'Cubierta',            short: function(){ return state.cubierta || ''; } },
   { label:'Extras',              short: function(){ return state.extras.length ? state.extras.length+' extra'+(state.extras.length!==1?'s':'') : 'Ninguno'; } },
+  { label:'Datos del cliente',   short: function(){ return state.cliente.nombre || ''; } },
   { label:'Resumen',             short: function(){ return ''; } },
 ];
 
 var STEP_HEADERS = [
-  { eyebrow:'Paso 1 de 8', title:'Tus <em>datos</em>',            sub:'Llena tu información de contacto para personalizar la cotización.' },
-  { eyebrow:'Paso 2 de 8', title:'<em>Situación</em> actual',     sub:'Cuéntanos cómo está el espacio hoy para ajustar la propuesta.' },
-  { eyebrow:'Paso 3 de 8', title:'<em>Tableros</em> interiores',  sub:'El acabado interior de todos los muebles lleva este material.' },
-  { eyebrow:'Paso 4 de 8', title:'<em>Frentes</em> exteriores',   sub:'Los frentes son las puertas visibles de tu cocina. Puedes combinar líneas y colores por zonas.' },
-  { eyebrow:'Paso 5 de 8', title:'<em>Herrajes</em>',             sub:'Selecciona los herrajes de tu cocina. Cada sección se despliega al tocarla.' },
-  { eyebrow:'Paso 6 de 8', title:'<em>Cubierta</em>',             sub:'El material de la superficie de trabajo de tu cocina.' },
-  { eyebrow:'Paso 7 de 8', title:'<em>Extras</em>',               sub:'Agrega elementos adicionales que complementen tu proyecto.' },
+  { eyebrow:'Paso 1 de 8', title:'<em>Situación</em> actual',     sub:'Cuéntanos cómo está el espacio hoy para ajustar la propuesta.' },
+  { eyebrow:'Paso 2 de 8', title:'<em>Tableros</em> interiores',  sub:'El acabado interior de todos los muebles lleva este material.' },
+  { eyebrow:'Paso 3 de 8', title:'<em>Frentes</em> exteriores',   sub:'Los frentes son las puertas visibles de tu cocina. Puedes combinar líneas y colores por zonas.' },
+  { eyebrow:'Paso 4 de 8', title:'<em>Herrajes</em>',             sub:'Selecciona los herrajes de tu cocina. Cada sección se despliega al tocarla.' },
+  { eyebrow:'Paso 5 de 8', title:'<em>Cubierta</em>',             sub:'El material de la superficie de trabajo de tu cocina.' },
+  { eyebrow:'Paso 6 de 8', title:'<em>Extras</em>',               sub:'Agrega elementos adicionales que complementen tu proyecto.' },
+  { eyebrow:'Paso 7 de 8', title:'Tus <em>datos</em>',            sub:'Llena tu información de contacto y la ubicación de instalación.' },
   { eyebrow:'Paso 8 de 8', title:'Tu <em>resumen</em>',           sub:'Revisa la configuración y descarga o comparte tu preconfiguración.' },
 ];
 
@@ -1402,7 +1402,6 @@ var HERRAJE_SECTIONS = [
         desc:'Módulo completo con compartimentos de reciclaje integrados y cierre suave.',
         val:'Basurero LA (módulo completo)',
         img:'img/customizer/herrajes/basurerocompleto.jpg',
-        images:['img/customizer/herrajes/basurerocompleto.jpg', 'img/customizer/basurero_modulocompleto.jpeg'],
       },
     ],
   },
@@ -1931,10 +1930,12 @@ function selectCubiertaVariante(id) {
 var cubiertaModalReturnFocus = null;
 var cubiertaModalOverflow = '';
 var cubiertaModalBackground = [];
+var cubiertaModalCloseTimer = null;
 
 function openCubiertaModal(trigger) {
   var modal = document.getElementById('cubiertaModal');
   if (!modal || !CUBIERTA_INFO[state.cubiertaCategoria]) return;
+  if (cubiertaModalCloseTimer) { clearTimeout(cubiertaModalCloseTimer); cubiertaModalCloseTimer = null; modal.classList.remove('is-closing'); }
   document.getElementById('cubiertaModalTitle').textContent = state.cubierta;
   if (modal.hidden) {
     cubiertaModalReturnFocus = trigger || document.activeElement;
@@ -1954,17 +1955,20 @@ function openCubiertaModal(trigger) {
 
 function closeCubiertaModal() {
   var modal = document.getElementById('cubiertaModal');
-  if (!modal || modal.hidden) return;
+  if (!modal || modal.hidden || cubiertaModalCloseTimer) return;
   var lb = document.getElementById('lightbox');
   if (lb && lb.style.display === 'flex') window.closeLightbox();
-  modal.hidden = true;
-  document.body.style.overflow = cubiertaModalOverflow;
-  cubiertaModalBackground.forEach(function(item) { item.element.inert = item.inert; });
-  cubiertaModalBackground = [];
-  if (cubiertaModalReturnFocus && cubiertaModalReturnFocus.isConnected) {
-    cubiertaModalReturnFocus.focus({ preventScroll: true });
-  }
-  cubiertaModalReturnFocus = null;
+  modal.classList.add('is-closing');
+  cubiertaModalCloseTimer = setTimeout(function() {
+    modal.hidden = true;
+    modal.classList.remove('is-closing');
+    document.body.style.overflow = cubiertaModalOverflow;
+    cubiertaModalBackground.forEach(function(item) { item.element.inert = item.inert; });
+    cubiertaModalBackground = [];
+    if (cubiertaModalReturnFocus && cubiertaModalReturnFocus.isConnected) cubiertaModalReturnFocus.focus({ preventScroll: true });
+    cubiertaModalReturnFocus = null;
+    cubiertaModalCloseTimer = null;
+  }, 190);
 }
 
 function handleCubiertaModalKeydown(event) {
@@ -2022,8 +2026,8 @@ function renderStep(step) {
   _currentStep = step;
   var total = STEPS.length;
 
-  document.querySelectorAll('.step-panel').forEach(function(p, i){
-    p.classList.toggle('active', i === step);
+  document.querySelectorAll('.step-panel').forEach(function(p){
+    p.classList.toggle('active', p.id === 'panel-' + step);
   });
 
   var h = STEP_HEADERS[step];
@@ -2064,27 +2068,34 @@ function updateSidebar() {
   if (!sb) return;
   sb.innerHTML = STEPS.map(function(s, i) {
     var active = i === _currentStep;
-    var done   = i < _currentStep;
+    var done   = stepIsComplete(i);
     var cls = 'sidebar-step' + (active?' active':'') + (done?' done':'');
     var bullet = done
       ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>'
       : (i + 1);
     var short = s.short();
-    return '<div class="' + cls + '">' +
-      '<div class="step-bullet">' + bullet + '</div>' +
-      '<div class="step-text">' +
+    return '<button type="button" class="' + cls + '" data-step="' + i + '" aria-current="' + (active?'step':'false') + '" onclick="navigateToStep(' + i + ')">' +
+      '<span class="step-bullet">' + bullet + '</span>' +
+      '<span class="step-text">' +
         '<span class="step-text-label">' + s.label + '</span>' +
         (short ? '<span class="step-text-val">' + short + '</span>' : '') +
-      '</div>' +
-    '</div>';
+      '</span>' +
+    '</button>';
   }).join('');
 }
 
-function nextStep() {
-  var step = _currentStep;
+function stepIsComplete(step) {
+  if (step === 0) return !!state.situacion;
+  if (step === 1) return !!state.interior;
+  if (step === 2) return Object.keys(state.frentes).some(function(key){ return state.frentes[key] && state.frentes[key].length; });
+  if (step === 6) return !!(state.cliente.nombre && state.cliente.tel && state.cliente.dir && state.cliente.fecha && state.cliente.hora && state.cliente.sucursal);
+  return step < _currentStep;
+}
+
+function validateStep(step) {
   var ok = true;
 
-  if (step === 0) {
+  if (step === 6) {
     var n  = (document.getElementById('c-nombre') || {}).value || '';
     var t  = (document.getElementById('c-tel')    || {}).value || '';
     var d  = (document.getElementById('c-dir')    || {}).value || '';
@@ -2105,12 +2116,14 @@ function nextStep() {
         sucursal: sEl.options[sEl.selectedIndex].text,
         asesor:   (document.getElementById('c-asesor') || {}).value || 'En línea',
         obs:      ((document.getElementById('c-obs') || {}).value || '').trim(),
+        lat:      state.cliente.lat,
+        lng:      state.cliente.lng,
       };
     }
   }
-  if (step === 1 && !state.situacion)                    { alert('Selecciona una opción de situación actual.'); ok = false; }
-  if (step === 2 && !state.interior)                     { alert('Selecciona el tablero interior.'); ok = false; }
-  if (step === 3) {
+  if (step === 0 && !state.situacion)                    { alert('Selecciona una opción de situación actual.'); ok = false; }
+  if (step === 1 && !state.interior)                     { alert('Selecciona el tablero interior.'); ok = false; }
+  if (step === 2) {
     var lineas = Object.keys(state.frentes);
     if (lineas.length === 0) {
       alert('Selecciona al menos una línea de frentes.');
@@ -2130,12 +2143,139 @@ function nextStep() {
     }
   }
 
-  if (!ok) return;
-  if (step < STEPS.length - 1) renderStep(step + 1);
+  return ok;
+}
+
+function navigateToStep(target) {
+  if (!Number.isInteger(target) || target < 0 || target >= STEPS.length) return;
+  if (target > _currentStep) {
+    for (var step = _currentStep; step < target; step++) {
+      if (!validateStep(step)) return;
+    }
+  }
+  renderStep(target);
+}
+
+function nextStep() {
+  if (_currentStep < STEPS.length - 1) navigateToStep(_currentStep + 1);
 }
 
 function prevStep() {
   if (_currentStep > 0) renderStep(_currentStep - 1);
+}
+
+/* ─── GOOGLE MAPS LOCATION PICKER (runtime key configuration) ─── */
+var _locationMap = null;
+var _locationMarker = null;
+var _locationGeocoder = null;
+var _locationMapLoading = false;
+var _locationMapReady = false;
+var _locationSelection = null;
+var _locationAddress = '';
+var _locationPreviousOverflow = '';
+var _locationReturnFocus = null;
+var _locationEscapeHandler = null;
+
+function openLocationMap() {
+  var modal = document.getElementById('locationMapModal');
+  var status = document.getElementById('locationMapStatus');
+  if (!modal) return;
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+  _locationPreviousOverflow = document.body.style.overflow;
+  _locationReturnFocus = document.activeElement;
+  document.body.style.overflow = 'hidden';
+  _locationEscapeHandler = function(event) { if (event.key === 'Escape') closeLocationMap(); };
+  document.addEventListener('keydown', _locationEscapeHandler);
+  var closeButton = modal.querySelector('button[aria-label="Cerrar mapa"]');
+  if (closeButton) closeButton.focus({ preventScroll: true });
+  _locationSelection = state.cliente.lat != null && state.cliente.lng != null
+    ? { lat: state.cliente.lat, lng: state.cliente.lng }
+    : null;
+  _locationAddress = '';
+  if (!window.MHG_GOOGLE_MAPS_API_KEY) {
+    if (status) status.textContent = 'Google Maps aún no está configurado. Consulta frontend/docs/GOOGLE-MAPS.md.';
+    return;
+  }
+  if (_locationMapReady) { initializeLocationMap(); return; }
+  if (_locationMapLoading) return;
+  _locationMapLoading = true;
+  if (status) status.textContent = 'Cargando Google Maps…';
+  window.initMHGLocationMap = function() {
+    _locationMapReady = true;
+    _locationMapLoading = false;
+    initializeLocationMap();
+  };
+  var script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(window.MHG_GOOGLE_MAPS_API_KEY) + '&callback=initMHGLocationMap&v=weekly';
+  script.onerror = function() {
+    _locationMapLoading = false;
+    if (status) status.textContent = 'No se pudo cargar Google Maps. Revisa la clave y sus restricciones.';
+  };
+  document.head.appendChild(script);
+}
+
+function initializeLocationMap() {
+  var node = document.getElementById('locationMap');
+  var status = document.getElementById('locationMapStatus');
+  if (!node || !window.google || !window.google.maps) return;
+  var center = _locationSelection || { lat: 18.90, lng: -96.97 };
+  if (!_locationMap) {
+    _locationMap = new window.google.maps.Map(node, { center: center, zoom: 16, mapTypeControl: false, streetViewControl: false, fullscreenControl: true });
+    _locationGeocoder = new window.google.maps.Geocoder();
+    _locationMap.addListener('click', function(event) { if (event.latLng) setLocationMarker(event.latLng); });
+    _locationMarker = new window.google.maps.Marker({ map: _locationMap, draggable: true, title: 'Ubicación de instalación' });
+    _locationMarker.addListener('dragend', function(event) { if (event.latLng) setLocationMarker(event.latLng); });
+  }
+  _locationMap.setCenter(center);
+  if (_locationSelection) _locationMarker.setPosition(center);
+  else _locationMarker.setMap(null);
+  window.google.maps.event.trigger(_locationMap, 'resize');
+  if (status) status.textContent = _locationSelection ? 'Puedes mover el pin y confirmar la ubicación.' : 'Haz clic en el mapa para colocar el pin.';
+}
+
+function setLocationMarker(position) {
+  if (!_locationMarker) return;
+  _locationMarker.setMap(_locationMap);
+  _locationMarker.setPosition(position);
+  _locationSelection = { lat: position.lat(), lng: position.lng() };
+  var status = document.getElementById('locationMapStatus');
+  if (status) status.textContent = 'Buscando una dirección cercana…';
+  _locationGeocoder.geocode({ location: _locationSelection }, function(results, resultStatus) {
+    if (resultStatus === 'OK' && results && results[0]) {
+      var field = document.getElementById('c-dir');
+      _locationAddress = results[0].formatted_address;
+      if (status) status.textContent = 'Dirección encontrada. Puedes editarla al cerrar el mapa.';
+    } else if (status) status.textContent = 'Pin colocado. No se encontró una dirección; puedes escribirla manualmente.';
+  });
+}
+
+function confirmLocationMap() {
+  if (!_locationSelection) {
+    var status = document.getElementById('locationMapStatus');
+    if (status) status.textContent = 'Primero coloca un pin en el mapa.';
+    return;
+  }
+  state.cliente.lat = _locationSelection.lat;
+  state.cliente.lng = _locationSelection.lng;
+  if (_locationAddress) {
+    var field = document.getElementById('c-dir');
+    if (field) field.value = _locationAddress;
+  }
+  closeLocationMap();
+}
+
+function closeLocationMap() {
+  var modal = document.getElementById('locationMapModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = _locationPreviousOverflow;
+  if (_locationEscapeHandler) document.removeEventListener('keydown', _locationEscapeHandler);
+  _locationEscapeHandler = null;
+  if (_locationReturnFocus && _locationReturnFocus.isConnected) _locationReturnFocus.focus({ preventScroll: true });
+  _locationReturnFocus = null;
 }
 
 /* ─── SUMMARY ─── */
@@ -2152,24 +2292,11 @@ function buildSummary() {
 
   var boxes = [
     {
-      title: 'Cliente',
-      rows: [
-        {label:'Nombre',        val: state.cliente.nombre},
-        {label:'Teléfono',      val: state.cliente.tel},
-        {label:'Dirección',     val: state.cliente.dir},
-        {label:'Levantamiento', val: state.cliente.fecha + '  ' + state.cliente.hora},
-        {label:'Sucursal',      val: state.cliente.sucursal},
-        {label:'Atendido por',  val: state.cliente.asesor},
-      ]
-    },
-    {
-      title: 'Materiales',
+      title: 'Situación, interiores y frentes',
       rows: [
         {label:'Situación', val: situacionLabel[state.situacion] || '—'},
         {label:'Interior',  val: state.interior==='blanco-frosty' ? 'Blanco Frosty 15mm Arauco' : 'Gris Oxford 15mm Arauco'},
         {label:'Frentes',   val: frentesText},
-        {label:'Cubierta',  val: (state.cubierta||'—') + (state.cubPrecio ? ' — ' + state.cubPrecio : '')},
-        {label:'Variante', val: cubiertaVarianteTexto()},
       ]
     },
     {
@@ -2184,10 +2311,29 @@ function buildSummary() {
       ]
     },
     {
+      title: 'Cubierta',
+      rows: [
+        {label:'Material', val: (state.cubierta||'—') + (state.cubPrecio ? ' — ' + state.cubPrecio : '')},
+        {label:'Variante', val: cubiertaVarianteTexto()},
+      ]
+    },
+    {
       title: 'Extras',
       rows: state.extras.length
         ? state.extras.map(function(e){ return {label: e, val: 'Incluido'}; })
         : [{label: 'Sin extras adicionales', val: ''}]
+    },
+    {
+      title: 'Datos del cliente',
+      rows: [
+        {label:'Nombre',        val: state.cliente.nombre},
+        {label:'Teléfono',      val: state.cliente.tel},
+        {label:'Dirección',     val: state.cliente.dir},
+        {label:'Ubicación',     val: locationCoordinatesText()},
+        {label:'Levantamiento', val: state.cliente.fecha + '  ' + state.cliente.hora},
+        {label:'Sucursal',      val: state.cliente.sucursal},
+        {label:'Atendido por',  val: state.cliente.asesor},
+      ]
     },
   ];
 
@@ -2208,7 +2354,7 @@ function buildSummary() {
     preview.className = 'cubierta-summary-img';
     preview.src = state.cubiertaVariante.imagen;
     preview.alt = state.cubiertaVariante.nombre;
-    grid.children[1].appendChild(preview);
+    grid.children[3].appendChild(preview);
   }
 
   var totalEl = document.getElementById('totalAmount');
@@ -2216,6 +2362,18 @@ function buildSummary() {
 }
 
 /* ─── PDF ─── */
+function locationCoordinatesText() {
+  return state.cliente.lat == null || state.cliente.lng == null
+    ? 'Sin pin seleccionado'
+    : state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6) + ' · ' + locationMapUrl();
+}
+
+function locationMapUrl() {
+  return state.cliente.lat == null || state.cliente.lng == null
+    ? ''
+    : 'https://www.google.com/maps?q=' + state.cliente.lat + ',' + state.cliente.lng;
+}
+
 function downloadPDF() {
   var logoEl = new Image();
   logoEl.crossOrigin = 'anonymous';
@@ -2315,27 +2473,14 @@ function _buildPDF(logoDataURL) {
     return lbl + (c&&c.length?' ('+c.join(', ')+')':'');
   }).join(' | ') || '—';
 
-  // Cliente
-  y = section('Datos del cliente', y);
-  y = row('Nombre:',        state.cliente.nombre, y);
-  y = row('Teléfono:',      state.cliente.tel, y);
-  y = row('Dirección:',     state.cliente.dir, y);
-  y = row('Levantamiento:', state.cliente.fecha + '  ' + state.cliente.hora, y);
-  y = row('Sucursal:',      state.cliente.sucursal, y);
-  y = row('Atendido por:',  state.cliente.asesor, y);
-  if (state.cliente.obs) y = row('Observaciones:', state.cliente.obs, y);
-  y += 6;
-
-  // Materiales
-  y = section('Materiales seleccionados', y);
+  // Situation, interiors and fronts (steps 1–3)
+  y = section('Situación, interiores y frentes', y);
   y = row('Situación:', situacionLabel[state.situacion]||'—', y);
   y = row('Interior:',  state.interior==='blanco-frosty'?'Blanco Frosty 15mm Arauco':'Gris Oxford 15mm Arauco', y);
   y = row('Frentes:',   frentesText, y);
-  y = row('Cubierta:',  (state.cubierta||'—') + (state.cubPrecio?' — '+state.cubPrecio:''), y);
-  y = row('Variante:', cubiertaVarianteTexto(), y);
   y += 6;
 
-  // Herrajes
+  // Hardware (step 4)
   y = section('Herrajes', y);
   y = row('Bisagras:',    state.bisagra, y);
   y = row('Correderas:',  state.corredera || '—', y);
@@ -2345,12 +2490,33 @@ function _buildPDF(logoDataURL) {
   if (state.modulos.length) y = row('Módulos esp.:',  state.modulos.join(', '), y);
   y += 6;
 
-  // Extras
+  // Countertop (step 5)
+  y = section('Cubierta', y);
+  y = row('Material:', (state.cubierta||'—') + (state.cubPrecio?' — '+state.cubPrecio:''), y);
+  y = row('Variante:', cubiertaVarianteTexto(), y);
+  y += 6;
+
+  // Extras (step 6)
   if (state.extras.length) {
     y = section('Elementos adicionales', y);
     state.extras.forEach(function(e){ y = row(e + ':', 'Incluido', y); });
     y += 6;
   }
+
+  // Customer data (step 7)
+  y = section('Datos del cliente', y);
+  y = row('Nombre:',        state.cliente.nombre, y);
+  y = row('Teléfono:',      state.cliente.tel, y);
+  y = row('Dirección:',     state.cliente.dir, y);
+  if (state.cliente.lat != null && state.cliente.lng != null) {
+    y = row('Ubicación (lat, lng):', state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6), y);
+    y = row('Mapa:', locationMapUrl(), y);
+  }
+  y = row('Levantamiento:', state.cliente.fecha + '  ' + state.cliente.hora, y);
+  y = row('Sucursal:',      state.cliente.sucursal, y);
+  y = row('Atendido por:',  state.cliente.asesor, y);
+  if (state.cliente.obs) y = row('Observaciones:', state.cliente.obs, y);
+  y += 6;
 
   // Note
   if (y > 240) { doc.addPage(); }
@@ -2391,17 +2557,9 @@ function sendWhatsApp() {
   }).join('\n') || '  • —';
 
   var msg = '*CONFIGURACIÓN COCINA — MHG*\n\n' +
-    '*Cliente:* '       + state.cliente.nombre + '\n' +
-    '*Tel:* '           + state.cliente.tel + '\n' +
-    '*Dirección:* '     + state.cliente.dir + '\n' +
-    '*Levantamiento:* ' + state.cliente.fecha + '  ' + state.cliente.hora + '\n' +
-    '*Sucursal:* '      + state.cliente.sucursal + '\n' +
-    '*Atendido por:* '  + state.cliente.asesor + '\n\n' +
     '*SITUACIÓN:* '   + (situacionLabel[state.situacion]||'—') + '\n' +
     '*INTERIOR:* '    + (state.interior==='blanco-frosty'?'Blanco Frosty 15mm':'Gris Oxford 15mm') + '\n' +
     '*FRENTES:*\n'    + frentesText + '\n' +
-    '*CUBIERTA:* '    + (state.cubierta||'—') + (state.cubPrecio ? ' — ' + state.cubPrecio : '') + '\n' +
-    '*VARIANTE:* '    + cubiertaVarianteTexto() + '\n\n' +
     '*HERRAJES:*\n' +
     '  • Bisagras: '   + state.bisagra + '\n' +
     '  • Correderas: ' + (state.corredera||'—') + '\n' +
@@ -2409,7 +2567,17 @@ function sendWhatsApp() {
     '  • Basurero: '   + (state.basurero||'—') + '\n' +
     '  • Especiero: '   + (state.especias||'—') + '\n' +
     '  • Módulos: '    + (state.modulos.join(', ')||'—') + '\n' +
+    '*CUBIERTA:* '    + (state.cubierta||'—') + (state.cubPrecio ? ' — ' + state.cubPrecio : '') + '\n' +
+    '*VARIANTE:* '    + cubiertaVarianteTexto() + '\n' +
     '*EXTRAS:* '       + (state.extras.join(', ')||'Ninguno') + '\n\n' +
+    '*DATOS DEL CLIENTE:*\n' +
+    '*Cliente:* '       + state.cliente.nombre + '\n' +
+    '*Tel:* '           + state.cliente.tel + '\n' +
+    '*Dirección:* '     + state.cliente.dir + '\n' +
+    (state.cliente.lat != null && state.cliente.lng != null ? '*Ubicación:* ' + state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6) + '\n*Mapa:* ' + locationMapUrl() + '\n' : '') +
+    '*Levantamiento:* ' + state.cliente.fecha + '  ' + state.cliente.hora + '\n' +
+    '*Sucursal:* '      + state.cliente.sucursal + '\n' +
+    '*Atendido por:* '  + state.cliente.asesor + '\n' +
     (state.cliente.obs ? '*Obs:* ' + state.cliente.obs + '\n\n' : '') +
     '_Configuración enviada desde mhgarquitectos.com_';
 

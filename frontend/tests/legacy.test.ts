@@ -27,7 +27,11 @@ test("corporate section IDs, content and asset paths survive the JSX transfer", 
   const sections = read("frontend/src/components/site/HomeSections.tsx");
   const corporate = sections + read("frontend/src/components/site/SiteHeader.tsx") + read("frontend/src/components/site/SiteFooter.tsx");
   for (const id of ["inicio", "proyectos", "servicios", "nosotros", "sucursales", "contacto"]) assert.ok(sections.includes(`id="${id}"`));
-  for (const match of original.matchAll(/<img[^>]+src="([^"]+)"/g)) assert.ok(corporate.includes(match[1]), match[1]);
+  for (const match of original.matchAll(/<img[^>]+src="([^"]+)"/g)) {
+    if (match[1] !== "img/construccion/fachada-1.jpg") assert.ok(corporate.includes(match[1]), match[1]);
+  }
+  assert.ok(sections.includes('/img/construccion/nosotros-led.jpg'));
+  assert.ok(existsSync(path.join(root, "frontend/public/img/construccion/nosotros-led.jpg")));
   assert.match(sections, /<a href="\/cocina-customizer\.html"/);
   assert.doesNotMatch(sections, /onclick=|dangerouslySetInnerHTML/);
 });
@@ -62,15 +66,60 @@ test("legacy catalogs, defaults, summary and WhatsApp retain their baseline beha
     document: { addEventListener() {}, getElementById(id: string) { return nodes[id] || null; }, querySelectorAll() { return []; } },
     window: { scrollTo() {}, open(value: string) { url = value; } },
   });
-  vm.runInContext(read("cotizador.js"), context);
+  vm.runInContext(read("frontend/public/cotizador.js"), context);
   assert.equal(vm.runInContext("STEPS.length", context), 8);
+  assert.deepEqual(JSON.parse(vm.runInContext("JSON.stringify(STEPS.map(step => step.label))", context)), ["Situación actual", "Tableros interiores", "Frentes exteriores", "Herrajes", "Cubierta", "Extras", "Datos del cliente", "Resumen"]);
+  assert.equal(vm.runInContext("HERRAJE_SECTIONS.find(section => section.id === 'basureros').opts.find(option => option.id === 'bas-la').images", context), undefined);
   assert.equal(vm.runInContext("CUBIERTA_VARIANTES.sinterizado.length", context), 62);
   assert.equal(vm.runInContext("Object.values(PALETTES).reduce((n, a) => n + a.length, 0)", context), 97);
   assert.deepEqual(JSON.parse(vm.runInContext("JSON.stringify(Object.values(CUBIERTA_INFO).map(v => v.precioBase))", context)), [6500, 8500, 12000, 17000]);
-  vm.runInContext('state.cliente.nombre="Cliente de prueba"; state.extras=["Iluminación LED"]; buildSummary(); sendWhatsApp(); renderStep(0);', context);
+  vm.runInContext('state.cliente.nombre="Cliente de prueba"; state.cliente.lat=18.9; state.cliente.lng=-96.97; state.extras=["Iluminación LED"]; buildSummary(); sendWhatsApp(); renderStep(0);', context);
   assert.match(nodes.summaryGrid.innerHTML, /Cliente de prueba/);
   assert.equal(nodes.totalAmount.textContent, "A confirmar tras levantamiento");
   assert.equal(new URL(url).pathname, "/5212717041499");
   assert.match(new URL(url).searchParams.get("text") || "", /Cliente de prueba/);
+  assert.match(new URL(url).searchParams.get("text") || "", /https:\/\/www\.google\.com\/maps\?q=18\.9,-96\.97/);
+  const text = new URL(url).searchParams.get("text") || "";
+  assert.ok(text.indexOf("*SITUACIÓN:*") < text.indexOf("*HERRAJES:*") && text.indexOf("*HERRAJES:*") < text.indexOf("*CUBIERTA:*") && text.indexOf("*EXTRAS:*") < text.indexOf("*DATOS DEL CLIENTE:*"));
   assert.equal(vm.runInContext("state.extras.length", context), 1, "The legacy new-configuration behavior must not change");
+});
+
+test("customizer navigation follows the new order and preserves step validation on direct jumps", () => {
+  const fields: Record<string, { value: string; selectedIndex?: number; options?: { text: string }[] }> = {
+    "c-nombre": { value: "" }, "c-tel": { value: "" }, "c-dir": { value: "" },
+    "c-fecha": { value: "" }, "c-hora": { value: "" }, "c-asesor": { value: "" }, "c-obs": { value: "" },
+    "c-sucursal": { value: "", selectedIndex: 0, options: [{ text: "Fortín de las Flores" }] },
+  };
+  const alerts: string[] = [];
+  const context = vm.createContext({
+    document: { addEventListener() {}, getElementById(id: string) { return fields[id] || null; }, querySelectorAll() { return []; } },
+    window: { scrollTo() {}, open() {} }, alert(message: string) { alerts.push(message); },
+  });
+  vm.runInContext(read("frontend/public/cotizador.js"), context);
+  vm.runInContext("renderStep(0); navigateToStep(7)", context);
+  assert.equal(vm.runInContext("_currentStep", context), 0);
+  assert.match(alerts.pop() || "", /situación actual/);
+  vm.runInContext("state.situacion='sin-cocina'; navigateToStep(7)", context);
+  assert.match(alerts.pop() || "", /tablero interior/);
+  vm.runInContext("state.interior='blanco-frosty'; navigateToStep(7)", context);
+  assert.match(alerts.pop() || "", /línea de frentes/);
+  vm.runInContext("state.frentes.economica=['Blanco']; navigateToStep(7)", context);
+  assert.match(alerts.pop() || "", /nombre, teléfono, dirección/);
+  Object.assign(fields["c-nombre"], { value: "Persona" }); Object.assign(fields["c-tel"], { value: "2710000000" });
+  Object.assign(fields["c-dir"], { value: "Calle de prueba" }); Object.assign(fields["c-fecha"], { value: "2026-11-01" });
+  Object.assign(fields["c-hora"], { value: "10:00" }); Object.assign(fields["c-sucursal"], { value: "Fortin" });
+  vm.runInContext("navigateToStep(7)", context);
+  assert.equal(vm.runInContext("_currentStep", context), 7);
+  vm.runInContext("state.cliente.lat=18.9; state.cliente.lng=-96.97; renderStep(2); renderStep(6); nextStep()", context);
+  assert.equal(vm.runInContext("_currentStep", context), 7);
+  assert.equal(vm.runInContext("state.cliente.lat", context), 18.9);
+  assert.equal(vm.runInContext("state.cliente.nombre", context), "Persona");
+});
+
+test("Google Maps configuration contains no key and its file is explicitly loaded by the legacy page", () => {
+  const html = read("frontend/public/cocina-customizer.html");
+  const config = read("frontend/public/maps-config.js");
+  assert.match(html, /<script src="maps-config\.js"><\/script>/);
+  assert.match(config, /MHG_GOOGLE_MAPS_API_KEY\s*=\s*window\.MHG_GOOGLE_MAPS_API_KEY\s*\|\|\s*""/);
+  assert.doesNotMatch(config, /AIza[0-9A-Za-z_-]{20,}/);
 });
