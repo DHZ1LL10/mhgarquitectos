@@ -1,5 +1,8 @@
 import type { PropertyRepository } from "./repository.ts";
-import { createLocalPropertyRepository } from "./local-repository.ts";
+import { createConfiguredPropertyRepository } from "./configured-repository.ts";
 
-// Composition point: future HTTP repository is selected here, not in views.
-export const propertyRepository: PropertyRepository = createLocalPropertyRepository();
+// Server composition point. Existing views and the independent demo admin stay unchanged.
+export const propertyRepository: PropertyRepository = createConfiguredPropertyRepository({
+  PROPERTY_REPOSITORY: process.env.PROPERTY_REPOSITORY,
+  PROPERTY_API_BASE_URL: process.env.PROPERTY_API_BASE_URL,
+});
