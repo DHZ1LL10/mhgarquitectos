@@ -28,10 +28,11 @@ test("corporate section IDs, content and asset paths survive the JSX transfer", 
   const corporate = sections + read("frontend/src/components/site/SiteHeader.tsx") + read("frontend/src/components/site/SiteFooter.tsx");
   for (const id of ["inicio", "proyectos", "servicios", "nosotros", "sucursales", "contacto"]) assert.ok(sections.includes(`id="${id}"`));
   for (const match of original.matchAll(/<img[^>]+src="([^"]+)"/g)) {
-    if (match[1] !== "img/construccion/fachada-1.jpg") assert.ok(corporate.includes(match[1]), match[1]);
+    assert.ok(corporate.includes(match[1]), match[1]);
   }
-  assert.ok(sections.includes('/img/construccion/nosotros-led.jpg'));
-  assert.ok(existsSync(path.join(root, "frontend/public/img/construccion/nosotros-led.jpg")));
+  assert.ok(sections.includes('/img/construccion/fachada-1.jpg'));
+  assert.ok(!sections.includes('/img/construccion/nosotros-led.jpg'));
+  assert.ok(existsSync(path.join(root, "frontend/public/img/construccion/fachada-1.jpg")));
   assert.match(sections, /<a href="\/cocina-customizer\.html"/);
   assert.doesNotMatch(sections, /onclick=|dangerouslySetInnerHTML/);
 });
