@@ -17,12 +17,16 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> URL:
-        return URL.create("postgresql+psycopg", username=self.db_user,
-                          password=self.db_password, host=self.db_host,
-                          port=self.db_port, database=self.db_name)
+        return URL.create(
+            "postgresql+psycopg",
+            username=self.db_user,
+            password=self.db_password,
+            host=self.db_host,
+            port=self.db_port,
+            database=self.db_name,
+        )
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
