@@ -158,7 +158,7 @@ var PALETTES = {
 // General material guidance supplied for each category; not variant-specific.
 var CUBIERTA_INFO = {
   "solida": {
-    "titulo": "Base sólida Corian",
+    "titulo": "Superficie sólida Corian",
     "precioBase": 6500,
     "descripcion": "Superficie homogénea y no porosa que permite diseños continuos, uniones discretas y fácil mantenimiento.",
     "imagen": "img/customizer/superficiesolida.jpg",

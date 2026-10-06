@@ -273,7 +273,7 @@ export default function HomeSections() {
     <div className="container trust-container">
       <div className="trust-visual">
         <div className="trust-img-wrap">
-          <img src="/img/construccion/nosotros-led.jpg" alt="Diseño de cocina con iluminación LED — MHG Arquitectos" className="trust-img" loading="lazy" />
+          <img src="/img/construccion/fachada-1.jpg" alt="Proyecto residencial terminado — MHG Arquitectos" className="trust-img" loading="lazy" />
         </div>
       </div>
       <div className="trust-content">
