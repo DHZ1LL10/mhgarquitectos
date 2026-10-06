@@ -20,7 +20,11 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    engine = create_engine(get_settings().database_url, poolclass=pool.NullPool)
+    engine = create_engine(
+        get_settings().database_url,
+        poolclass=pool.NullPool,
+        connect_args={"connect_timeout": 5, "options": "-c timezone=UTC"},
+    )
     with engine.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
         with context.begin_transaction():
