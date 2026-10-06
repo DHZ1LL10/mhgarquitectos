@@ -47,7 +47,7 @@ try {
       assert.match(html, /href="\/cocina-customizer\.html"/);
       assert.match(html, /href="\/propiedades"/);
       const original = await readFile(path.join(frontend, "../index.html"), "utf8");
-      const originalImages = [...original.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)].map(match => match[0].includes('alt="Proyecto residencial terminado') ? "/img/construccion/nosotros-led.jpg" : "/" + match[1]);
+      const originalImages = [...original.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)].map(match => "/" + match[1]);
       const migratedImages = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
       assert.deepEqual(migratedImages, originalImages, "Corporate images and their order must be unchanged");
       assert.equal([...html.matchAll(/class="proj-item"/g)].length, 23);
