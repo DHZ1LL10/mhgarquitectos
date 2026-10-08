@@ -1,12 +1,12 @@
 {
-  "modified": {
-    "cocina-customizer.html": "60c403b9179df972f2d09ac85c02d197abbb79b311fbd4a8ea74701a81c5f2ae",
-    "cotizador.js": "ba260e618b8e46aedb1215bb348aac74f33a0230bf153bcec3093ddd4300b7b2",
-    "configurador-galeria.css": "2118306edb051e5628d86ca765788e001945b1d797da57e66f84f0dd63b55f37",
-    "style.css": "eb411b2581d4e2eab33c0e493d0700a176425991ad130e5d728c250243ce76c8"
-  },
-  "additions": {
-    "maps-config.js": "f7a1715052952ff71928a62ed9e127cf02dc966785678af6b1bd564d1c5fdab3",
-    "img/construccion/nosotros-led.jpg": "c1c00babcca48fa9989a2009d7c9ccd8564d5f41abe4a969198dbecaf47b7a7e"
-  }
+    "modified":  {
+                     "cocina-customizer.html":  "22e344394e69bc3ae71d79c33290d732626246d9095180183ce060d09eddf091",
+                     "cotizador.js":  "68c5392a8251354d7b7690b3bada35b286a3546ada5c995502d56dda4d107ac4",
+                     "configurador-galeria.css":  "257a4c73d14ab19d29ce1a312234f1b338abba91ea9dca9fdf4539afe297a7a4",
+                     "style.css":  "eb411b2581d4e2eab33c0e493d0700a176425991ad130e5d728c250243ce76c8"
+                 },
+    "additions":  {
+                      "maps-config.js":  "f7a1715052952ff71928a62ed9e127cf02dc966785678af6b1bd564d1c5fdab3",
+                      "img/construccion/nosotros-led.jpg":  "c1c00babcca48fa9989a2009d7c9ccd8564d5f41abe4a969198dbecaf47b7a7e"
+                  }
 }

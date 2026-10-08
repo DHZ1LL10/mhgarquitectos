@@ -60,7 +60,7 @@ test("public output excludes browser profiles, reports and the old home document
 
 test("legacy catalogs, defaults, summary and WhatsApp retain their baseline behavior", () => {
   const nodes: Record<string, { innerHTML: string; textContent: string }> = {
-    summaryGrid: { innerHTML: "", textContent: "" }, totalAmount: { innerHTML: "", textContent: "" }, sidebarSteps: { innerHTML: "", textContent: "" },
+    summaryGrid: { innerHTML: "", textContent: "" }, sidebarSteps: { innerHTML: "", textContent: "" },
   };
   let url = "";
   const context = vm.createContext({
@@ -76,7 +76,8 @@ test("legacy catalogs, defaults, summary and WhatsApp retain their baseline beha
   assert.deepEqual(JSON.parse(vm.runInContext("JSON.stringify(Object.values(CUBIERTA_INFO).map(v => v.precioBase))", context)), [6500, 8500, 12000, 17000]);
   vm.runInContext('state.cliente.nombre="Cliente de prueba"; state.cliente.lat=18.9; state.cliente.lng=-96.97; state.extras=["Iluminación LED"]; buildSummary(); sendWhatsApp(); renderStep(0);', context);
   assert.match(nodes.summaryGrid.innerHTML, /Cliente de prueba/);
-  assert.equal(nodes.totalAmount.textContent, "A confirmar tras levantamiento");
+  assert.doesNotMatch(read("frontend/public/cotizador.js"), /totalAmount|Estimado de inversión|A confirmar tras levantamiento/);
+  assert.doesNotMatch(read("frontend/public/cocina-customizer.html"), /totalAmount|Estimado de inversión|Precio referencial basado/);
   assert.equal(new URL(url).pathname, "/5212717041499");
   assert.match(new URL(url).searchParams.get("text") || "", /Cliente de prueba/);
   assert.match(new URL(url).searchParams.get("text") || "", /https:\/\/www\.google\.com\/maps\?q=18\.9,-96\.97/);
@@ -104,7 +105,7 @@ test("customizer navigation follows the new order and preserves step validation 
   assert.match(alerts.pop() || "", /tablero interior/);
   vm.runInContext("state.interior='blanco-frosty'; navigateToStep(7)", context);
   assert.match(alerts.pop() || "", /línea de frentes/);
-  vm.runInContext("state.frentes.economica=['Blanco']; navigateToStep(7)", context);
+  vm.runInContext("state.frentes.economica=['Blanco']; state.bisagra=HERRAJE_SECTIONS[0].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[0],false); state.corredera=HERRAJE_SECTIONS[1].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[1],false); resolverHerraje(HERRAJE_SECTIONS[2],true); resolverHerraje(HERRAJE_SECTIONS[3],true); resolverHerraje(HERRAJE_SECTIONS[4],true); resolverHerraje(HERRAJE_SECTIONS[5],true); navigateToStep(7)", context);
   assert.match(alerts.pop() || "", /nombre, teléfono, dirección/);
   Object.assign(fields["c-nombre"], { value: "Persona" }); Object.assign(fields["c-tel"], { value: "2710000000" });
   Object.assign(fields["c-dir"], { value: "Calle de prueba" }); Object.assign(fields["c-fecha"], { value: "2026-11-01" });

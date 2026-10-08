@@ -20,6 +20,10 @@ var state = {
   cubiertaCategoria: null,
   cubiertaVariante: null,
   extras:    [],
+  herrajesAtendidos: {},
+  herrajesNoAplica: {},
+  herrajeOpenId: 'bisagras',
+  herrajeNextIndex: 0,
 };
 
 /* ─── STEPS META ─── */
@@ -1328,6 +1332,7 @@ var HERRAJE_SECTIONS = [
   {
     id:'bisagras', title:'Bisagras',
     type:'radio', key:'bisagra',
+    optional:false,
     preselect:'bis-hettich',
     opts:[
       {
@@ -1344,6 +1349,7 @@ var HERRAJE_SECTIONS = [
   {
     id:'correderas', title:'Correderas para cajones',
     type:'radio', key:'corredera',
+    optional:false,
     opts:[
       {
         id:'cor-lb',
@@ -1372,6 +1378,7 @@ var HERRAJE_SECTIONS = [
   {
     id:'cajones', title:'Cajones',
     type:'multi', key:'cajones',
+    optional:true,
     opts:[
       { id:'caj-mdf', label:'Con MDF',             desc:'Cajón con estructura interior de MDF, acabado sólido y resistente.',       val:'Con MDF',              img:'img/customizer/cajonmdf.jpg' },
       { id:'caj-alu', label:'Tiro de aluminio',     desc:'Perfil lateral de aluminio anodizado. Apariencia premium y gran dureza.',  val:'Tiro aluminio',        img:'img/customizer/cajontiraaluminio.webp' },
@@ -1381,6 +1388,7 @@ var HERRAJE_SECTIONS = [
   {
     id:'basureros', title:'Basureros',
     type:'radio', key:'basurero',
+    optional:true,
     opts:[
       {
         id:'bas-lb',
@@ -1408,6 +1416,7 @@ var HERRAJE_SECTIONS = [
   {
     id:'especias', title:'Especiero',
     type:'radio', key:'especias',
+    optional:true,
     opts:[
       {
         id:'esp-si',
@@ -1421,6 +1430,7 @@ var HERRAJE_SECTIONS = [
   {
     id:'modulos', title:'Módulos especiales',
     type:'multi', key:'modulos',
+    optional:true,
     opts:[
       { id:'mod-esq', label:'Esquinero extraíble',       desc:'Sistema giratorio para aprovechar las esquinas ciegas.',  val:'Esquinero extraíble', img:'img/customizer/herrajes/esquineroextraible4.jpg', images:['img/customizer/herrajes/esquineroextraible4.jpg', 'img/customizer/herrajes/esquineroextraible1.jpeg', 'img/customizer/herrajes/esquineroextraible2.jpg', 'img/customizer/herrajes/esquineroextraible3.jpg'] },
       { id:'mod-hor', label:'Torre de horno',            desc:'Módulo vertical para horno empotrado a la medida.',       val:'Torre de horno',      img:null },
@@ -1558,7 +1568,7 @@ function prepararGaleriaHerraje(photo, option) {
   button.setAttribute('aria-label', 'Ampliar ' + option.label);
   button.addEventListener('click', function(event) {
     event.stopPropagation();
-    window.openLightbox(images, option.label, active);
+    if (typeof window.openLightbox === 'function') window.openLightbox(images.slice(), option.label, active);
   });
   img.addEventListener('error', function() { button.hidden = true; });
   img.addEventListener('load', function() { button.hidden = false; });
@@ -1592,26 +1602,137 @@ function prepararGaleriaHerraje(photo, option) {
   photo.appendChild(strip);
 }
 
+function herrajeSeccionCompleta(section) {
+  if (!section || !state.herrajesAtendidos[section.id]) return false;
+  if (state.herrajesNoAplica[section.id]) return section.optional === true;
+  return section.type === 'multi'
+    ? Array.isArray(state[section.key]) && state[section.key].length > 0
+    : Boolean(state[section.key]);
+}
+
+function herrajesCompletos() {
+  return HERRAJE_SECTIONS.every(herrajeSeccionCompleta);
+}
+
+function herrajeResumen(section) {
+  if (state.herrajesNoAplica[section.id]) return 'No aplica';
+  var value = state[section.key];
+  return Array.isArray(value) ? (value.join(', ') || '—') : (value || '—');
+}
+
+function actualizarEstadoSeccionesHerrajes() {
+  HERRAJE_SECTIONS.forEach(function(section, index) {
+    var element = document.getElementById('sec-' + section.id);
+    if (!element) return;
+    var complete = herrajeSeccionCompleta(section);
+    element.classList.toggle('completed', complete);
+    element.setAttribute('data-status', element.classList.contains('open') ? 'current' : (complete ? 'completed' : 'pending'));
+    var status = element.querySelector('.herraje-section-status');
+    if (status) status.textContent = complete ? 'Completado' : (element.classList.contains('open') ? 'En curso' : 'Pendiente');
+    var next = element.querySelector('.herraje-multi-continue');
+    if (next) next.disabled = !(Array.isArray(state[section.key]) && state[section.key].length > 0);
+  });
+}
+
+function abrirSeccionHerrajes(id, scroll) {
+  var sectionId = id.slice(4);
+  if (!HERRAJE_SECTIONS.some(function(section) { return section.id === sectionId; })) return;
+  state.herrajeOpenId = sectionId;
+  document.querySelectorAll('.herraje-section').forEach(function(section) {
+    section.classList.toggle('open', section.id === id);
+    var header = section.querySelector('.herraje-section-header');
+    if (header) header.setAttribute('aria-expanded', String(section.id === id));
+  });
+  actualizarEstadoSeccionesHerrajes();
+  var element = document.getElementById(id);
+  if (scroll && element && typeof element.scrollIntoView === 'function') {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    element.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+  }
+}
+
+function avanzarHerrajesDespuesDe(section) {
+  var index = HERRAJE_SECTIONS.indexOf(section);
+  if (index !== state.herrajeNextIndex) {
+    actualizarEstadoSeccionesHerrajes();
+    updateSidebar();
+    return;
+  }
+  state.herrajeNextIndex = index + 1;
+  while (state.herrajeNextIndex < HERRAJE_SECTIONS.length && herrajeSeccionCompleta(HERRAJE_SECTIONS[state.herrajeNextIndex])) state.herrajeNextIndex++;
+  if (state.herrajeNextIndex < HERRAJE_SECTIONS.length) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[state.herrajeNextIndex].id, true);
+  else actualizarEstadoSeccionesHerrajes();
+  updateSidebar();
+}
+
+function resolverHerraje(section, noAplica) {
+  if (!section || (noAplica && !section.optional)) return false;
+  var sectionElement = document.getElementById('sec-' + section.id);
+  var noAplicaButton = sectionElement && sectionElement.querySelector('.herraje-no-aplica');
+  if (noAplica) {
+    state.herrajesNoAplica[section.id] = true;
+    state[section.key] = section.type === 'multi' ? [] : null;
+    if (sectionElement) sectionElement.querySelectorAll('.herr-card, .herr-opt').forEach(function(option) { option.classList.remove('selected'); });
+    if (noAplicaButton) { noAplicaButton.classList.add('selected'); noAplicaButton.setAttribute('aria-pressed', 'true'); }
+  } else {
+    delete state.herrajesNoAplica[section.id];
+    if (section.type === 'multi' && !Array.isArray(state[section.key])) state[section.key] = [];
+    if (noAplicaButton) { noAplicaButton.classList.remove('selected'); noAplicaButton.setAttribute('aria-pressed', 'false'); }
+  }
+  state.herrajesAtendidos[section.id] = true;
+  actualizarEstadoSeccionesHerrajes();
+  avanzarHerrajesDespuesDe(section);
+  return true;
+}
+
+function resolverHerrajeOpcional(id) {
+  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
+  resolverHerraje(section, true);
+}
+
+function continuarHerrajeMultiple(id) {
+  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
+  if (!section || section.type !== 'multi' || !state[section.key].length) return;
+  resolverHerraje(section, false);
+}
+
+function confirmarHerrajeUnico(id) {
+  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
+  if (!section || section.optional || section.type !== 'radio' || section.opts.length !== 1) return;
+  var option = section.opts[0];
+  var card = document.getElementById(option.id);
+  if (card) {
+    var body = card.closest('.herraje-section-body');
+    if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(item) { item.classList.remove('selected'); });
+    card.classList.add('selected');
+  }
+  state[section.key] = option.val;
+  resolverHerraje(section, false);
+  updateSidebar();
+}
+
 function buildHerrajeContainer() {
   var container = document.getElementById('herrajeContainer');
   if (!container) return;
   container.innerHTML = HERRAJE_SECTIONS.map(function(sec) {
-    var isOpen = sec.id === 'bisagras';
+    var isOpen = sec.id === state.herrajeOpenId;
+    var noAplica = state.herrajesNoAplica[sec.id];
     var optsHTML;
 
     if (sec.type === 'radio') {
       optsHTML = '<div class="herr-cards">' +
         sec.opts.map(function(o) {
-          var isPresel = sec.preselect && sec.preselect === o.id;
+          var isPresel = !noAplica && sec.preselect && sec.preselect === o.id;
           var selCls = isPresel ? ' selected' : '';
+          var currentSelected = !noAplica && state[sec.key] === o.val;
           if (herrajeImagenes(o).length) {
-            return '<div class="herr-card' + selCls + '" id="' + o.id + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
+            return '<div class="herr-card' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
               '<div class="herr-card-photo"><img src="' + herrajeImagenes(o)[0] + '" alt="' + o.label + '" loading="lazy" />' +
               '<div class="herr-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div></div>' +
               '<div class="herr-card-body"><div class="herr-card-name">' + o.label + '</div><div class="herr-card-desc">' + o.desc + '</div></div>' +
             '</div>';
           } else {
-            return '<div class="herr-opt' + selCls + '" id="' + o.id + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
+            return '<div class="herr-opt' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
               '<div class="herr-radio"></div>' +
               '<div><div class="herr-opt-name">' + o.label + '</div><div class="herr-opt-desc">' + o.desc + '</div></div>' +
             '</div>';
@@ -1637,9 +1758,13 @@ function buildHerrajeContainer() {
       '</div>';
     }
 
-    return '<div class="herraje-section' + (isOpen ? ' open' : '') + '" id="sec-' + sec.id + '">' +
-      '<div class="herraje-section-header" onclick="toggleHerrajeSection(\'sec-' + sec.id + '\')">' +
-        '<span class="herraje-section-title">' + sec.title + '</span>' +
+    if (sec.optional) optsHTML += '<button type="button" class="herraje-no-aplica' + (noAplica ? ' selected' : '') + '" aria-pressed="' + String(!!noAplica) + '" onclick="resolverHerrajeOpcional(\'' + sec.id + '\')">No aplica</button>';
+    if (sec.id === 'bisagras') optsHTML += '<button type="button" class="herraje-required-continue" onclick="confirmarHerrajeUnico(\'bisagras\')">Confirmar bisagra y continuar</button>';
+    if (sec.type === 'multi') optsHTML += '<button type="button" class="herraje-multi-continue" onclick="continuarHerrajeMultiple(\'' + sec.id + '\')"' + (state[sec.key].length ? '' : ' disabled') + '>Continuar</button>';
+    var complete = herrajeSeccionCompleta(sec);
+    return '<div class="herraje-section' + (isOpen ? ' open' : '') + (complete ? ' completed' : '') + '" id="sec-' + sec.id + '" data-status="' + (complete ? 'completed' : (isOpen ? 'current' : 'pending')) + '">' +
+      '<div class="herraje-section-header" role="button" tabindex="0" aria-expanded="' + String(isOpen) + '" onclick="toggleHerrajeSection(\'sec-' + sec.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleHerrajeSection(\'sec-' + sec.id + '\')}">' +
+        '<span class="herraje-section-title">' + sec.title + '</span><span class="herraje-section-status">' + (complete ? 'Completado' : (isOpen ? 'En curso' : 'Pendiente')) + '</span>' +
         '<svg class="herraje-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>' +
       '</div>' +
       '<div class="herraje-section-body">' + optsHTML + '</div>' +
@@ -1652,6 +1777,7 @@ function buildHerrajeContainer() {
       if (photo) prepararGaleriaHerraje(photo, option);
     });
   });
+  actualizarEstadoSeccionesHerrajes();
 }
 
 
@@ -1659,30 +1785,44 @@ function escQ(s) { return s.replace(/'/g, "\\'"); }
 
 function toggleHerrajeSection(id) {
   var el = document.getElementById(id);
+  if (!el) return;
   var isOpen = el.classList.contains('open');
-  document.querySelectorAll('.herraje-section').forEach(function(sec) {
-    sec.classList.remove('open');
-  });
-  if (!isOpen) {
-    el.classList.add('open');
+  if (!isOpen) abrirSeccionHerrajes(id, false);
+  else {
+    el.classList.remove('open');
+    el.querySelector('.herraje-section-header').setAttribute('aria-expanded', 'false');
+    state.herrajeOpenId = '';
+    actualizarEstadoSeccionesHerrajes();
   }
 }
 
 function selectHerrajeOpt(el, key, val) {
+  var sectionElement = el.closest('.herraje-section');
+  var section = sectionElement && HERRAJE_SECTIONS.find(function(item) { return 'sec-' + item.id === sectionElement.id; });
+  if (!section) return;
   var body = el.closest('.herraje-section-body');
   if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(o){ o.classList.remove('selected'); });
   el.classList.add('selected');
   state[key] = val;
+  resolverHerraje(section, false);
   updateSidebar();
 }
 
 function toggleMultiOpt(el, key, val) {
+  var sectionElement = el.closest('.herraje-section');
+  var section = sectionElement && HERRAJE_SECTIONS.find(function(item) { return 'sec-' + item.id === sectionElement.id; });
+  if (!section) return;
+  delete state.herrajesNoAplica[section.id];
+  state.herrajesAtendidos[section.id] = false;
+  var noAplica = sectionElement.querySelector('.herraje-no-aplica');
+  if (noAplica) { noAplica.classList.remove('selected'); noAplica.setAttribute('aria-pressed', 'false'); }
   el.classList.toggle('selected');
   if (el.classList.contains('selected')) {
     if (state[key].indexOf(val) === -1) state[key].push(val);
   } else {
     state[key] = state[key].filter(function(v){ return v !== val; });
   }
+  actualizarEstadoSeccionesHerrajes();
   updateSidebar();
 }
 
@@ -2024,6 +2164,7 @@ var _currentStep = 0;
 
 function renderStep(step) {
   _currentStep = step;
+  if (step === 3) abrirSeccionHerrajes('sec-' + (state.herrajeOpenId || HERRAJE_SECTIONS[Math.min(state.herrajeNextIndex, HERRAJE_SECTIONS.length - 1)].id), false);
   var total = STEPS.length;
 
   document.querySelectorAll('.step-panel').forEach(function(p){
@@ -2088,6 +2229,7 @@ function stepIsComplete(step) {
   if (step === 0) return !!state.situacion;
   if (step === 1) return !!state.interior;
   if (step === 2) return Object.keys(state.frentes).some(function(key){ return state.frentes[key] && state.frentes[key].length; });
+  if (step === 3) return herrajesCompletos();
   if (step === 6) return !!(state.cliente.nombre && state.cliente.tel && state.cliente.dir && state.cliente.fecha && state.cliente.hora && state.cliente.sucursal);
   return step < _currentStep;
 }
@@ -2143,6 +2285,12 @@ function validateStep(step) {
     }
   }
 
+  if (step === 3 && !herrajesCompletos()) {
+    var pending = HERRAJE_SECTIONS.find(function(section) { return !herrajeSeccionCompleta(section); });
+    if (pending) abrirSeccionHerrajes('sec-' + pending.id, true);
+    alert('Completa los apartados de Herrajes: elige una opción o marca No aplica donde está disponible.');
+    ok = false;
+  }
   return ok;
 }
 
@@ -2302,12 +2450,12 @@ function buildSummary() {
     {
       title: 'Herrajes',
       rows: [
-        {label:'Bisagras',    val: state.bisagra},
-        {label:'Correderas',  val: state.corredera || '—'},
-        {label:'Cajones',     val: state.cajones.join(', ') || '—'},
-        {label:'Basurero',    val: state.basurero || '—'},
-        {label:'Especiero',    val: state.especias  || '—'},
-        {label:'Módulos esp.',val: state.modulos.join(', ') || '—'},
+        {label:'Bisagras',    val: herrajeResumen(HERRAJE_SECTIONS[0])},
+        {label:'Correderas',  val: herrajeResumen(HERRAJE_SECTIONS[1])},
+        {label:'Cajones',     val: herrajeResumen(HERRAJE_SECTIONS[2])},
+        {label:'Basurero',    val: herrajeResumen(HERRAJE_SECTIONS[3])},
+        {label:'Especiero',    val: herrajeResumen(HERRAJE_SECTIONS[4])},
+        {label:'Módulos esp.',val: herrajeResumen(HERRAJE_SECTIONS[5])},
       ]
     },
     {
@@ -2357,8 +2505,6 @@ function buildSummary() {
     grid.children[3].appendChild(preview);
   }
 
-  var totalEl = document.getElementById('totalAmount');
-  if (totalEl) totalEl.textContent = 'A confirmar tras levantamiento';
 }
 
 /* ─── PDF ─── */
@@ -2482,12 +2628,12 @@ function _buildPDF(logoDataURL) {
 
   // Hardware (step 4)
   y = section('Herrajes', y);
-  y = row('Bisagras:',    state.bisagra, y);
-  y = row('Correderas:',  state.corredera || '—', y);
-  y = row('Cajones:',     state.cajones.join(', ') || '—', y);
-  y = row('Basurero:',    state.basurero || '—', y);
-  y = row('Especiero:',    state.especias  || '—', y);
-  if (state.modulos.length) y = row('Módulos esp.:',  state.modulos.join(', '), y);
+  y = row('Bisagras:',    herrajeResumen(HERRAJE_SECTIONS[0]), y);
+  y = row('Correderas:',  herrajeResumen(HERRAJE_SECTIONS[1]), y);
+  y = row('Cajones:',     herrajeResumen(HERRAJE_SECTIONS[2]), y);
+  y = row('Basurero:',    herrajeResumen(HERRAJE_SECTIONS[3]), y);
+  y = row('Especiero:',    herrajeResumen(HERRAJE_SECTIONS[4]), y);
+  y = row('Módulos esp.:', herrajeResumen(HERRAJE_SECTIONS[5]), y);
   y += 6;
 
   // Countertop (step 5)
@@ -2561,12 +2707,12 @@ function sendWhatsApp() {
     '*INTERIOR:* '    + (state.interior==='blanco-frosty'?'Blanco Frosty 15mm':'Gris Oxford 15mm') + '\n' +
     '*FRENTES:*\n'    + frentesText + '\n' +
     '*HERRAJES:*\n' +
-    '  • Bisagras: '   + state.bisagra + '\n' +
-    '  • Correderas: ' + (state.corredera||'—') + '\n' +
-    '  • Cajones: '    + (state.cajones.join(', ')||'—') + '\n' +
-    '  • Basurero: '   + (state.basurero||'—') + '\n' +
-    '  • Especiero: '   + (state.especias||'—') + '\n' +
-    '  • Módulos: '    + (state.modulos.join(', ')||'—') + '\n' +
+    '  • Bisagras: '   + herrajeResumen(HERRAJE_SECTIONS[0]) + '\n' +
+    '  • Correderas: ' + herrajeResumen(HERRAJE_SECTIONS[1]) + '\n' +
+    '  • Cajones: '    + herrajeResumen(HERRAJE_SECTIONS[2]) + '\n' +
+    '  • Basurero: '   + herrajeResumen(HERRAJE_SECTIONS[3]) + '\n' +
+    '  • Especiero: '   + herrajeResumen(HERRAJE_SECTIONS[4]) + '\n' +
+    '  • Módulos: '    + herrajeResumen(HERRAJE_SECTIONS[5]) + '\n' +
     '*CUBIERTA:* '    + (state.cubierta||'—') + (state.cubPrecio ? ' — ' + state.cubPrecio : '') + '\n' +
     '*VARIANTE:* '    + cubiertaVarianteTexto() + '\n' +
     '*EXTRAS:* '       + (state.extras.join(', ')||'Ninguno') + '\n\n' +
