@@ -27,10 +27,52 @@ test("Bisagras requiere confirmación explícita, no acepta No aplica y avanza a
   assert.equal(vm.runInContext("HERRAJE_SECTIONS[0].optional", context), false);
   assert.equal(vm.runInContext("resolverHerraje(HERRAJE_SECTIONS[0],true)", context), false);
   assert.equal(vm.runInContext("stepIsComplete(3)", context), false);
-  vm.runInContext("state.bisagra=HERRAJE_SECTIONS[0].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[0],false)", context);
+  vm.runInContext("confirmarHerrajeUnico('bisagras')", context);
   assert.equal(vm.runInContext("stepIsComplete(3)", context), false);
   assert.equal(vm.runInContext("state.herrajeNextIndex", context), 1);
   assert.equal(vm.runInContext("state.bisagra", context), "Bisagra cierre suave");
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[0])", context), true);
+});
+
+test("radios persist selection but require Continuar before completing (including Correderas)", () => {
+  const { context } = createContext();
+  vm.runInContext("seleccionarHerrajeRadio('bisagras', HERRAJE_SECTIONS[0].opts[0].val)", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[0])", context), false);
+  vm.runInContext("confirmarHerrajeUnico('bisagras')", context);
+  vm.runInContext("seleccionarHerrajeRadio('correderas', HERRAJE_SECTIONS[1].opts[2].val)", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[1])", context), false);
+  vm.runInContext("confirmarHerrajeUnico('correderas')", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[1])", context), true);
+  assert.equal(vm.runInContext("state.corredera", context), "LA Hettich oculta soft-close (módulo completo)");
+});
+
+test("the final optional subsection advances after Continue and no longer triggers a false validation alert", () => {
+  const { context, alerts } = createContext();
+  vm.runInContext("resolverHerraje(HERRAJE_SECTIONS[0],false); state.corredera=HERRAJE_SECTIONS[1].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[1],false); resolverHerraje(HERRAJE_SECTIONS[2],true); resolverHerraje(HERRAJE_SECTIONS[3],true); resolverHerraje(HERRAJE_SECTIONS[4],true); state.modulos.push(HERRAJE_SECTIONS[5].opts[0].val); continuarHerrajeMultiple('modulos')", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[5])", context), true);
+  assert.equal(vm.runInContext("herrajesCompletos() && validateStep(3)", context), true);
+  assert.equal(alerts.length, 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(vm.runInContext("state.modulos", context))), ["Esquinero extraíble"]);
+});
+
+test("the final optional subsection also advances through No aplica and remains complete on return", () => {
+  const { context, alerts } = createContext();
+  vm.runInContext("resolverHerraje(HERRAJE_SECTIONS[0],false); state.corredera=HERRAJE_SECTIONS[1].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[1],false); resolverHerraje(HERRAJE_SECTIONS[2],true); resolverHerraje(HERRAJE_SECTIONS[3],true); resolverHerraje(HERRAJE_SECTIONS[4],true); resolverHerrajeOpcional('modulos')", context);
+  assert.equal(vm.runInContext("state.herrajesNoAplica.modulos && herrajesCompletos() && validateStep(3)", context), true);
+  vm.runInContext("abrirSeccionHerrajes('sec-modulos',false)", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[5])", context), true);
+  assert.equal(alerts.length, 0);
+});
+
+test("reselecting an optional radio requires one confirmation and preserves No aplica until changed", () => {
+  const { context } = createContext();
+  vm.runInContext("resolverHerrajeOpcional('especias')", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[4])", context), true);
+  vm.runInContext("seleccionarHerrajeRadio('especias', HERRAJE_SECTIONS[4].opts[0].val)", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[4])", context), false);
+  assert.equal(vm.runInContext("state.herrajesNoAplica.especias", context), undefined);
+  vm.runInContext("confirmarHerrajeUnico('especias')", context);
+  assert.equal(vm.runInContext("herrajeSeccionCompleta(HERRAJE_SECTIONS[4])", context), true);
 });
 
 test("optional radio and multi sections complete through No aplica without product selections or prices", () => {
@@ -79,8 +121,7 @@ test("hinge image opens its associated single-photo lightbox and single photos o
   assert.match(source.slice(source.indexOf("function prepararGaleriaHerraje"), source.indexOf("function herrajeSeccionCompleta")), /window\.openLightbox\(images\.slice\(\), option\.label, active\)/);
   assert.match(source.slice(source.indexOf("function prepararGaleriaHerraje"), source.indexOf("function herrajeSeccionCompleta")), /if \(images\.length < 2\) return/);
   const styles = readFileSync(path.join(root, "frontend/public/configurador-galeria.css"), "utf8");
-  assert.match(styles, /#bis-hettich \.herr-card-photo > img \{ object-fit: contain; object-position: center;/);
+  assert.match(styles, /#bis-hettich \.herr-card-photo > img \{ object-fit: cover; object-position: 58% center;/);
   assert.match(styles, /\.herr-gallery button img \{[^}]*object-fit: contain; object-position: center;/);
   assert.match(styles, /#lbThumbnails img \{[^}]*object-fit: contain; object-position: center;/);
 });
-

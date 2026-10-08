@@ -9,7 +9,7 @@ var state = {
   situacion: null,
   interior:  null,
   frentes:   {},
-  bisagra:   'Hettich oculta cierre suave',
+  bisagra:   'Bisagra cierre suave',
   corredera: null,
   cajones:   [],
   basurero:  null,
@@ -1690,6 +1690,27 @@ function resolverHerrajeOpcional(id) {
   resolverHerraje(section, true);
 }
 
+function seleccionarHerrajeRadio(id, val) {
+  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id && item.type === 'radio'; });
+  if (!section || !section.opts.some(function(option) { return option.val === val; })) return false;
+  delete state.herrajesNoAplica[section.id];
+  state[section.key] = val;
+  state.herrajesAtendidos[section.id] = false;
+  var sectionElement = document.getElementById('sec-' + section.id);
+  if (sectionElement) {
+    sectionElement.querySelectorAll('.herr-card, .herr-opt').forEach(function(option) {
+      option.classList.toggle('selected', option.id === section.opts.find(function(item) { return item.val === val; }).id);
+    });
+    var noAplicaButton = sectionElement.querySelector('.herraje-no-aplica');
+    if (noAplicaButton) { noAplicaButton.classList.remove('selected'); noAplicaButton.setAttribute('aria-pressed', 'false'); }
+    var continueButton = sectionElement.querySelector('.herraje-required-continue');
+    if (continueButton) continueButton.disabled = false;
+  }
+  actualizarEstadoSeccionesHerrajes();
+  updateSidebar();
+  return true;
+}
+
 function continuarHerrajeMultiple(id) {
   var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
   if (!section || section.type !== 'multi' || !state[section.key].length) return;
@@ -1698,8 +1719,9 @@ function continuarHerrajeMultiple(id) {
 
 function confirmarHerrajeUnico(id) {
   var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
-  if (!section || section.optional || section.type !== 'radio' || section.opts.length !== 1) return;
-  var option = section.opts[0];
+  if (!section || section.type !== 'radio') return;
+  var option = section.opts.find(function(item) { return item.val === state[section.key]; });
+  if (!option || state.herrajesNoAplica[section.id]) return;
   var card = document.getElementById(option.id);
   if (card) {
     var body = card.closest('.herraje-section-body');
@@ -1759,7 +1781,7 @@ function buildHerrajeContainer() {
     }
 
     if (sec.optional) optsHTML += '<button type="button" class="herraje-no-aplica' + (noAplica ? ' selected' : '') + '" aria-pressed="' + String(!!noAplica) + '" onclick="resolverHerrajeOpcional(\'' + sec.id + '\')">No aplica</button>';
-    if (sec.id === 'bisagras') optsHTML += '<button type="button" class="herraje-required-continue" onclick="confirmarHerrajeUnico(\'bisagras\')">Confirmar bisagra y continuar</button>';
+    if (sec.type === 'radio') optsHTML += '<button type="button" class="herraje-required-continue" onclick="confirmarHerrajeUnico(\'' + sec.id + '\')"' + (state[sec.key] ? '' : ' disabled') + '>' + (sec.id === 'bisagras' ? 'Confirmar bisagra y continuar' : 'Continuar') + '</button>';
     if (sec.type === 'multi') optsHTML += '<button type="button" class="herraje-multi-continue" onclick="continuarHerrajeMultiple(\'' + sec.id + '\')"' + (state[sec.key].length ? '' : ' disabled') + '>Continuar</button>';
     var complete = herrajeSeccionCompleta(sec);
     return '<div class="herraje-section' + (isOpen ? ' open' : '') + (complete ? ' completed' : '') + '" id="sec-' + sec.id + '" data-status="' + (complete ? 'completed' : (isOpen ? 'current' : 'pending')) + '">' +
@@ -1799,13 +1821,10 @@ function toggleHerrajeSection(id) {
 function selectHerrajeOpt(el, key, val) {
   var sectionElement = el.closest('.herraje-section');
   var section = sectionElement && HERRAJE_SECTIONS.find(function(item) { return 'sec-' + item.id === sectionElement.id; });
-  if (!section) return;
+  if (!section || section.type !== 'radio') return;
   var body = el.closest('.herraje-section-body');
   if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(o){ o.classList.remove('selected'); });
-  el.classList.add('selected');
-  state[key] = val;
-  resolverHerraje(section, false);
-  updateSidebar();
+  seleccionarHerrajeRadio(section.id, val);
 }
 
 function toggleMultiOpt(el, key, val) {

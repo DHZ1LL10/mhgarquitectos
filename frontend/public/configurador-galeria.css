@@ -45,7 +45,7 @@
 .herr-card-photo::after { display: none; }
 .herr-card-photo > img { display: block; object-fit: contain; filter: none; }
 #bis-hettich .herr-card-photo { height: auto; aspect-ratio: 16 / 10; min-height: 180px; max-height: 280px; }
-#bis-hettich .herr-card-photo > img { object-fit: contain; object-position: center; padding: 10px; box-sizing: border-box; }
+#bis-hettich .herr-card-photo > img { object-fit: cover; object-position: 58% center; padding: 0; box-sizing: border-box; }
 .herr-card:hover .herr-card-photo img { transform: none; }
 .herr-card-body { position: static; padding: 10px 13px 12px; color: var(--dark); background: #fff; }
 .herr-card-name { color: var(--dark); font-size: 1.13rem; line-height: 1.2; }
