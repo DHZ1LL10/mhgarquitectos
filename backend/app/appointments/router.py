@@ -11,7 +11,7 @@ from app.appointments.schemas import (
     AppointmentPatch,
 )
 from app.appointments.service import validate_transition
-from app.dependencies import Database, admin_endpoints_enabled
+from app.dependencies import Database, require_admin
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
@@ -33,8 +33,8 @@ def create_appointment(payload: AppointmentCreate, db: Database):
 @router.patch(
     "/{id}",
     response_model=AppointmentOutput,
-    dependencies=[Depends(admin_endpoints_enabled)],
-    description="Future admin endpoint. Disabled by default.",
+    dependencies=[Depends(require_admin)],
+    description="Authenticated administrator operation.",
 )
 def update_appointment(id: UUID, payload: AppointmentPatch, db: Database):
     item = db.scalar(select(Appointment).where(Appointment.id == id).with_for_update())

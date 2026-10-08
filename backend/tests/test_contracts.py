@@ -43,9 +43,7 @@ def test_health_contract_and_unavailable_db():
 def test_admin_operations_default_deny_and_openapi():
     db = MagicMock()
     app.dependency_overrides[get_db] = lambda: db
-    app.dependency_overrides[get_settings] = lambda: Settings(
-        db_password="test", enable_admin_endpoints=False
-    )
+    app.dependency_overrides[get_settings] = lambda: Settings(db_password="test")
     try:
         with TestClient(app) as client:
             for method, path, body in (
@@ -55,10 +53,10 @@ def test_admin_operations_default_deny_and_openapi():
                 ("get", f"/api/v1/kitchen-configurations/{uuid4()}", None),
             ):
                 response = client.request(method, path, json=body)
-                assert response.status_code == 403
+                assert response.status_code == 401
             schema = client.get("/openapi.json").json()
             assert "/api/v1/kitchen-submissions" in schema["paths"]
-            assert "securitySchemes" not in schema["components"]  # No pretend auth.
+            assert "/api/v1/auth/login" in schema["paths"]
             assert db.execute.call_count == 0
     finally:
         app.dependency_overrides.clear()
@@ -197,3 +195,19 @@ def test_initial_migration_renders_postgresql_ddl():
         "uq_properties_slug",
     ):
         assert required in sql
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        {"cors_origins": ["*"]},
+        {"cors_origins": ["https://example.com/path"]},
+        {"cors_origins": ["https://user:secret@example.com"]},
+        {"cookie_samesite": "none", "cookie_secure": False},
+        {"session_hours": 0},
+        {"session_hours": 25},
+    ],
+)
+def test_unsafe_auth_configuration_rejected(settings):
+    with pytest.raises(ValidationError):
+        Settings(db_password="test", **settings)

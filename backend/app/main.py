@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app import models  # noqa: F401 - register all mappings
+from app.admin.router import router as management_router
 from app.appointments.router import router as appointments_router
+from app.auth.router import router as auth_router
 from app.config import get_settings
 from app.dependencies import Database
 from app.errors import install_error_handlers
@@ -24,14 +26,14 @@ logger = logging.getLogger("mhg")
 app = FastAPI(
     title="MHG Arquitectos API",
     version="1.0.0",
-    description="Modular monolith. Administrative operations are disabled by default; no authentication implemented yet.",
+    description="Modular monolith with revocable administrative sessions.",
 )
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_methods=["GET", "POST", "PATCH"],
-    allow_headers=["Content-Type"],
-    allow_credentials=False,
+    allow_headers=["Content-Type", "X-MHG-Admin"],
+    allow_credentials=True,
 )
 install_error_handlers(app)
 
@@ -51,6 +53,8 @@ async def request_log(request: Request, call_next):
         (time.monotonic() - started) * 1000,
     )
     response.headers["X-Request-ID"] = request_id
+    if request.url.path.startswith("/api/v1/"):
+        response.headers["Cache-Control"] = "no-store"
     return response
 
 
@@ -61,6 +65,8 @@ def health(db: Database):
 
 
 for router in (
+    auth_router,
+    management_router,
     public_router,
     admin_router,
     kitchens_router,

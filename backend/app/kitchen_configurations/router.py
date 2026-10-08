@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.dependencies import Database, admin_endpoints_enabled
+from app.dependencies import Database, current_user
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.schemas import KitchenCreate, KitchenOutput
 
@@ -26,8 +26,8 @@ def create_configuration(payload: KitchenCreate, db: Database):
 @router.get(
     "/{id}",
     response_model=KitchenOutput,
-    dependencies=[Depends(admin_endpoints_enabled)],
-    description="Future admin endpoint: contains personal data. Disabled by default.",
+    dependencies=[Depends(current_user)],
+    description="Authenticated administrative reader; contains personal data.",
 )
 def get_configuration(id: UUID, db: Database):
     item = db.get(KitchenConfiguration, id)

@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 
-from app.dependencies import Database, admin_endpoints_enabled
+from app.dependencies import Database, require_admin
 from app.properties.models import Property, PropertyImage, PropertyStatus
 from app.properties.schemas import PropertyCreate, PropertyOutput, PropertyPatch
 
@@ -11,7 +11,7 @@ public_router = APIRouter(prefix="/properties", tags=["Properties · public"])
 admin_router = APIRouter(
     prefix="/properties",
     tags=["Properties · future admin"],
-    dependencies=[Depends(admin_endpoints_enabled)],
+    dependencies=[Depends(require_admin)],
 )
 
 
