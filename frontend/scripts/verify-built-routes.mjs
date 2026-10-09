@@ -85,13 +85,20 @@ try {
     assert.equal((await get(route)).status, 404, route);
     results.push(`404: ${route}`);
   }
-  for (const name of ["cocina-customizer.html", "style.css", "cotizador.js", "galeria-configurador.js", "configurador-galeria.css", "maps-config.js", "img/logo.jpg", "img/construccion/nosotros-led.jpg"]) {
+  for (const name of ["cocina-customizer.html", "style.css", "cotizador.js", "kitchen-submission.js", "galeria-configurador.js", "configurador-galeria.css", "img/logo.jpg", "img/construccion/nosotros-led.jpg"]) {
     const response = await get("/" + name); assert.equal(response.status, 200, name);
     const bytes = Buffer.from(await response.arrayBuffer()); assert.equal(sha256(bytes), expectedPublicHash(name), `HTTP bytes: ${name}`);
     assert.match(response.headers.get("x-robots-tag") || "", /noindex/);
     if (name.endsWith(".html")) assert.doesNotMatch(bytes.toString("utf8"), /\/_next\//);
     results.push(`200 + exact SHA-256: /${name}`);
   }
+  const runtimeConfig = await get("/customizer-runtime-config.js");
+  assert.equal(runtimeConfig.status, 200);
+  assert.match(runtimeConfig.headers.get("content-type") || "", /application\/javascript/);
+  const runtimeConfigBody = await runtimeConfig.text();
+  assert.match(runtimeConfigBody, /MHG_CUSTOMIZER_CONFIG/);
+  assert.doesNotMatch(runtimeConfigBody, /password|secret|token/i);
+  results.push("200 + safe runtime config: /customizer-runtime-config.js");
   const sitemap = await (await get("/sitemap.xml")).text();
   assert.match(sitemap, /casa-demo-fortin/); assert.match(sitemap, /departamento-demo-tuxtepec/);
   assert.doesNotMatch(sitemap, /\/admin|borrador|archivado/);

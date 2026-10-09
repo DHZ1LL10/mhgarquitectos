@@ -5,6 +5,7 @@ import vm from "node:vm";
 import test from "node:test";
 import { serviceQuotes } from "../src/data/service-quotes.ts";
 import { buildQuoteMessage } from "../src/data/quote-message.ts";
+import { site } from "../src/config/site.ts";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const read = (name: string) => readFileSync(path.join(root, name), "utf8");
@@ -65,8 +66,10 @@ test("legacy catalogs, defaults, summary and WhatsApp retain their baseline beha
   let url = "";
   const context = vm.createContext({
     document: { addEventListener() {}, getElementById(id: string) { return nodes[id] || null; }, querySelectorAll() { return []; } },
-    window: { scrollTo() {}, open(value: string) { url = value; } },
+    window: { scrollTo() {}, open(value: string) { url = value; }, MHG_CUSTOMIZER_CONFIG: { whatsappNumber: site.quotesWhatsApp } },
+    URL, Uint8Array,
   });
+  vm.runInContext(read("frontend/public/kitchen-submission.js"), context);
   vm.runInContext(read("frontend/public/cotizador.js"), context);
   assert.equal(vm.runInContext("STEPS.length", context), 8);
   assert.deepEqual(JSON.parse(vm.runInContext("JSON.stringify(STEPS.map(step => step.label))", context)), ["Situación actual", "Tableros interiores", "Frentes exteriores", "Herrajes", "Cubierta", "Extras", "Datos del cliente", "Resumen"]);
@@ -78,9 +81,9 @@ test("legacy catalogs, defaults, summary and WhatsApp retain their baseline beha
   assert.match(nodes.summaryGrid.innerHTML, /Cliente de prueba/);
   assert.doesNotMatch(read("frontend/public/cotizador.js"), /totalAmount|Estimado de inversión|A confirmar tras levantamiento/);
   assert.doesNotMatch(read("frontend/public/cocina-customizer.html"), /totalAmount|Estimado de inversión|Precio referencial basado/);
-  assert.equal(new URL(url).pathname, "/5212717041499");
+  assert.equal(new URL(url).pathname, `/${site.quotesWhatsApp}`);
   assert.match(new URL(url).searchParams.get("text") || "", /Cliente de prueba/);
-  assert.match(new URL(url).searchParams.get("text") || "", /https:\/\/www\.google\.com\/maps\?q=18\.9,-96\.97/);
+  assert.match(new URL(url).searchParams.get("text") || "", /https:\/\/www\.openstreetmap\.org\//);
   const text = new URL(url).searchParams.get("text") || "";
   assert.ok(text.indexOf("*SITUACIÓN:*") < text.indexOf("*HERRAJES:*") && text.indexOf("*HERRAJES:*") < text.indexOf("*CUBIERTA:*") && text.indexOf("*EXTRAS:*") < text.indexOf("*DATOS DEL CLIENTE:*"));
   assert.equal(vm.runInContext("state.extras.length", context), 1, "The legacy new-configuration behavior must not change");
@@ -118,10 +121,10 @@ test("customizer navigation follows the new order and preserves step validation 
   assert.equal(vm.runInContext("state.cliente.nombre", context), "Persona");
 });
 
-test("Google Maps configuration contains no key and its file is explicitly loaded by the legacy page", () => {
+test("Leaflet and OpenStreetMap replace Google Maps without an API key", () => {
   const html = read("frontend/public/cocina-customizer.html");
-  const config = read("frontend/public/maps-config.js");
-  assert.match(html, /<script src="maps-config\.js"><\/script>/);
-  assert.match(config, /MHG_GOOGLE_MAPS_API_KEY\s*=\s*window\.MHG_GOOGLE_MAPS_API_KEY\s*\|\|\s*""/);
-  assert.doesNotMatch(config, /AIza[0-9A-Za-z_-]{20,}/);
+  assert.match(html, /leaflet@1\.9\.4/);
+  assert.match(html, /OpenStreetMap/);
+  assert.match(html, /customizer-runtime-config\.js/);
+  assert.doesNotMatch(html + read("frontend/public/cotizador.js"), /maps\.googleapis\.com|MHG_GOOGLE_MAPS_API_KEY|AIza[0-9A-Za-z_-]{20,}/);
 });

@@ -13,4 +13,7 @@ assert.deepEqual(actual, [...publicFiles].sort(), "Unexpected or missing files i
 for (const name of ["script.js", "modals.js", "cotizador.js", "galeria-configurador.js"]) {
   new vm.Script(await readFile(path.join(repository, name), "utf8"), { filename: name });
 }
+for (const name of ["cotizador.js", "kitchen-submission.js"]) {
+  new vm.Script(await readFile(path.join(publicDirectory, name), "utf8"), { filename: `public/${name}` });
+}
 console.log(`Verified ${Object.keys(baseline.files).length} original hashes and ${publicFiles.length} public copies; legacy JS syntax OK.`);

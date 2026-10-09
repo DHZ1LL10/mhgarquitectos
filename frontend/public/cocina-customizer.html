@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3YnckuhZwQRfKhTyQPqUU6Uh7+KQ=" crossorigin="" />
   <link rel="stylesheet" href="style.css?v=2">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -318,6 +319,14 @@
     .map-picker-map { height: min(62vh, 520px); min-height: 300px; background: var(--light); }
     .map-picker-status { margin: 0; color: var(--muted); font-size: .75rem; }
     .map-picker-footer { border-top: 1px solid var(--border); }
+    .map-picker-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .submission-status { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px; background: #fff; }
+    .submission-status[data-state="sending"] { border-color: var(--gold); }
+    .submission-status[data-state="success"] { border-color: var(--green); background: var(--green-fade); }
+    .submission-status[data-state="error"] { border-color: #a13d3d; background: #fff5f5; }
+    .submission-status p { margin: 0; }
+    .submission-status .submission-folio { margin-top: 4px; font-weight: 600; color: var(--green); }
+    .submission-status .action-btn { margin-top: 12px; }
 
     /* SUMMARY */
     .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
@@ -661,6 +670,10 @@
             <input type="tel" id="c-tel" class="form-input" placeholder="271 700 0000" autocomplete="tel" />
           </div>
           <div class="form-group">
+            <label class="form-label" for="c-email">Correo electrónico <span>(opcional)</span></label>
+            <input type="email" id="c-email" class="form-input" placeholder="nombre@ejemplo.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
             <label class="form-label" for="c-fecha">Fecha de levantamiento</label>
             <input type="date" id="c-fecha" class="form-input" />
           </div>
@@ -864,6 +877,9 @@
     <!-- PASO 8: RESUMEN -->
     <section class="step-panel" id="panel-7">
       <div class="total-box" aria-hidden="true"></div>
+      <div class="submission-status" id="submissionStatus" data-state="idle" role="status" aria-live="polite">
+        <p>Tu solicitud se enviará automáticamente al abrir este resumen.</p>
+      </div>
       <div class="summary-grid" id="summaryGrid"></div>
       <div class="action-row">
         <button class="action-btn green" onclick="downloadPDF()">
@@ -956,8 +972,8 @@
 <div class="map-picker-modal" id="locationMapModal" aria-hidden="true" onclick="if(event.target === this) closeLocationMap()">
   <section class="map-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="locationMapTitle">
     <header class="map-picker-header"><h2 id="locationMapTitle">Selecciona la ubicación</h2><button type="button" class="action-btn" onclick="closeLocationMap()" aria-label="Cerrar mapa">×</button></header>
-    <div class="map-picker-map" id="locationMap" role="application" aria-label="Mapa de Google para elegir la ubicación"></div>
-    <footer class="map-picker-footer"><p class="map-picker-status" id="locationMapStatus" aria-live="polite">Haz clic en el mapa para colocar el pin.</p><div class="frente-modal-actions"><button type="button" class="action-btn" onclick="closeLocationMap()">Cancelar</button><button type="button" class="action-btn green" onclick="confirmLocationMap()">Confirmar ubicación</button></div></footer>
+    <div class="map-picker-map" id="locationMap" role="application" aria-label="Mapa de OpenStreetMap para elegir la ubicación"></div>
+    <footer class="map-picker-footer"><p class="map-picker-status" id="locationMapStatus" aria-live="polite">Haz clic en el mapa para colocar el pin.</p><div class="map-picker-actions"><button type="button" class="action-btn" onclick="useCurrentLocation()">Usar mi ubicación</button><button type="button" class="action-btn" onclick="closeLocationMap()">Cancelar</button><button type="button" class="action-btn green" onclick="confirmLocationMap()">Confirmar ubicación</button></div></footer>
   </section>
 </div>
 
@@ -973,7 +989,9 @@
   <div id="lbThumbnails" aria-label="Miniaturas de la galería" hidden></div>
 </div>
 
-<script src="maps-config.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9coqIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="/customizer-runtime-config.js"></script>
+<script src="kitchen-submission.js"></script>
 <script src="cotizador.js"></script>
 <script src="galeria-configurador.js"></script>
 </body>

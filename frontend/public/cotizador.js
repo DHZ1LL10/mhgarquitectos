@@ -5,7 +5,7 @@
 
 /* ─── STATE ─── */
 var state = {
-  cliente:   { nombre:'', tel:'', fecha:'', hora:'', sucursal:'', asesor:'', dir:'', obs:'', lat:null, lng:null },
+  cliente:   { nombre:'', tel:'', email:'', fecha:'', hora:'', sucursal:'', asesor:'', dir:'', obs:'', lat:null, lng:null },
   situacion: null,
   interior:  null,
   frentes:   {},
@@ -25,6 +25,10 @@ var state = {
   herrajeOpenId: 'bisagras',
   herrajeNextIndex: 0,
 };
+var _submissionIdentity = null;
+var _submissionReceipt = null;
+var _submissionStatus = 'idle';
+var _submissionRequest = null;
 
 /* ─── STEPS META ─── */
 var STEPS = [
@@ -2218,7 +2222,10 @@ function renderStep(step) {
     }
   }
 
-  if (step === total - 1) buildSummary();
+  if (step === total - 1) {
+    buildSummary();
+    submitKitchenConfiguration(false);
+  }
   updateSidebar();
   window.scrollTo(0, 0);
 }
@@ -2238,7 +2245,7 @@ function updateSidebar() {
       '<span class="step-bullet">' + bullet + '</span>' +
       '<span class="step-text">' +
         '<span class="step-text-label">' + s.label + '</span>' +
-        (short ? '<span class="step-text-val">' + short + '</span>' : '') +
+        (short ? '<span class="step-text-val">' + escapeHTML(short) + '</span>' : '') +
       '</span>' +
     '</button>';
   }).join('');
@@ -2259,18 +2266,24 @@ function validateStep(step) {
   if (step === 6) {
     var n  = (document.getElementById('c-nombre') || {}).value || '';
     var t  = (document.getElementById('c-tel')    || {}).value || '';
+    var e  = (document.getElementById('c-email')  || {}).value || '';
     var d  = (document.getElementById('c-dir')    || {}).value || '';
     var f  = (document.getElementById('c-fecha')  || {}).value || '';
     var h  = (document.getElementById('c-hora')   || {}).value || '';
     var sEl = document.getElementById('c-sucursal');
     var s  = sEl ? sEl.value : '';
-    if (!n.trim()||!t.trim()||!d.trim()||!f||!h||!s) {
+    var emailField = document.getElementById('c-email');
+    if (emailField && e && !emailField.checkValidity()) {
+      alert('Ingresa un correo electrónico válido o deja el campo vacío.');
+      ok = false;
+    } else if (!n.trim()||!t.trim()||!d.trim()||!f||!h||!s) {
       alert('Por favor completa: nombre, teléfono, dirección, fecha, hora y sucursal.');
       ok = false;
     } else {
       state.cliente = {
         nombre:   n.trim(),
         tel:      t.trim(),
+        email:    e.trim(),
         dir:      d.trim(),
         fecha:    f,
         hora:     h,
@@ -2331,14 +2344,10 @@ function prevStep() {
   if (_currentStep > 0) renderStep(_currentStep - 1);
 }
 
-/* ─── GOOGLE MAPS LOCATION PICKER (runtime key configuration) ─── */
+/* ─── LEAFLET + OPENSTREETMAP LOCATION PICKER ─── */
 var _locationMap = null;
 var _locationMarker = null;
-var _locationGeocoder = null;
-var _locationMapLoading = false;
-var _locationMapReady = false;
 var _locationSelection = null;
-var _locationAddress = '';
 var _locationPreviousOverflow = '';
 var _locationReturnFocus = null;
 var _locationEscapeHandler = null;
@@ -2359,63 +2368,63 @@ function openLocationMap() {
   _locationSelection = state.cliente.lat != null && state.cliente.lng != null
     ? { lat: state.cliente.lat, lng: state.cliente.lng }
     : null;
-  _locationAddress = '';
-  if (!window.MHG_GOOGLE_MAPS_API_KEY) {
-    if (status) status.textContent = 'Google Maps aún no está configurado. Consulta frontend/docs/GOOGLE-MAPS.md.';
+  if (!window.L) {
+    if (status) status.textContent = 'No se pudo cargar el mapa. Puedes escribir la dirección manualmente.';
     return;
   }
-  if (_locationMapReady) { initializeLocationMap(); return; }
-  if (_locationMapLoading) return;
-  _locationMapLoading = true;
-  if (status) status.textContent = 'Cargando Google Maps…';
-  window.initMHGLocationMap = function() {
-    _locationMapReady = true;
-    _locationMapLoading = false;
-    initializeLocationMap();
-  };
-  var script = document.createElement('script');
-  script.async = true;
-  script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(window.MHG_GOOGLE_MAPS_API_KEY) + '&callback=initMHGLocationMap&v=weekly';
-  script.onerror = function() {
-    _locationMapLoading = false;
-    if (status) status.textContent = 'No se pudo cargar Google Maps. Revisa la clave y sus restricciones.';
-  };
-  document.head.appendChild(script);
+  initializeLocationMap();
 }
 
 function initializeLocationMap() {
   var node = document.getElementById('locationMap');
   var status = document.getElementById('locationMapStatus');
-  if (!node || !window.google || !window.google.maps) return;
+  if (!node || !window.L) return;
   var center = _locationSelection || { lat: 18.90, lng: -96.97 };
   if (!_locationMap) {
-    _locationMap = new window.google.maps.Map(node, { center: center, zoom: 16, mapTypeControl: false, streetViewControl: false, fullscreenControl: true });
-    _locationGeocoder = new window.google.maps.Geocoder();
-    _locationMap.addListener('click', function(event) { if (event.latLng) setLocationMarker(event.latLng); });
-    _locationMarker = new window.google.maps.Marker({ map: _locationMap, draggable: true, title: 'Ubicación de instalación' });
-    _locationMarker.addListener('dragend', function(event) { if (event.latLng) setLocationMarker(event.latLng); });
+    _locationMap = window.L.map(node, { zoomControl: true }).setView([center.lat, center.lng], 15);
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(_locationMap);
+    _locationMap.on('click', function(event) { setLocationMarker(event.latlng); });
   }
-  _locationMap.setCenter(center);
-  if (_locationSelection) _locationMarker.setPosition(center);
-  else _locationMarker.setMap(null);
-  window.google.maps.event.trigger(_locationMap, 'resize');
+  _locationMap.setView([center.lat, center.lng], _locationSelection ? 17 : 15);
+  if (_locationSelection) setLocationMarker(_locationSelection, false);
+  else if (_locationMarker) { _locationMap.removeLayer(_locationMarker); _locationMarker = null; }
+  window.setTimeout(function() { _locationMap.invalidateSize(); }, 0);
   if (status) status.textContent = _locationSelection ? 'Puedes mover el pin y confirmar la ubicación.' : 'Haz clic en el mapa para colocar el pin.';
 }
 
-function setLocationMarker(position) {
-  if (!_locationMarker) return;
-  _locationMarker.setMap(_locationMap);
-  _locationMarker.setPosition(position);
-  _locationSelection = { lat: position.lat(), lng: position.lng() };
+function setLocationMarker(position, updateStatus) {
+  if (!_locationMap || !window.L) return;
+  var lat = typeof position.lat === 'function' ? position.lat() : Number(position.lat);
+  var lng = typeof position.lng === 'function' ? position.lng() : Number(position.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  _locationSelection = { lat: lat, lng: lng };
+  if (!_locationMarker) {
+    _locationMarker = window.L.marker([lat, lng], { draggable: true, title: 'Ubicación de instalación' }).addTo(_locationMap);
+    _locationMarker.on('dragend', function(event) { setLocationMarker(event.target.getLatLng()); });
+  } else {
+    _locationMarker.setLatLng([lat, lng]);
+  }
   var status = document.getElementById('locationMapStatus');
-  if (status) status.textContent = 'Buscando una dirección cercana…';
-  _locationGeocoder.geocode({ location: _locationSelection }, function(results, resultStatus) {
-    if (resultStatus === 'OK' && results && results[0]) {
-      var field = document.getElementById('c-dir');
-      _locationAddress = results[0].formatted_address;
-      if (status) status.textContent = 'Dirección encontrada. Puedes editarla al cerrar el mapa.';
-    } else if (status) status.textContent = 'Pin colocado. No se encontró una dirección; puedes escribirla manualmente.';
-  });
+  if (status && updateStatus !== false) status.textContent = 'Pin colocado. La dirección escrita seguirá siendo editable.';
+}
+
+function useCurrentLocation() {
+  var status = document.getElementById('locationMapStatus');
+  if (!navigator.geolocation) {
+    if (status) status.textContent = 'Tu navegador no permite obtener la ubicación. Coloca el pin manualmente.';
+    return;
+  }
+  if (status) status.textContent = 'Obteniendo tu ubicación…';
+  navigator.geolocation.getCurrentPosition(function(position) {
+    var point = { lat: position.coords.latitude, lng: position.coords.longitude };
+    setLocationMarker(point);
+    if (_locationMap) _locationMap.setView([point.lat, point.lng], 17);
+  }, function() {
+    if (status) status.textContent = 'No fue posible obtener tu ubicación. Coloca el pin manualmente.';
+  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
 }
 
 function confirmLocationMap() {
@@ -2426,10 +2435,6 @@ function confirmLocationMap() {
   }
   state.cliente.lat = _locationSelection.lat;
   state.cliente.lng = _locationSelection.lng;
-  if (_locationAddress) {
-    var field = document.getElementById('c-dir');
-    if (field) field.value = _locationAddress;
-  }
   closeLocationMap();
 }
 
@@ -2446,6 +2451,15 @@ function closeLocationMap() {
 }
 
 /* ─── SUMMARY ─── */
+function escapeHTML(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function buildSummary() {
   var grid = document.getElementById('summaryGrid');
   if (!grid) return;
@@ -2495,6 +2509,7 @@ function buildSummary() {
       rows: [
         {label:'Nombre',        val: state.cliente.nombre},
         {label:'Teléfono',      val: state.cliente.tel},
+        {label:'Email',         val: state.cliente.email || 'No proporcionado'},
         {label:'Dirección',     val: state.cliente.dir},
         {label:'Ubicación',     val: locationCoordinatesText()},
         {label:'Levantamiento', val: state.cliente.fecha + '  ' + state.cliente.hora},
@@ -2506,11 +2521,11 @@ function buildSummary() {
 
   grid.innerHTML = boxes.map(function(b) {
     return '<div class="summary-box">' +
-      '<div class="summary-box-title">' + b.title + '</div>' +
+      '<div class="summary-box-title">' + escapeHTML(b.title) + '</div>' +
       b.rows.map(function(r){
         return '<div class="summary-row">' +
-          '<span class="summary-row-label">' + r.label + '</span>' +
-          '<span class="summary-row-val">' + (r.val || '—') + '</span>' +
+          '<span class="summary-row-label">' + escapeHTML(r.label) + '</span>' +
+          '<span class="summary-row-val">' + escapeHTML(r.val || '—') + '</span>' +
         '</div>';
       }).join('') +
     '</div>';
@@ -2526,6 +2541,84 @@ function buildSummary() {
 
 }
 
+function renderSubmissionStatus(message) {
+  var node = document.getElementById('submissionStatus');
+  if (!node) return;
+  node.dataset.state = _submissionStatus;
+  while (node.firstChild) node.removeChild(node.firstChild);
+  var text = document.createElement('p');
+  text.textContent = message;
+  node.appendChild(text);
+  if (_submissionStatus === 'success' && _submissionReceipt) {
+    var folio = document.createElement('p');
+    folio.className = 'submission-folio';
+    folio.textContent = 'Folio: ' + _submissionReceipt.folio;
+    node.appendChild(folio);
+  }
+  if (_submissionStatus === 'error') {
+    var retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'action-btn green';
+    retry.textContent = 'Reintentar';
+    retry.addEventListener('click', function() { submitKitchenConfiguration(true); });
+    node.appendChild(retry);
+  }
+}
+
+function submitKitchenConfiguration(forceRetry) {
+  if (!window.MHGKitchenSubmission) {
+    _submissionStatus = 'error';
+    renderSubmissionStatus('No pudimos preparar tu solicitud. Recarga la página e inténtalo nuevamente.');
+    return Promise.resolve(null);
+  }
+  var payload;
+  try {
+    payload = window.MHGKitchenSubmission.buildPayload(state);
+    var nextIdentity = window.MHGKitchenSubmission.identityFor(_submissionIdentity, payload, window.crypto);
+    if (!_submissionIdentity || nextIdentity.fingerprint !== _submissionIdentity.fingerprint) {
+      _submissionReceipt = null;
+      _submissionStatus = 'idle';
+    }
+    _submissionIdentity = nextIdentity;
+  } catch (error) {
+    _submissionStatus = 'error';
+    renderSubmissionStatus(error.message || 'No pudimos preparar tu solicitud.');
+    return Promise.resolve(null);
+  }
+  if (_submissionReceipt) {
+    _submissionStatus = 'success';
+    renderSubmissionStatus('Solicitud recibida correctamente.');
+    return Promise.resolve(_submissionReceipt);
+  }
+  if (_submissionRequest && _submissionRequest.fingerprint === _submissionIdentity.fingerprint) return _submissionRequest.promise;
+  if (_submissionStatus === 'error' && !forceRetry) return Promise.resolve(null);
+  _submissionStatus = 'sending';
+  renderSubmissionStatus('Enviando solicitud…');
+  var config = window.MHG_CUSTOMIZER_CONFIG || {};
+  var fingerprint = _submissionIdentity.fingerprint;
+  var request = window.MHGKitchenSubmission.send(config.apiBaseUrl || '', payload, _submissionIdentity, window.fetch.bind(window))
+    .then(function(receipt) {
+      if (_submissionIdentity && _submissionIdentity.fingerprint === fingerprint) {
+        _submissionReceipt = receipt;
+        _submissionStatus = 'success';
+        renderSubmissionStatus('Solicitud recibida correctamente.');
+      }
+      return receipt;
+    })
+    .catch(function(error) {
+      if (_submissionIdentity && _submissionIdentity.fingerprint === fingerprint) {
+        _submissionStatus = 'error';
+        renderSubmissionStatus((error && error.message) || 'No pudimos enviar tu solicitud.');
+      }
+      return null;
+    })
+    .finally(function() {
+      if (_submissionRequest && _submissionRequest.fingerprint === fingerprint) _submissionRequest = null;
+    });
+  _submissionRequest = { fingerprint: fingerprint, promise: request };
+  return request;
+}
+
 /* ─── PDF ─── */
 function locationCoordinatesText() {
   return state.cliente.lat == null || state.cliente.lng == null
@@ -2536,7 +2629,7 @@ function locationCoordinatesText() {
 function locationMapUrl() {
   return state.cliente.lat == null || state.cliente.lng == null
     ? ''
-    : 'https://www.google.com/maps?q=' + state.cliente.lat + ',' + state.cliente.lng;
+    : window.MHGKitchenSubmission.openStreetMapUrl(state.cliente.lat, state.cliente.lng);
 }
 
 function downloadPDF() {
@@ -2566,7 +2659,7 @@ function _buildPDF(logoDataURL) {
   var BORDER = [220, 226, 222];
   var GOLD   = [180, 148, 80];
 
-  var folio = 'COT-' + Date.now().toString().slice(-6);
+  var folio = _submissionReceipt ? _submissionReceipt.folio : 'COT-' + Date.now().toString().slice(-6);
   var fecha = new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'});
   var y = 0;
 
@@ -2672,6 +2765,7 @@ function _buildPDF(logoDataURL) {
   y = section('Datos del cliente', y);
   y = row('Nombre:',        state.cliente.nombre, y);
   y = row('Teléfono:',      state.cliente.tel, y);
+  if (state.cliente.email) y = row('Email:', state.cliente.email, y);
   y = row('Dirección:',     state.cliente.dir, y);
   if (state.cliente.lat != null && state.cliente.lng != null) {
     y = row('Ubicación (lat, lng):', state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6), y);
@@ -2722,6 +2816,7 @@ function sendWhatsApp() {
   }).join('\n') || '  • —';
 
   var msg = '*CONFIGURACIÓN COCINA — MHG*\n\n' +
+    (_submissionReceipt ? '*FOLIO:* ' + _submissionReceipt.folio + '\n' : '') +
     '*SITUACIÓN:* '   + (situacionLabel[state.situacion]||'—') + '\n' +
     '*INTERIOR:* '    + (state.interior==='blanco-frosty'?'Blanco Frosty 15mm':'Gris Oxford 15mm') + '\n' +
     '*FRENTES:*\n'    + frentesText + '\n' +
@@ -2738,6 +2833,7 @@ function sendWhatsApp() {
     '*DATOS DEL CLIENTE:*\n' +
     '*Cliente:* '       + state.cliente.nombre + '\n' +
     '*Tel:* '           + state.cliente.tel + '\n' +
+    (state.cliente.email ? '*Email:* ' + state.cliente.email + '\n' : '') +
     '*Dirección:* '     + state.cliente.dir + '\n' +
     (state.cliente.lat != null && state.cliente.lng != null ? '*Ubicación:* ' + state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6) + '\n*Mapa:* ' + locationMapUrl() + '\n' : '') +
     '*Levantamiento:* ' + state.cliente.fecha + '  ' + state.cliente.hora + '\n' +
@@ -2746,7 +2842,12 @@ function sendWhatsApp() {
     (state.cliente.obs ? '*Obs:* ' + state.cliente.obs + '\n\n' : '') +
     '_Configuración enviada desde mhgarquitectos.com_';
 
-  window.open('https://wa.me/5212717041499?text=' + encodeURIComponent(msg), '_blank');
+  var whatsappNumber = (window.MHG_CUSTOMIZER_CONFIG || {}).whatsappNumber;
+  if (!whatsappNumber) {
+    alert('El contacto por WhatsApp no está configurado. Tu solicitud recibida permanece guardada.');
+    return;
+  }
+  window.open('https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
 }
 
 function selectFrenteZone(btn) { var p = btn.parentElement; p.querySelectorAll('.frente-zone-btn').forEach(function(b){ b.classList.remove('sel'); }); btn.classList.add('sel'); }
