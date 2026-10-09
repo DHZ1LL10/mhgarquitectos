@@ -84,7 +84,7 @@ Desde `backend/`:
 
 ```powershell
 Copy-Item .env.example .env
-# Definir DB_PASSWORD y AUTH_TOKEN_SECRET en .env.
+# Sustituir DB_PASSWORD por una contraseña local propia en .env.
 docker compose up --build -d
 docker compose exec api python -m app.scripts.create_admin
 docker compose exec api alembic current
