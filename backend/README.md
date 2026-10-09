@@ -1,9 +1,10 @@
-# MHG backend core — Fase 2
+# MHG backend core — Fase 3A
 
 FastAPI + SQLAlchemy 2.1 + Pydantic 2 + PostgreSQL 17 + Alembic.
-Monolito modular, sin servicios externos, autenticación ni notificaciones.
-No está habilitado para exposición pública: las rutas de administración carecen de
-autenticación y permanecen desactivadas por defecto. El frontend sigue en modo local.
+Monolito modular con autenticación administrativa propia y sesiones revocables.
+Las rutas públicas y administrativas están separadas; toda operación administrativa
+se autoriza en FastAPI con un usuario persistido en PostgreSQL. No hay servicios externos
+ni notificaciones en esta fase.
 
 ## Arranque con Docker Compose (PowerShell)
 
@@ -15,12 +16,14 @@ Desde la raíz del repositorio:
 
 ```powershell
 cd backend
-Copy-Item .env.example .env
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 # Edita .env: establece DB_PASSWORD para tu entorno local.
-# Conserva ENABLE_ADMIN_ENDPOINTS=false salvo para probar escrituras locales.
 docker compose config --quiet
 docker compose up --build -d
 docker compose ps
+docker compose exec api alembic current
+docker compose exec api alembic check
+docker compose exec api python -m app.scripts.create_admin
 Invoke-RestMethod http://localhost:8000/health
 Invoke-RestMethod http://localhost:8000/api/v1/properties
 ```
@@ -43,11 +46,9 @@ docker compose down
 down conserva el volumen postgres-data. No usar down -v con datos que deban conservarse.
 Cambiar DB_PASSWORD después de inicializar el volumen no cambia automáticamente la
 contraseña del rol existente en PostgreSQL. Gestionar ese cambio explícitamente.
-
-Para probar POST/PATCH administrativos localmente: edita .env y establece
-ENABLE_ADMIN_ENDPOINTS=true, después ejecuta docker compose up -d api.
-El interruptor NO autentica a nadie. Restaurarlo a false al terminar.
-No exponer esta configuración en Internet ni conectar el admin demo a escrituras reales.
+El comando create_admin solicita email, nombre y contraseña mediante una terminal
+interactiva; la contraseña no se pasa como argumento ni queda guardada en Git. Para
+crear personal de consulta, agregar `--role staff`. No existe registro público.
 
 ## Tests reproducibles con PostgreSQL aislado
 
@@ -128,9 +129,11 @@ backend/
     config.py               # env
     db.py                   # engine y sesiones
     common.py               # UUID, timestamps, schemas compartidos
-    dependencies.py         # DB y bloqueo temporal de rutas admin
+    dependencies.py         # DB, sesión actual y autorización por rol
     errors.py               # respuestas de error consistentes
     models.py               # registro de modelos Alembic
+    auth/                    # usuarios, sesiones, Argon2id y endpoints login/logout/me
+    admin/                   # lecturas administrativas para el panel
     properties/             # models.py, schemas.py, router.py
     kitchen_configurations/ # models.py, schemas.py, router.py, submissions.py
     appointments/           # models.py, schemas.py, router.py, service.py
@@ -138,6 +141,7 @@ backend/
   migrations/
     env.py
     versions/0001_core.py
+    versions/0002_admin_auth.py
   tests/
     test_contracts.py
     integration/
@@ -148,6 +152,12 @@ backend/
   requirements*.in / requirements*.txt
   .env.example
 ```
+
+- admin_users: UUID, email único normalizado, hash Argon2id, nombre, rol admin/staff,
+  actividad, último acceso y timestamps. No almacena contraseñas en texto plano.
+- admin_sessions: guarda únicamente SHA-256 del token opaco aleatorio; la cookie real es
+  HttpOnly, expira y se revoca al cerrar sesión. auth_login_limits mantiene presupuestos
+  compartidos de intentos por email e IP.
 
 - properties: UUID; slug único; status draft/published/archived; operation sale/rent;
   property_type house/apartment/land, alineado con el contrato actual del frontend;
@@ -198,17 +208,25 @@ agenda, horarios de sucursal ni restricción de fechas históricas todavía.
 
 ## API /api/v1
 
-| Método y ruta | Uso actual / protección futura |
+| Método y ruta | Acceso actual |
 | --- | --- |
 | GET /health | Salud real de PostgreSQL; 503 si no responde |
 | GET /api/v1/properties | Público, solo published; limit 1..100, offset >= 0 |
 | GET /api/v1/properties/{slug} | Público; draft/archived/inexistente devuelven 404 |
-| POST /api/v1/properties | Admin futuro; bloqueado por defecto |
-| PATCH /api/v1/properties/{id} | Admin futuro; bloqueado por defecto |
+| POST /api/v1/auth/login | Público con Origin/cabecera CSRF; crea sesión HttpOnly |
+| POST /api/v1/auth/logout | Revoca la sesión y elimina la cookie |
+| GET /api/v1/auth/me | Usuario autenticado |
+| GET /api/v1/admin/dashboard | staff/admin; totales según rol |
+| GET /api/v1/admin/properties | Solo admin; incluye todos los estados |
+| GET /api/v1/admin/leads | staff/admin |
+| GET /api/v1/admin/appointments | staff/admin; incluye leads relacionados |
+| GET /api/v1/admin/kitchen-configurations | staff/admin; incluye leads y citas |
+| POST /api/v1/properties | Solo admin |
+| PATCH /api/v1/properties/{id} | Solo admin |
 | POST /api/v1/kitchen-configurations | Envío público |
-| GET /api/v1/kitchen-configurations/{id} | Admin futuro, contiene datos personales |
+| GET /api/v1/kitchen-configurations/{id} | staff/admin; contiene datos personales |
 | POST /api/v1/appointments | Solicitud pública, estado inicial requested |
-| PATCH /api/v1/appointments/{id} | Admin futuro; transiciones controladas |
+| PATCH /api/v1/appointments/{id} | Solo admin; transiciones controladas |
 | POST /api/v1/leads | Envío público; estado inicial new |
 | POST /api/v1/kitchen-submissions | Envío público atómico cocina+cita+lead |
 
@@ -219,7 +237,7 @@ tres requests separadas. No tiene idempotency-key todavía: no reintentar envío
 automáticamente sin diseñar deduplicación.
 
 Errores: {error:{code,message,details?}}; 422 validación, 404 no encontrado,
-409 conflicto (incluye slug duplicado), 403 administración deshabilitada,
+409 conflicto (incluye slug duplicado), 401 sesión ausente/caducada, 403 permiso insuficiente,
 503 DB inaccesible, 500 error interno sin detalles sensibles. Logging con método,
 plantilla de ruta, status, duración y request id; sin cuerpos con datos personales.
 OpenAPI disponible en /openapi.json; documentación automática /docs (no se abrió).
@@ -233,22 +251,28 @@ No utiliza NEXT_PUBLIC ni contiene credenciales. Mantiene las firmas
 listPublished/getPublishedBySlug; convierte snake_case y decimal JSON al contrato
 de vistas actual; 404 → null, otros errores se propagan sin esconderlos con mocks.
 
-El contrato actual del frontend solo permite MXN. La API acepta códigos de tres
+El panel real usa NEXT_PUBLIC_API_BASE_URL, cookies con credentials=include y la
+cabecera X-MHG-Admin. `/admin/login` autentica contra FastAPI; `/admin` consulta y
+persiste propiedades y citas y presenta leads/configuraciones desde PostgreSQL.
+Admin puede escribir propiedades y citas; staff mantiene acceso de consulta.
+
+El contrato actual del catálogo público solo permite MXN. La API acepta códigos de tres
 letras; el adaptador rechaza otras monedas explícitamente hasta ampliar ese contrato.
 Los slugs se generan al construir Next y dynamicParams sigue false; el adaptador
 conserva lecturas cacheadas para ese modelo. Cambios publicados después requieren
 un nuevo build. Antes de activar el catálogo real diseñar ISR/revalidación, sitemap,
-metadata, avisos demo y política de URLs. No se cambió diseño, páginas ni admin demo.
+metadata, avisos demo y política de URLs. El catálogo público permanece local por
+decisión de alcance, aunque el panel administrativo ya escribe a la API real.
 
 El customizador legacy no consume todavía la API y conserva exactamente sus archivos.
 Los formularios/WhatsApp existentes tampoco se reconectaron. La nueva fuente de verdad
 está implementada en backend, pendiente de conectar clientes en otra iteración.
 
-Pendiente antes de exposición pública: autenticación/autorización administrativa real,
-rate limits y antiabuso, límites de cuerpo en el proxy, política de privacidad/retención,
-idempotencia, copias de seguridad/restauración, despliegue backend y TLS.
-CORS no es autenticación. No se implementó ninguna de esas funciones en esta fase.
+Pendiente antes de exposición pública: antiabuso para endpoints públicos, límites de
+cuerpo en el proxy, política de privacidad/retención, idempotencia, copias de
+seguridad/restauración, despliegue backend y TLS. La autenticación administrativa no
+sustituye esos controles operativos.
 
 Ejemplos: [requests](examples/REQUESTS.md). Evidencia y pendientes de validación:
-[reporte de Fase 2](../docs/PHASE-2-VALIDATION.md).
+[reporte de Fase 3A](../docs/PHASE-3A.md).
 
