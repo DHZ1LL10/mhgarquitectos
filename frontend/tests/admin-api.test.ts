@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { AdminApi, ApiError } from "../src/features/admin/api-client.ts";
+import { initialSessionError } from "../src/features/admin/auth-state.ts";
 import { confirmedDateTime, emptyProperty, leadWhatsAppUrl, localDateTime, openStreetMapUrl, parseUser, propertyInput, transitions } from "../src/features/admin/contracts.ts";
 
 test("admin HTTP client sends cookies, CSRF header and no cache", async () => {
@@ -16,6 +17,25 @@ test("admin HTTP client sends cookies, CSRF header and no cache", async () => {
     return Response.json({ id: "test" });
   });
   assert.deepEqual(await client.request("/auth/login", "POST", { email: "test@example.com", password: "test-only" }), { id: "test" });
+});
+
+test("initial /auth/me 401 means unauthenticated rather than network failure", () => {
+  assert.equal(initialSessionError(new ApiError(401, "Tu sesión no está activa.")), "");
+  assert.equal(initialSessionError(new ApiError(0, "No se pudo conectar con la API.")), "No se pudo conectar con la API.");
+});
+
+test("login 401 is presented as invalid credentials", async () => {
+  const client = new AdminApi("http://localhost:8000/api/v1", async (url, options) => {
+    assert.equal(url, "http://localhost:8000/api/v1/auth/login");
+    assert.equal(options?.credentials, "include");
+    return Response.json({ error: { message: "Authentication failed" } }, { status: 401 });
+  });
+  await assert.rejects(client.request("/auth/login", "POST", { email: "bad@example.com", password: "bad" }), error => error instanceof ApiError && error.status === 401 && error.message === "Credenciales incorrectas.");
+});
+
+test("API URL construction accepts local HTTP and rejects file URLs", () => {
+  assert.doesNotThrow(() => new AdminApi("http://localhost:8000/api/v1"));
+  assert.throws(() => new AdminApi("file:///api/v1"), error => error instanceof ApiError && error.status === 0);
 });
 
 for (const status of [401, 403, 409, 422, 429, 500]) {

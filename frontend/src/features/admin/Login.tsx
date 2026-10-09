@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { adminApi, ApiError } from "./api-client";
+import { adminApi } from "./api-client";
+import { initialSessionError } from "./auth-state";
 import { parseUser } from "./contracts";
 import styles from "../properties/styles/admin.module.css";
 
@@ -11,7 +12,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     let mounted = true;
-    Promise.resolve().then(() => adminApi().request("/auth/me")).then(value => { parseUser(value); if (mounted) router.replace("/admin"); }).catch(error => { if (mounted && !(error instanceof ApiError && error.status === 401)) setError(error.message); });
+    Promise.resolve().then(() => adminApi().request("/auth/me")).then(value => { parseUser(value); if (mounted) router.replace("/admin"); }).catch(error => { if (mounted) setError(initialSessionError(error)); });
     return () => { mounted = false; };
   }, [router]);
   async function submit(event: FormEvent<HTMLFormElement>) {
