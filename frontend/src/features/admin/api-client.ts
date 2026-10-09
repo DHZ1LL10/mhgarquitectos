@@ -14,7 +14,7 @@ export class AdminApi {
   private readonly base: string;
   private readonly fetcher: typeof fetch;
   constructor(baseUrl: string, fetcher: typeof fetch = fetch) {
-    this.fetcher = fetcher;
+    this.fetcher = fetcher.bind(globalThis);
     if (!baseUrl) throw new ApiError(0, "Falta configurar NEXT_PUBLIC_API_BASE_URL para el panel.");
     let url: URL;
     try { url = new URL(baseUrl); } catch { throw new ApiError(0, "La URL de API no es válida."); }

@@ -19,6 +19,25 @@ test("admin HTTP client sends cookies, CSRF header and no cache", async () => {
   assert.deepEqual(await client.request("/auth/login", "POST", { email: "test@example.com", password: "test-only" }), { id: "test" });
 });
 
+test("default browser fetch keeps the global receiver and reaches /auth/me", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = function (this: typeof globalThis, url, options) {
+    assert.equal(this, globalThis);
+    assert.equal(url, "http://localhost:8000/api/v1/auth/me");
+    assert.equal(options?.credentials, "include");
+    calls++;
+    return Promise.resolve(Response.json({ error: { message: "Authentication required" } }, { status: 401 }));
+  } as typeof fetch;
+  try {
+    const client = new AdminApi("http://localhost:8000/api/v1");
+    await assert.rejects(client.request("/auth/me"), error => error instanceof ApiError && error.status === 401);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("initial /auth/me 401 means unauthenticated rather than network failure", () => {
   assert.equal(initialSessionError(new ApiError(401, "Tu sesión no está activa.")), "");
   assert.equal(initialSessionError(new ApiError(0, "No se pudo conectar con la API.")), "No se pudo conectar con la API.");
