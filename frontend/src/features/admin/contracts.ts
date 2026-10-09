@@ -1,4 +1,4 @@
-import type { AppointmentStatus, PropertyInput, User } from "./types.ts";
+import type { AppointmentStatus, Lead, PropertyInput, User } from "./types.ts";
 
 export function parseUser(value: unknown): User {
   if (!value || typeof value !== "object") throw new Error("Respuesta de usuario inválida");
@@ -27,4 +27,17 @@ export function confirmedDateTime(value: string): string | null {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) throw new Error("Fecha de confirmación inválida");
   return date.toISOString();
+}
+
+export function openStreetMapUrl(latitude: number | null, longitude: number | null): string | null {
+  if (latitude === null || longitude === null || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  return `https://www.openstreetmap.org/?mlat=${latitude.toFixed(6)}&mlon=${longitude.toFixed(6)}#map=18/${latitude.toFixed(6)}/${longitude.toFixed(6)}`;
+}
+
+export function leadWhatsAppUrl(lead: Pick<Lead, "name" | "phone" | "submission">): string | null {
+  let digits = lead.phone.replace(/\D/g, "");
+  if (digits.length === 10) digits = "52" + digits;
+  if (digits.length < 7 || digits.length > 15) return null;
+  const folio = lead.submission?.folio ? ` sobre la solicitud ${lead.submission.folio}` : "";
+  return `https://wa.me/${digits}?text=${encodeURIComponent(`Hola ${lead.name}, te contactamos de MHG Arquitectos${folio}.`)}`;
 }

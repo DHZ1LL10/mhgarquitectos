@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { AdminApi, ApiError } from "../src/features/admin/api-client.ts";
-import { confirmedDateTime, emptyProperty, localDateTime, parseUser, propertyInput, transitions } from "../src/features/admin/contracts.ts";
+import { confirmedDateTime, emptyProperty, leadWhatsAppUrl, localDateTime, openStreetMapUrl, parseUser, propertyInput, transitions } from "../src/features/admin/contracts.ts";
 
 test("admin HTTP client sends cookies, CSRF header and no cache", async () => {
   const client = new AdminApi("https://api.example.com/api/v1/", async (url, options) => {
@@ -70,4 +70,13 @@ test("admin client and UI do not persist tokens or use demo storage", () => {
     const source = readFileSync(new URL(`../src/features/admin/${file}`, import.meta.url), "utf8");
     assert.doesNotMatch(source, /localStorage|sessionStorage|document\.cookie|saveDemoProperty|createDemoProperties/);
   }
+});
+
+test("admin contact links use real lead phone, folio and OpenStreetMap", () => {
+  const lead = { name: "María", phone: "272 220 0485", submission: { folio: "MHG-ABC" } };
+  const whatsapp = leadWhatsAppUrl(lead as never);
+  assert.match(whatsapp || "", /^https:\/\/wa\.me\/522722200485\?text=/);
+  assert.match(decodeURIComponent(whatsapp || ""), /MHG-ABC/);
+  assert.match(openStreetMapUrl(19.043, -98.198) || "", /openstreetmap\.org/);
+  assert.equal(openStreetMapUrl(null, -98.198), null);
 });

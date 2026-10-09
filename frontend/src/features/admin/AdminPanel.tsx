@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminApi, ApiError } from "./api-client";
-import { appointmentLabels, emptyProperty, parseUser } from "./contracts";
+import { appointmentLabels, emptyProperty, leadWhatsAppUrl, openStreetMapUrl, parseUser } from "./contracts";
 import type { Appointment, Dashboard, Kitchen, Lead, Property, PropertyInput, User } from "./types";
 import PropertyForm from "./PropertyForm";
 import AppointmentForm from "./AppointmentForm";
@@ -12,8 +12,15 @@ type View = "dashboard" | "properties" | "leads" | "appointments" | "kitchen-con
 type Data = { dashboard?: Dashboard; properties?: Property[]; leads?: Lead[]; appointments?: Appointment[]; "kitchen-configurations"?: Kitchen[] };
 const labels: Record<View, string> = { dashboard: "Dashboard", properties: "Propiedades", leads: "Leads", appointments: "Citas", "kitchen-configurations": "Configuraciones de cocina" };
 const date = (value: string | null) => value ? new Date(value).toLocaleString("es-MX") : "Sin confirmar";
-function Contacts({ leads }: { leads: Lead[] }) { return leads.length ? <ul>{leads.map(lead => <li key={lead.id}>{lead.name} · {lead.phone}{lead.email ? ` · ${lead.email}` : ""}</li>)}</ul> : <p>Sin cliente relacionado.</p>; }
-function Location({ item }: { item: { address: string; latitude: number | null; longitude: number | null } }) { return <p>{item.address}{item.latitude !== null && item.longitude !== null && <> · {item.latitude}, {item.longitude}</>}</p>; }
+function WhatsAppContact({ lead }: { lead: Lead }) {
+  const url = leadWhatsAppUrl(lead);
+  return url ? <a className={`${styles.button} ${styles.secondary}`} href={url} target="_blank" rel="noopener noreferrer">Contactar por WhatsApp</a> : null;
+}
+function Contacts({ leads }: { leads: Lead[] }) { return leads.length ? <ul>{leads.map(lead => <li key={lead.id}>{lead.name} · {lead.phone}{lead.email ? ` · ${lead.email}` : ""}{lead.submission && <> · Folio {lead.submission.folio}</>}<div><WhatsAppContact lead={lead} /></div></li>)}</ul> : <p>Sin cliente relacionado.</p>; }
+function Location({ item }: { item: { address: string; latitude: number | null; longitude: number | null } }) {
+  const map = openStreetMapUrl(item.latitude, item.longitude);
+  return <p>{item.address}{item.latitude !== null && item.longitude !== null && <> · {item.latitude}, {item.longitude}</>}{map && <> · <a href={map} target="_blank" rel="noopener noreferrer">Abrir ubicación</a></>}</p>;
+}
 function Snapshot({ value }: { value: unknown }) {
   if (value == null) return <span>Sin selección</span>;
   if (Array.isArray(value)) return value.length ? <ul>{value.map((item, index) => <li key={index}><Snapshot value={item} /></li>)}</ul> : <span>Ninguno</span>;
@@ -89,9 +96,9 @@ export default function AdminPanel() {
         {editing && <PropertyForm key={editing.id ?? "new"} initial={editing.value} saving={saving} onSave={saveProperty} onCancel={() => setEditing(null)} />}
         <div className={styles.cards}>{data.properties?.map(item => <article className={styles.record} key={item.id}><h2>{item.title}</h2><span className={styles.badge}>{({ draft: "Borrador", published: "Publicado", archived: "Archivado" })[item.status]}</span><p>{item.price} {item.currency}</p><p>{item.slug}</p><p>Actualizado: {date(item.updated_at)}</p><button disabled={saving} className={`${styles.button} ${styles.secondary}`} onClick={() => { setEditing({ id: item.id, value: item }); setError(""); setMessage(""); }}>Editar propiedad</button></article>)}</div>
       </>}
-      {view === "leads" && <div className={styles.list}>{data.leads?.map(item => <article className={styles.record} key={item.id}><h2>{item.name}</h2><p>{item.phone} · {item.email || "Sin email"}</p><p>Origen: {item.source} · Estado: {item.status}</p><p>{item.message}</p><p>Propiedad: {item.property_id || "Sin asociación"}</p><p>Configuración: {item.kitchen_configuration_id || "Sin asociación"}</p><p>Cita: {item.appointment_id || "Sin asociación"}</p><p>{date(item.created_at)}</p></article>)}</div>}
-      {view === "appointments" && <div className={styles.list}>{data.appointments?.map(item => <article className={styles.record} key={item.id}><h2>{appointmentLabels[item.status]} · {item.branch}</h2><p>ID: {item.id}</p><Contacts leads={item.leads} /><p>Solicitada: {date(item.requested_datetime)} · Confirmada: {date(item.confirmed_datetime)}</p><Location item={item} /><p>{item.notes}</p>{user.role === "admin" && <AppointmentForm key={item.updated_at} item={item} saving={saving} onSave={saveAppointment} />}</article>)}</div>}
-      {view === "kitchen-configurations" && <div className={styles.list}>{data["kitchen-configurations"]?.map(item => <article className={styles.record} key={item.id}><h2>Configuración · {item.branch}</h2><p>ID: {item.id}</p><Contacts leads={item.leads} /><p>Situación: {item.current_situation}</p><Location item={item} /><p>Asesor: {item.advisor || "Sin asignar"} · Solicitada: {date(item.requested_datetime)}</p><p>{item.notes}</p>
+      {view === "leads" && <div className={styles.list}>{data.leads?.map(item => <article className={styles.record} key={item.id}><h2>{item.name}</h2>{item.submission && <p><strong>Folio: {item.submission.folio}</strong> · Notificación: {item.submission.notification_status}</p>}<p>{item.phone} · {item.email || "Sin email"}</p><WhatsAppContact lead={item} />{item.address && <Location item={{ address: item.address, latitude: item.latitude, longitude: item.longitude }} />}<p>Origen: {item.source} · Estado: {item.status}</p><p>{item.message}</p><p>Propiedad: {item.property_id || "Sin asociación"}</p><p>Configuración: {item.kitchen_configuration_id || "Sin asociación"}</p><p>Cita: {item.appointment_id || "Sin asociación"}</p><p>{date(item.created_at)}</p></article>)}</div>}
+      {view === "appointments" && <div className={styles.list}>{data.appointments?.map(item => <article className={styles.record} key={item.id}><h2>{appointmentLabels[item.status]} · {item.branch}</h2><p>ID: {item.id}</p>{item.submission && <p><strong>Folio: {item.submission.folio}</strong> · Configuración: {item.submission.configuration_id}</p>}<Contacts leads={item.leads} /><p>Solicitada: {date(item.requested_datetime)} · Confirmada: {date(item.confirmed_datetime)}</p><Location item={item} /><p>{item.notes}</p>{user.role === "admin" && <AppointmentForm key={item.updated_at} item={item} saving={saving} onSave={saveAppointment} />}</article>)}</div>}
+      {view === "kitchen-configurations" && <div className={styles.list}>{data["kitchen-configurations"]?.map(item => <article className={styles.record} key={item.id}><h2>Configuración · {item.branch}</h2><p>ID: {item.id}</p>{item.submission && <p><strong>Folio: {item.submission.folio}</strong> · Cita: {item.submission.appointment_id} · Notificación: {item.submission.notification_status}</p>}<Contacts leads={item.leads} /><p>Situación: {item.current_situation}</p><Location item={item} /><p>Asesor: {item.advisor || "Sin asignar"} · Solicitada: {date(item.requested_datetime)}</p><p>{item.notes}</p>
         {([["Tablero interior", item.interior_board], ["Frentes exteriores", item.exterior_fronts], ["Herrajes", item.hardware], ["Cubierta", item.countertop], ["Acabado", item.finish], ["Extras", item.extras]] as const).map(([label, value]) => <section key={label}><h3>{label}</h3><Snapshot value={value} /></section>)}
         <h3>Citas asociadas</h3>{item.appointments.length ? item.appointments.map(appointment => <p key={appointment.id}>{appointment.id} · {appointmentLabels[appointment.status]} · {date(appointment.requested_datetime)}</p>) : <p>Sin cita asociada.</p>}
         <p>Creada: {date(item.created_at)} · Actualizada: {date(item.updated_at)}</p><details><summary>Selecciones completas · versión {item.selection_version}</summary><Snapshot value={item.selections} /></details>
