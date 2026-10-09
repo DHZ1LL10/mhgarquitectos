@@ -233,8 +233,10 @@ agenda, horarios de sucursal ni restricción de fechas históricas todavía.
 La operación atómica exige coincidencia de dirección, coordenadas, sucursal y fecha;
 guarda las tres entidades en una sola transacción. Si falla la escritura final,
 se revierte todo. Para el flujo futuro del customizador, preferir esta operación a
-tres requests separadas. No tiene idempotency-key todavía: no reintentar envíos
-automáticamente sin diseñar deduplicación.
+tres requests separadas. Exige `Idempotency-Key` con un UUID: repetir exactamente el
+mismo cuerpo devuelve el recibo original sin duplicar filas, mientras reutilizar la
+clave con datos distintos devuelve 409. Después del commit intenta enviar el correo;
+un fallo SMTP queda registrado y nunca revierte la solicitud ya aceptada.
 
 Errores: {error:{code,message,details?}}; 422 validación, 404 no encontrado,
 409 conflicto (incluye slug duplicado), 401 sesión ausente/caducada, 403 permiso insuficiente,
@@ -264,14 +266,14 @@ un nuevo build. Antes de activar el catálogo real diseñar ISR/revalidación, s
 metadata, avisos demo y política de URLs. El catálogo público permanece local por
 decisión de alcance, aunque el panel administrativo ya escribe a la API real.
 
-El customizador legacy no consume todavía la API y conserva exactamente sus archivos.
-Los formularios/WhatsApp existentes tampoco se reconectaron. La nueva fuente de verdad
-está implementada en backend, pendiente de conectar clientes en otra iteración.
+El customizador legacy consume la operación atómica mediante una URL inyectada en
+runtime por Next.js. Conserva su documento independiente, PDF y WhatsApp; PostgreSQL
+es la fuente de verdad y el mensaje de WhatsApp es un canal manual complementario.
 
-Pendiente antes de exposición pública: antiabuso para endpoints públicos, límites de
-cuerpo en el proxy, política de privacidad/retención, idempotencia, copias de
-seguridad/restauración, despliegue backend y TLS. La autenticación administrativa no
-sustituye esos controles operativos.
+Pendiente antes de exposición pública: antiabuso en proxy para endpoints públicos,
+límites de cuerpo, política de privacidad/retención, copias de seguridad/restauración,
+despliegue backend y TLS. La autenticación administrativa e idempotencia no sustituyen
+esos controles operativos.
 
 Ejemplos: [requests](examples/REQUESTS.md). Evidencia y pendientes de validación:
 [reporte de Fase 3A](../docs/PHASE-3A.md).

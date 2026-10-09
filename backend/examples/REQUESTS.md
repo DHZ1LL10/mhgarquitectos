@@ -40,15 +40,17 @@ Invoke-RestMethod -Method Patch -Uri "$apiBase/api/v1/properties/$($property.id)
   -Body '{"status":"archived"}'
 
 # Público: cocina, cita y lead en una transacción.
+$idempotencyKey = [guid]::NewGuid().ToString()
 $submission = Invoke-RestMethod -Method Post -Uri "$apiBase/api/v1/kitchen-submissions" `
+  -Headers @{ "Idempotency-Key" = $idempotencyKey } `
   -ContentType "application/json; charset=utf-8" `
   -Body (Get-Content examples/kitchen-submission.json -Raw -Encoding UTF8)
-$submission.lead
+$submission
 
 # staff/admin: consultar configuración. Solo admin puede confirmar la cita.
-Invoke-RestMethod -Uri "$apiBase/api/v1/kitchen-configurations/$($submission.configuration.id)" `
+Invoke-RestMethod -Uri "$apiBase/api/v1/kitchen-configurations/$($submission.configuration_id)" `
   -WebSession $adminSession
-Invoke-RestMethod -Method Patch -Uri "$apiBase/api/v1/appointments/$($submission.appointment.id)" `
+Invoke-RestMethod -Method Patch -Uri "$apiBase/api/v1/appointments/$($submission.appointment_id)" `
   -Headers $headers -WebSession $adminSession -ContentType "application/json" `
   -Body '{"status":"confirmed","confirmed_datetime":"2030-10-12T10:00:00-06:00"}'
 

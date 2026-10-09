@@ -1,20 +1,20 @@
-# Checklist manual — Fase 1
+# Checklist manual — estado actual
 
 Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas nuevas ni evaluación de Core Web Vitals. Marcar cada caso después de probarlo y registrar navegador, ancho, resultado y cualquier diferencia.
 
 ## Preparación
 
-1. Desde `frontend/`, ejecutar `npm.cmd run dev` y abrir manualmente `http://localhost:3000`.
-2. Para comparar el original, en otra terminal ejecutar desde la raíz `python -m http.server 3001 --bind 127.0.0.1`. Abrir manualmente `http://localhost:3001/index.html`.
-3. Ambos servidores son locales; detenerlos con Ctrl+C al terminar. No utilizar `file://`, porque el PDF usa `/img/logo.jpg`.
-4. Probar anchos 1440, 1024, 850, 768, 390 y 320 px. Los anchos intermedios son especialmente importantes por el enlace nuevo del menú.
-5. Usar solamente datos ficticios. No es necesario enviar mensajes de WhatsApp ni contactar al negocio.
+1. Levantar PostgreSQL, migraciones y API desde `backend/` con `docker compose up --build -d`.
+2. Crear un administrador local si aún no existe y ejecutar el frontend desde `frontend/` con `npm.cmd run dev`.
+3. Abrir manualmente `http://localhost:3000`. No utilizar `file://`, porque el customizador necesita la configuración de runtime y usa `/img/logo.jpg`.
+4. Probar anchos 1440, 1024, 850, 768, 390 y 320 px.
+5. Usar solamente datos ficticios y una cuenta SMTP de pruebas. No enviar mensajes de WhatsApp ni contactar al negocio.
 
 ## Portada: equivalencia visual
 
 - [ ] Comparar lado a lado logo, tipografías, hero, imagen, overlay, títulos y botones; el H1 debe decir exactamente “Diseñamos Construimos Equipamos”.
 - [ ] Comparar las seis secciones en orden: inicio, proyectos, servicios, nosotros, sucursales y contacto.
-- [ ] Comparar fotografías, recortes, espacios, colores, bordes, footer y botón flotante; en Nosotros confirmar la imagen LED nueva y únicamente la métrica 6.5 años.
+- [ ] Comparar fotografías, recortes, espacios, colores, bordes, footer y botón flotante; en Nosotros confirmar la imagen corporativa y únicamente la métrica 6.5 años.
 - [ ] Confirmar ausencia de desbordamiento horizontal y texto tapado en todos los anchos.
 - [ ] Revisar el header con el único enlace nuevo, Propiedades; comprobar que cabe a 1024 y 850 px.
 - [ ] Desplazarse: la navegación debe pasar de transparente a sólida igual que el original.
@@ -31,7 +31,7 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 - [ ] Enlaces generales de WhatsApp: apuntan al número original `5212711055612`; no es necesario enviar.
 - [ ] Abrir Cotizar para Construcción, Mobiliario e Interiorismo; comparar campos y estilo con el original.
 - [ ] Intentar enviar vacío: mensaje de campo requerido, foco y resaltado correctos.
-- [ ] Completar datos ficticios; comprobar texto y destino de WhatsApp (`5212717041499`) sin enviar el mensaje.
+- [ ] Completar datos ficticios; comprobar texto y destino temporal de WhatsApp configurado en `src/config/site.ts`, sin enviar el mensaje.
 - [ ] Cancelar y cerrar por Escape/fondo; volver a abrir y comprobar que los campos se reinician como antes.
 - [ ] Navegar portada → propiedades → ficha → portada varias veces. Confirmar un solo comportamiento por clic y que no quedan overlays o scroll bloqueado.
 
@@ -49,9 +49,12 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 - [ ] En Cubierta recorrer Base sólida, Granito, Cuarzo y Piedra sinterizada. Comprobar precios contra el original.
 - [ ] En sinterizadas: probar las cuatro colecciones, elegir acabado y cambiar de colección/categoría; comparar limpieza de selección con el original.
 - [ ] En Extras activar y desactivar los cuatro extras; Ampliar no debe cambiar selección.
-- [ ] En Datos del cliente, comprobar campos, abrir el mapa y colocar/mover el pin. Sin clave debe aparecer el aviso de configuración pendiente y seguir disponible la dirección manual.
-- [ ] Con una clave posteriormente autorizada y restringida en Google Cloud, confirmar el pin, reabrirlo, cambiarlo, editar manualmente la dirección y confirmar otra vez.
-- [ ] En Resumen comprobar dirección y coordenadas; descargar PDF y comprobarlas; revisar el enlace de mapa del mensaje de WhatsApp sin enviarlo.
+- [ ] En Datos del cliente, comprobar el email opcional, abrir el mapa Leaflet/OSM, colocar y mover el pin y usar “Usar mi ubicación” después de conceder permiso manualmente.
+- [ ] Confirmar ubicación, reabrirla, cambiarla y editar manualmente la dirección. La dirección no debe depender de reverse geocoding.
+- [ ] Al entrar a Resumen debe aparecer “Enviando solicitud…” y después “Solicitud recibida correctamente” con un folio `MHG-...`.
+- [ ] Volver a un paso anterior y regresar sin cambios: debe conservar el folio y no crear otra solicitud. Cambiar un dato y regresar debe crear una solicitud nueva.
+- [ ] Simular API inaccesible: debe aparecer el error y “Reintentar”; nunca debe afirmar que fue recibida. Restaurar la API y reintentar debe funcionar sin duplicar filas.
+- [ ] En Resumen comprobar dirección, coordenadas y enlace OSM; descargar PDF y comprobarlos; revisar el enlace de mapa del mensaje de WhatsApp sin enviarlo.
 - [ ] Descargar un PDF REAL con conexión al CDN de jsPDF. Abrirlo y revisar logo, contenido, páginas y nombre del archivo; no usar solo una simulación.
 - [ ] Probar datos largos y varias selecciones; documentar el truncado heredado si aparece, sin confundirlo con una regresión.
 - [ ] Abrir WhatsApp desde el resumen; revisar número y mensaje sin enviarlo.
@@ -75,20 +78,18 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 - [ ] Inspeccionar código fuente: título, descripción, canonical y Open Graph de cada ficha están en el HTML inicial.
 - [ ] Confirmar `noindex`: es intencional durante esta fase y no debe quitarse para indexar ejemplos ficticios.
 
-## Administración de demostración
+## Administración real
 
-- [ ] Abrir `/admin` directamente. No debe mostrar login ni exigir credenciales.
-- [ ] Debe aparecer exactamente: “Modo demostración: los cambios se pierden al recargar.”
-- [ ] Se ven cuatro registros y sus estados.
-- [ ] Editar un título, precio y descripción; guardar en memoria y comprobar el cambio en la lista.
-- [ ] Cambiar un borrador a publicado y después a archivado: cambia solo la pantalla de administración.
-- [ ] Abrir el catálogo público en otra pestaña: continúa mostrando los dos fixtures originales.
-- [ ] Crear un registro ficticio completo; guardarlo y editarlo otra vez.
-- [ ] Intentar guardar un slug duplicado, uno con espacios, precio cero o superficie cero: debe mostrar errores.
-- [ ] Cancelar edición: el registro anterior permanece intacto.
-- [ ] Elegir otra fotografía local: se informa que sustituye la galería de la copia en memoria. No hay subida de archivos.
-- [ ] Recargar `/admin`: vuelven exactamente los cuatro registros iniciales; las creaciones y ediciones desaparecen.
-- [ ] Salir mediante los enlaces y volver: confirmar que no se presenta una promesa de persistencia.
+- [ ] Abrir `/admin` sin sesión: debe mostrar o redirigir a `/admin/login` sin revelar datos.
+- [ ] Probar contraseña incorrecta y después iniciar sesión con un administrador local.
+- [ ] Verificar Dashboard, Propiedades, Leads, Citas y Configuraciones de cocina; recargar y confirmar que los datos persisten.
+- [ ] Localizar el folio recién creado en Lead, Cita y Configuración y comprobar que los tres IDs relacionados coinciden.
+- [ ] Comprobar nombre, teléfono, email, fecha, sucursal, dirección, ubicación, selecciones y timestamps.
+- [ ] Abrir el enlace de ubicación: debe llevar a OpenStreetMap con el punto correcto.
+- [ ] Abrir “Contactar por WhatsApp”: debe usar el teléfono real del cliente y texto prellenado; cerrar sin enviarlo.
+- [ ] Crear y editar una propiedad; cambiar draft → published → archived y confirmar persistencia tras recargar.
+- [ ] Iniciar sesión como staff: debe consultar leads, citas y configuraciones, pero no administrar propiedades ni modificar citas.
+- [ ] Cerrar sesión: la cookie debe revocarse y `/admin` debe volver a exigir login.
 - [ ] Confirmar que no aparece enlace `/admin` en header/footer públicos.
 
 ## Antes de cualquier despliegue futuro
