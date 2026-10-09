@@ -273,6 +273,49 @@ def test_smtp_failure_preserves_submission_and_admin_relations(client, connectio
         assert items[0]["submission"]["configuration_id"] == receipt["configuration_id"]
 
 
+def test_successful_notification_is_recorded_after_persistence(client, connection):
+    delivered = []
+
+    class RecordingNotifier:
+        configured = True
+
+        def send_kitchen_submission(self, data):
+            delivered.append(data)
+
+    from app.main import app
+
+    app.dependency_overrides[notifier_dependency] = lambda: RecordingNotifier()
+    try:
+        response = client.post(
+            "/api/v1/kitchen-submissions",
+            headers={"Idempotency-Key": str(uuid4())},
+            json={
+                "configuration": kitchen_payload(),
+                "appointment": appointment_payload(),
+                "contact": contact_payload(),
+            },
+        )
+    finally:
+        app.dependency_overrides.pop(notifier_dependency, None)
+
+    assert response.status_code == 201, response.text
+    receipt = response.json()
+    stored = connection.execute(
+        select(
+            KitchenSubmission.notification_status,
+            KitchenSubmission.notification_attempts,
+            KitchenSubmission.notification_error,
+            KitchenSubmission.notified_at,
+        ).where(KitchenSubmission.id == receipt["submission_id"])
+    ).one()
+    assert len(delivered) == 1
+    assert delivered[0].folio == receipt["folio"]
+    assert stored.notification_status == "sent"
+    assert stored.notification_attempts == 1
+    assert stored.notification_error is None
+    assert stored.notified_at is not None
+
+
 def test_database_constraints_and_timestamp_trigger(client, connection):
     item = create(client, "properties", property_payload())
     with pytest.raises(IntegrityError), connection.begin_nested():
