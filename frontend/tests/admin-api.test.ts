@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { AdminApi, ApiError } from "../src/features/admin/api-client.ts";
+import { AdminApi, ApiError, resolveAdminApiBaseUrl } from "../src/features/admin/api-client.ts";
 import { initialSessionError } from "../src/features/admin/auth-state.ts";
 import { confirmedDateTime, emptyProperty, leadWhatsAppUrl, localDateTime, openStreetMapUrl, parseUser, propertyInput, transitions } from "../src/features/admin/contracts.ts";
 
@@ -36,6 +36,17 @@ test("login 401 is presented as invalid credentials", async () => {
 test("API URL construction accepts local HTTP and rejects file URLs", () => {
   assert.doesNotThrow(() => new AdminApi("http://localhost:8000/api/v1"));
   assert.throws(() => new AdminApi("file:///api/v1"), error => error instanceof ApiError && error.status === 0);
+  assert.equal(resolveAdminApiBaseUrl("http://localhost:8000/api/v1"), "http://localhost:8000/api/v1");
+  assert.equal(resolveAdminApiBaseUrl(""), "");
+});
+
+test("admin login route imports the client component and real submit handler", () => {
+  const page = readFileSync(new URL("../src/app/(management)/admin/login/page.tsx", import.meta.url), "utf8");
+  const login = readFileSync(new URL("../src/features/admin/Login.tsx", import.meta.url), "utf8");
+  assert.match(page, /import Login from "@\/features\/admin\/Login"/);
+  assert.match(login, /^"use client";/);
+  assert.match(login, /onSubmit=\{submit\}/);
+  assert.match(login, /request\("\/auth\/login", "POST"/);
 });
 
 for (const status of [401, 403, 409, 422, 429, 500]) {

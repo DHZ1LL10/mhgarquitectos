@@ -47,4 +47,5 @@ export class AdminApi {
     try { return await response.json() as T; } catch { throw new ApiError(0, "La API devolvió una respuesta no válida."); }
   }
 }
-export function adminApi() { return new AdminApi(process.env.NEXT_PUBLIC_API_BASE_URL || ""); }
+export function resolveAdminApiBaseUrl(value = process.env.NEXT_PUBLIC_API_BASE_URL) { return value || ""; }
+export function adminApi() { return new AdminApi(resolveAdminApiBaseUrl()); }
