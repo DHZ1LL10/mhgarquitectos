@@ -20,6 +20,7 @@ from app.kitchen_configurations.schemas import KitchenCreate
 from app.kitchen_configurations.submissions import Submission
 from app.leads.schemas import LeadCreate
 from app.main import app
+from app.notifications.email import KitchenEmailData, build_kitchen_email, map_url
 from app.properties.schemas import PropertyCreate, PropertyOutput
 from tests.payloads import appointment_payload, contact_payload, kitchen_payload, property_payload
 
@@ -181,6 +182,35 @@ def test_atomic_submission_context():
         Submission.model_validate(values)
 
 
+def test_kitchen_email_has_plaintext_html_and_openstreetmap_link():
+    data = KitchenEmailData(
+        folio="MHG-TEST",
+        submission_id=str(uuid4()),
+        name="María <Cliente>",
+        phone="+52 272 220 0485",
+        email="maria@example.com",
+        requested_datetime="2030-10-12T16:00:00+00:00",
+        branch="Fortín",
+        address="Dirección de prueba",
+        latitude=19.043,
+        longitude=-98.198,
+        current_situation="remodelacion",
+        interior_board={"label": "Blanco"},
+        exterior_fronts={"linea": ["Arena"]},
+        hardware={"bisagras": "Cierre suave"},
+        countertop={"label": "Superficie sólida Corian"},
+        finish={"label": "Blanco"},
+        extras=[{"label": "Iluminación LED"}],
+    )
+    message = build_kitchen_email(data, "web@example.com", "ventas@example.com")
+    assert message["Subject"] == "Nueva solicitud de cocina MHG-TEST"
+    assert message.get_body(preferencelist=("plain",)).get_content().find("María <Cliente>") >= 0
+    html = message.get_body(preferencelist=("html",)).get_content()
+    assert "María &lt;Cliente&gt;" in html
+    assert "openstreetmap.org" in html
+    assert map_url(None, None) is None
+
+
 def test_initial_migration_renders_postgresql_ddl():
     output = io.StringIO()
     config = Config("alembic.ini", output_buffer=output)
@@ -193,6 +223,8 @@ def test_initial_migration_renders_postgresql_ddl():
         "CREATE TRIGGER",
         "TIMESTAMP WITH TIME ZONE",
         "uq_properties_slug",
+        "CREATE TABLE kitchen_submissions",
+        "uq_kitchen_submissions_idempotency_key_hash",
     ):
         assert required in sql
 
@@ -206,6 +238,8 @@ def test_initial_migration_renders_postgresql_ddl():
         {"cookie_samesite": "none", "cookie_secure": False},
         {"session_hours": 0},
         {"session_hours": 25},
+        {"smtp_user": "user", "smtp_password": None},
+        {"smtp_from": "bad\n@example.com"},
     ],
 )
 def test_unsafe_auth_configuration_rejected(settings):

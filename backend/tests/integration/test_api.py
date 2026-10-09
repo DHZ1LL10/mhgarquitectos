@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.appointments.models import Appointment
 from app.kitchen_configurations.models import KitchenConfiguration
+from app.kitchen_configurations.submission_models import KitchenSubmission
+from app.kitchen_configurations.submissions import notifier_dependency
 from app.leads.models import Lead
 from app.properties.models import Property
 from tests.payloads import appointment_payload, contact_payload, kitchen_payload, property_payload
@@ -162,19 +164,49 @@ def test_lead_draft_property_not_allowed(client):
 
 
 def test_atomic_submission_success(client, connection):
-    result = create(
-        client,
-        "kitchen-submissions",
-        {
-            "configuration": kitchen_payload(),
-            "appointment": appointment_payload(),
-            "contact": contact_payload(),
-        },
+    key = str(uuid4())
+    payload = {
+        "configuration": kitchen_payload(),
+        "appointment": appointment_payload(),
+        "contact": contact_payload(),
+    }
+    response = client.post(
+        "/api/v1/kitchen-submissions", json=payload, headers={"Idempotency-Key": key}
     )
-    assert result["lead"]["kitchen_configuration_id"] == result["configuration"]["id"]
-    assert result["lead"]["appointment_id"] == result["appointment"]["id"]
-    for model in (KitchenConfiguration, Appointment, Lead):
+    assert response.status_code == 201, response.text
+    result = response.json()
+    assert result["status"] == "received"
+    assert result["replayed"] is False
+    assert result["folio"].startswith("MHG-")
+    assert result["configuration_id"] and result["appointment_id"] and result["lead_id"]
+    for model in (KitchenConfiguration, Appointment, Lead, KitchenSubmission):
         assert connection.scalar(select(func.count()).select_from(model)) == 1
+    assert connection.scalar(select(KitchenSubmission.notification_status)) == "not_configured"
+
+    duplicate = client.post(
+        "/api/v1/kitchen-submissions", json=payload, headers={"Idempotency-Key": key}
+    )
+    assert duplicate.status_code == 200
+    assert duplicate.json() == {**result, "replayed": True}
+    for model in (KitchenConfiguration, Appointment, Lead, KitchenSubmission):
+        assert connection.scalar(select(func.count()).select_from(model)) == 1
+
+    changed = {**payload, "contact": contact_payload(name="Otra persona")}
+    assert (
+        client.post(
+            "/api/v1/kitchen-submissions", json=changed, headers={"Idempotency-Key": key}
+        ).status_code
+        == 409
+    )
+    assert client.post("/api/v1/kitchen-submissions", json=payload).status_code == 422
+    assert (
+        client.post(
+            "/api/v1/kitchen-submissions",
+            json=payload,
+            headers={"Idempotency-Key": "not-a-uuid"},
+        ).status_code
+        == 422
+    )
 
 
 def test_atomic_submission_rollback(client, connection):
@@ -185,6 +217,7 @@ def test_atomic_submission_rollback(client, connection):
     try:
         response = client.post(
             "/api/v1/kitchen-submissions",
+            headers={"Idempotency-Key": str(uuid4())},
             json={
                 "configuration": kitchen_payload(),
                 "appointment": appointment_payload(),
@@ -195,8 +228,49 @@ def test_atomic_submission_rollback(client, connection):
         assert "Intentional" not in response.text
     finally:
         event.remove(Lead, "before_insert", fail_final_write)
-    for model in (KitchenConfiguration, Appointment, Lead):
+    for model in (KitchenConfiguration, Appointment, Lead, KitchenSubmission):
         assert connection.scalar(select(func.count()).select_from(model)) == 0
+
+
+def test_smtp_failure_preserves_submission_and_admin_relations(client, connection):
+    class FailingNotifier:
+        configured = True
+
+        def send_kitchen_submission(self, data):
+            assert data.name == "Persona de prueba"
+            raise TimeoutError("test-only SMTP failure")
+
+    from app.main import app
+
+    app.dependency_overrides[notifier_dependency] = lambda: FailingNotifier()
+    try:
+        response = client.post(
+            "/api/v1/kitchen-submissions",
+            headers={"Idempotency-Key": str(uuid4())},
+            json={
+                "configuration": kitchen_payload(),
+                "appointment": appointment_payload(),
+                "contact": contact_payload(),
+            },
+        )
+    finally:
+        app.dependency_overrides.pop(notifier_dependency, None)
+    assert response.status_code == 201, response.text
+    receipt = response.json()
+    stored = connection.execute(
+        select(
+            KitchenSubmission.notification_status,
+            KitchenSubmission.notification_error,
+            KitchenSubmission.notification_attempts,
+        ).where(KitchenSubmission.id == receipt["submission_id"])
+    ).one()
+    assert stored.notification_status == "failed"
+    assert stored.notification_error == "TimeoutError"
+    assert stored.notification_attempts == 1
+    for path in ("leads", "appointments", "kitchen-configurations"):
+        items = client.get("/api/v1/admin/" + path).json()
+        assert items[0]["submission"]["folio"] == receipt["folio"]
+        assert items[0]["submission"]["configuration_id"] == receipt["configuration_id"]
 
 
 def test_database_constraints_and_timestamp_trigger(client, connection):

@@ -6,6 +6,8 @@ from app.appointments.schemas import AppointmentOutput
 from app.dependencies import AuthenticatedUser, Database, current_user, require_admin
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.schemas import KitchenOutput
+from app.kitchen_configurations.submission_models import KitchenSubmission
+from app.kitchen_configurations.submission_schemas import SubmissionReference
 from app.leads.models import Lead
 from app.leads.schemas import LeadOutput
 from app.properties.models import Property, PropertyStatus
@@ -14,13 +16,29 @@ from app.properties.schemas import PropertyOutput
 router = APIRouter(prefix="/admin", tags=["Administration"], dependencies=[Depends(current_user)])
 
 
+class LeadDetails(LeadOutput):
+    submission: SubmissionReference | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+
+
 class AppointmentDetails(AppointmentOutput):
-    leads: list[LeadOutput]
+    leads: list[LeadDetails]
+    submission: SubmissionReference | None = None
 
 
 class KitchenDetails(KitchenOutput):
-    leads: list[LeadOutput]
+    leads: list[LeadDetails]
     appointments: list[AppointmentOutput]
+    submission: SubmissionReference | None = None
+
+
+def submission_map(db: Database, field, ids) -> dict:
+    if not ids:
+        return {}
+    items = db.scalars(select(KitchenSubmission).where(field.in_(ids))).all()
+    return {getattr(item, field.key): SubmissionReference.model_validate(item) for item in items}
 
 
 @router.get("/dashboard")
@@ -52,11 +70,50 @@ def properties(
     ).all()
 
 
-@router.get("/leads", response_model=list[LeadOutput])
+@router.get("/leads", response_model=list[LeadDetails])
 def leads(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
-    return db.scalars(
+    items = db.scalars(
         select(Lead).order_by(Lead.created_at.desc(), Lead.id).limit(limit).offset(offset)
     ).all()
+    submissions = submission_map(db, KitchenSubmission.lead_id, [item.id for item in items])
+    appointments = {
+        item.id: item
+        for item in db.scalars(
+            select(Appointment).where(
+                Appointment.id.in_([lead.appointment_id for lead in items if lead.appointment_id])
+            )
+        ).all()
+    }
+    configurations = {
+        item.id: item
+        for item in db.scalars(
+            select(KitchenConfiguration).where(
+                KitchenConfiguration.id.in_(
+                    [
+                        lead.kitchen_configuration_id
+                        for lead in items
+                        if lead.kitchen_configuration_id
+                    ]
+                )
+            )
+        ).all()
+    }
+
+    def location(lead):
+        return appointments.get(lead.appointment_id) or configurations.get(
+            lead.kitchen_configuration_id
+        )
+
+    return [
+        LeadDetails(
+            **LeadOutput.model_validate(item).model_dump(),
+            submission=submissions.get(item.id),
+            address=location(item).address if location(item) else None,
+            latitude=location(item).latitude if location(item) else None,
+            longitude=location(item).longitude if location(item) else None,
+        )
+        for item in items
+    ]
 
 
 @router.get("/appointments", response_model=list[AppointmentDetails])
@@ -70,14 +127,20 @@ def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int
     contacts = db.scalars(
         select(Lead).where(Lead.appointment_id.in_([item.id for item in items]))
     ).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [item.id for item in contacts])
+    submissions = submission_map(db, KitchenSubmission.appointment_id, [item.id for item in items])
     return [
         AppointmentDetails(
             **AppointmentOutput.model_validate(item).model_dump(),
             leads=[
-                LeadOutput.model_validate(lead)
+                LeadDetails(
+                    **LeadOutput.model_validate(lead).model_dump(),
+                    submission=lead_submissions.get(lead.id),
+                )
                 for lead in contacts
                 if lead.appointment_id == item.id
             ],
+            submission=submissions.get(item.id),
         )
         for item in items
     ]
@@ -99,14 +162,22 @@ def kitchens(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Q
             Appointment.id.in_([lead.appointment_id for lead in contacts if lead.appointment_id])
         )
     ).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [item.id for item in contacts])
+    submissions = submission_map(
+        db, KitchenSubmission.configuration_id, [item.id for item in items]
+    )
     return [
         KitchenDetails(
             **KitchenOutput.model_validate(item).model_dump(),
             leads=[
-                LeadOutput.model_validate(lead)
+                LeadDetails(
+                    **LeadOutput.model_validate(lead).model_dump(),
+                    submission=lead_submissions.get(lead.id),
+                )
                 for lead in contacts
                 if lead.kitchen_configuration_id == item.id
             ],
+            submission=submissions.get(item.id),
             appointments=[
                 AppointmentOutput.model_validate(appointment)
                 for appointment in related

@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import inspect, select, text
@@ -205,6 +206,7 @@ def test_administrative_related_records_and_no_store(client):
 
     response = client.post(
         "/api/v1/kitchen-submissions",
+        headers={"Idempotency-Key": str(uuid4())},
         json={
             "configuration": kitchen_payload(),
             "appointment": appointment_payload(),
@@ -218,11 +220,12 @@ def test_administrative_related_records_and_no_store(client):
         assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
         assert len(response.json()) == 1
     config = client.get("/api/v1/admin/kitchen-configurations").json()[0]
-    assert config["leads"][0]["id"] == saved["lead"]["id"]
-    assert config["appointments"][0]["id"] == saved["appointment"]["id"]
+    assert config["leads"][0]["id"] == saved["lead_id"]
+    assert config["appointments"][0]["id"] == saved["appointment_id"]
+    assert config["submission"]["folio"] == saved["folio"]
     assert (
         client.get("/api/v1/admin/appointments").json()[0]["leads"][0]["name"]
-        == saved["lead"]["name"]
+        == "Persona de prueba"
     )
     assert client.get("/api/v1/admin/leads?limit=101").status_code == 422
 

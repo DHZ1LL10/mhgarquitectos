@@ -32,7 +32,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_methods=["GET", "POST", "PATCH"],
-    allow_headers=["Content-Type", "X-MHG-Admin"],
+    allow_headers=["Content-Type", "X-MHG-Admin", "Idempotency-Key"],
     allow_credentials=True,
 )
 install_error_handlers(app)
