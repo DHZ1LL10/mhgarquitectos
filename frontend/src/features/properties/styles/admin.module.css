@@ -27,3 +27,11 @@
 .hint { color: #53605a; font-size: .88rem; margin: 0; }
 @media (max-width: 850px) { .layout { grid-template-columns: 1fr; } .shell { padding: 24px 16px 56px; } }
 @media (max-width: 480px) { .row { grid-template-columns: 1fr; } .panel { padding: 20px; } }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 20px 0; }
+.form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.form fieldset fieldset { padding: 16px; border: 1px solid #dce3de; border-radius: 8px; }
+.button:disabled { opacity: .55; cursor: not-allowed; }
+.record dd { margin-left: 18px; overflow-wrap: anywhere; }
+.record dt { font-weight: 600; }
+.record details { margin-top: 16px; }

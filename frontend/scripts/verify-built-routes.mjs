@@ -35,7 +35,7 @@ try {
   }
   assert.ok(ready, `Server did not start: ${logs}`);
 
-  for (const route of ["/", "/index.html", "/propiedades", "/propiedades/casa-demo-fortin", "/propiedades/departamento-demo-tuxtepec", "/admin"]) {
+  for (const route of ["/", "/index.html", "/propiedades", "/propiedades/casa-demo-fortin", "/propiedades/departamento-demo-tuxtepec", "/admin", "/admin/login"]) {
     const response = await get(route);
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("x-robots-tag") || "", /noindex/, route);
@@ -69,8 +69,14 @@ try {
       assert.match(html, /Características de ejemplo/);
     }
     if (route === "/admin") {
-      assert.ok(html.includes("Modo demostración: los cambios se pierden al recargar."));
+      assert.match(html, /Administración MHG/);
+      assert.doesNotMatch(html, /Modo demostración|Guardar en memoria/);
       assert.doesNotMatch(html, /type="(?:password|file)"/);
+    }
+    if (route === "/admin/login") {
+      assert.match(html, /Acceso administrativo/);
+      assert.match(html, /type="password"/);
+      assert.doesNotMatch(html, /Modo demostración|Guardar en memoria/);
     }
     results.push(`200 + initial HTML + noindex: ${route}`);
   }
