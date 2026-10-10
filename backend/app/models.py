@@ -8,6 +8,6 @@ from app.properties.models import Property, PropertyImage
 __all__ = ["Appointment", "KitchenConfiguration", "Lead", "Property", "PropertyImage"]
 __all__ += ["KitchenSubmission"]
 
-from app.auth.models import AdminSession, AdminUser, LoginLimit
+from app.auth.models import AdminSession, AdminUser, LoginLimit, PublicRateLimit
 
-__all__ += ["AdminSession", "AdminUser", "LoginLimit"]
+__all__ += ["AdminSession", "AdminUser", "LoginLimit", "PublicRateLimit"]

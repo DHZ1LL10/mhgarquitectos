@@ -5,13 +5,14 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import model_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.appointments.models import Appointment
 from app.appointments.schemas import AppointmentCreate
+from app.auth.security import enforce_public_rate_limit
 from app.common import InputModel, OutputModel
 from app.dependencies import Configuration, Database
 from app.kitchen_configurations.models import KitchenConfiguration
@@ -175,11 +176,20 @@ def _notify_after_commit(
 )
 def create_submission(
     payload: Submission,
+    request: Request,
     response: Response,
     idempotency_key: IdempotencyKey,
     db: Database,
     notifier: Notifier,
+    settings: Configuration,
 ):
+    enforce_public_rate_limit(
+        request,
+        db,
+        settings,
+        "kitchen-submissions",
+        settings.public_rate_limit_kitchen_submissions,
+    )
     key_hash = _digest(str(idempotency_key))
     payload_hash = _payload_digest(payload)
     receipt = _existing_receipt(db, key_hash, payload_hash, response)

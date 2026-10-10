@@ -1,6 +1,7 @@
 import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
+from ipaddress import ip_address
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
@@ -9,7 +10,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.auth.models import AdminSession, AdminUser, LoginLimit
+from app.auth.models import AdminSession, AdminUser, LoginLimit, PublicRateLimit
 from app.auth.schemas import CreateAdminInput
 from app.config import Settings
 
@@ -20,6 +21,30 @@ dummy_hash = hasher.hash(secrets.token_urlsafe(32))
 
 def token_digest(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
+
+
+def client_ip(request: Request, settings: Settings) -> str:
+    peer = request.client.host if request.client else "unknown"
+    if not settings.trust_proxy:
+        return peer
+    try:
+        peer_address = ip_address(peer)
+    except ValueError:
+        return peer
+    if not any(peer_address in network for network in settings.trusted_proxy_networks):
+        return peer
+
+    forwarded = request.headers.get("x-forwarded-for")
+    if not forwarded:
+        return peer
+    try:
+        chain = [ip_address(value.strip()) for value in forwarded.split(",")]
+    except ValueError:
+        return peer
+    for candidate in reversed(chain):
+        if not any(candidate in network for network in settings.trusted_proxy_networks):
+            return str(candidate)
+    return str(chain[0])
 
 
 def csrf_guard(request: Request, settings: Settings) -> None:
@@ -49,6 +74,43 @@ def consume_login_budget(db: Session, email: str, ip: str) -> None:
             )
         bucket.attempts += 1
     db.commit()
+
+
+def consume_public_budget(
+    db: Session, category: str, ip: str, maximum: int, window_seconds: int
+) -> None:
+    now = datetime.now(UTC)
+    db.execute(delete(PublicRateLimit).where(PublicRateLimit.expires_at <= now))
+    key = token_digest(f"{category}:{ip}")
+    db.execute(
+        insert(PublicRateLimit)
+        .values(key=key, attempts=0, expires_at=now + timedelta(seconds=window_seconds))
+        .on_conflict_do_nothing()
+    )
+    bucket = db.scalar(select(PublicRateLimit).where(PublicRateLimit.key == key).with_for_update())
+    if bucket.attempts >= maximum:
+        retry_after = max(1, int((bucket.expires_at - now).total_seconds()))
+        db.commit()
+        raise HTTPException(
+            429,
+            "Too many public submissions. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    bucket.attempts += 1
+    db.commit()
+
+
+def enforce_public_rate_limit(
+    request: Request, db: Session, settings: Settings, category: str, maximum: int
+) -> None:
+    if settings.public_rate_limit_enabled:
+        consume_public_budget(
+            db,
+            category,
+            client_ip(request, settings),
+            maximum,
+            settings.public_rate_limit_window_seconds,
+        )
 
 
 def verify_password(encoded: str, password: str) -> bool:

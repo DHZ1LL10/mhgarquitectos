@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 
 from app.appointments.models import Appointment
@@ -11,7 +11,8 @@ from app.appointments.schemas import (
     AppointmentPatch,
 )
 from app.appointments.service import validate_transition
-from app.dependencies import Database, require_admin
+from app.auth.security import enforce_public_rate_limit
+from app.dependencies import Configuration, Database, require_admin
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
@@ -22,7 +23,12 @@ router = APIRouter(prefix="/appointments", tags=["Appointments"])
     status_code=201,
     description="Public appointment request. Does not reserve availability or confirm a booking.",
 )
-def create_appointment(payload: AppointmentCreate, db: Database):
+def create_appointment(
+    payload: AppointmentCreate, request: Request, db: Database, settings: Configuration
+):
+    enforce_public_rate_limit(
+        request, db, settings, "appointments", settings.public_rate_limit_appointments
+    )
     item = Appointment(**payload.model_dump())
     db.add(item)
     db.commit()

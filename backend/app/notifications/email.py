@@ -101,14 +101,16 @@ class SmtpEmailNotifier:
     @property
     def configured(self) -> bool:
         return bool(
-            self.settings.smtp_host and self.settings.smtp_from and self.settings.notification_email
+            self.settings.smtp_host
+            and self.settings.smtp_from
+            and self.settings.notification_recipient
         )
 
     def send_kitchen_submission(self, data: KitchenEmailData) -> None:
         if not self.configured:
             raise RuntimeError("SMTP is not configured")
         message = build_kitchen_email(
-            data, str(self.settings.smtp_from), str(self.settings.notification_email)
+            data, str(self.settings.smtp_from), str(self.settings.notification_recipient)
         )
         with smtplib.SMTP(
             self.settings.smtp_host, self.settings.smtp_port, timeout=10

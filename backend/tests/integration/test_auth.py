@@ -255,12 +255,12 @@ def test_secure_cookie_and_explicit_cors(anonymous_client, connection):
     from app.main import app
 
     add_user(connection)
-    settings = get_settings().model_copy(update={"cookie_secure": True, "cookie_samesite": "none"})
+    settings = get_settings().model_copy(update={"cookie_secure": True, "cookie_samesite": "lax"})
     app.dependency_overrides[get_settings] = lambda: settings
     response = login(anonymous_client)
     assert response.status_code == 200
     cookie = response.headers["set-cookie"]
-    assert "Secure" in cookie and "HttpOnly" in cookie and "SameSite=none" in cookie
+    assert "Secure" in cookie and "HttpOnly" in cookie and "SameSite=lax" in cookie
     assert "Domain=" not in cookie
     allowed = anonymous_client.options(
         "/api/v1/auth/login",

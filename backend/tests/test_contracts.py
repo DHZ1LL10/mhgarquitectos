@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from alembic import command
 from alembic.config import Config
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from sqlalchemy.exc import OperationalError
@@ -14,13 +14,19 @@ from sqlalchemy.exc import OperationalError
 from app.appointments.models import AppointmentStatus
 from app.appointments.schemas import AppointmentCreate, AppointmentData
 from app.appointments.service import TRANSITIONS, validate_transition
+from app.auth.security import client_ip
 from app.config import Settings, get_settings
-from app.db import get_db
+from app.db import engine_options, get_db
 from app.kitchen_configurations.schemas import KitchenCreate
 from app.kitchen_configurations.submissions import Submission
 from app.leads.schemas import LeadCreate
-from app.main import app
-from app.notifications.email import KitchenEmailData, build_kitchen_email, map_url
+from app.main import app, create_app
+from app.notifications.email import (
+    KitchenEmailData,
+    SmtpEmailNotifier,
+    build_kitchen_email,
+    map_url,
+)
 from app.properties.schemas import PropertyCreate, PropertyOutput
 from tests.payloads import appointment_payload, contact_payload, kitchen_payload, property_payload
 
@@ -39,6 +45,134 @@ def test_health_contract_and_unavailable_db():
             assert "secret" not in response.text
     finally:
         app.dependency_overrides.clear()
+
+
+def test_database_url_fallback_ssl_and_small_pool():
+    local = Settings(
+        db_host="db",
+        db_port=5433,
+        db_name="mhg_local",
+        db_user="mhg_user",
+        db_password="not-printed",
+        db_sslmode="disable",
+    )
+    assert local.database_url.host == "db"
+    assert local.database_url.database == "mhg_local"
+    assert local.database_url.query["sslmode"] == "disable"
+
+    managed = Settings(
+        DATABASE_URL="postgresql://managed:not-printed@database.example/mhg",
+        db_sslmode="require",
+        db_pool_size=3,
+        db_max_overflow=2,
+    )
+    assert managed.database_url.drivername == "postgresql+psycopg"
+    assert managed.database_url.host == "database.example"
+    assert managed.database_url.query["sslmode"] == "require"
+    options = engine_options(managed)
+    assert options["pool_size"] == 3 and options["max_overflow"] == 2
+
+
+def request_with_peer(peer: str, headers: list[tuple[bytes, bytes]]) -> Request:
+    return Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/",
+            "headers": headers,
+            "client": (peer, 1234),
+            "server": ("test", 80),
+            "scheme": "http",
+            "query_string": b"",
+        }
+    )
+
+
+def test_forwarded_ip_requires_a_trusted_immediate_proxy():
+    spoofed = request_with_peer("203.0.113.10", [(b"x-forwarded-for", b"198.51.100.20")])
+    disabled = Settings(db_password="test", trust_proxy=False)
+    assert client_ip(spoofed, disabled) == "203.0.113.10"
+    forwarded_only = request_with_peer("203.0.113.10", [(b"forwarded", b"for=198.51.100.20")])
+    assert client_ip(forwarded_only, disabled) == "203.0.113.10"
+
+    configured = Settings(db_password="test", trust_proxy=True, trusted_proxy_cidrs=["10.0.0.0/8"])
+    assert client_ip(spoofed, configured) == "203.0.113.10"
+    trusted = request_with_peer("10.0.0.4", [(b"x-forwarded-for", b"198.51.100.20, 10.0.0.3")])
+    assert client_ip(trusted, configured) == "198.51.100.20"
+    malformed = request_with_peer("10.0.0.4", [(b"x-forwarded-for", b"not-an-ip")])
+    assert client_ip(malformed, configured) == "10.0.0.4"
+
+
+def test_request_body_limit_rejects_before_route_processing():
+    limited = create_app(Settings(db_password="test", max_request_body_bytes=1024))
+    with TestClient(limited, raise_server_exceptions=False) as client:
+        response = client.post(
+            "/api/v1/kitchen-submissions",
+            content=b"x" * 1025,
+            headers={"Content-Type": "application/json", "Idempotency-Key": str(uuid4())},
+        )
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "payload_too_large"
+
+
+def test_openapi_can_be_disabled_and_security_headers_are_present():
+    disabled = create_app(Settings(db_password="test", openapi_enabled=False))
+    with TestClient(disabled, raise_server_exceptions=False) as client:
+        response = client.get("/openapi.json")
+    assert response.status_code == 404
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert (
+        response.headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
+    )
+
+
+def test_exact_cors_allowlist_accepts_only_the_configured_origin():
+    cors_app = create_app(
+        Settings(db_password="test", cors_origins=["https://staging.example.com"])
+    )
+    with TestClient(cors_app) as client:
+        allowed = client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://staging.example.com",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        denied = client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://preview.netlify.app",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+    assert allowed.headers["access-control-allow-origin"] == "https://staging.example.com"
+    assert denied.status_code == 400
+    assert "access-control-allow-origin" not in denied.headers
+
+
+def test_staging_email_override_is_mandatory_and_authoritative():
+    with pytest.raises(ValidationError):
+        Settings(
+            db_password="test",
+            environment="staging",
+            cookie_secure=True,
+            smtp_host="smtp.example.com",
+            smtp_from="sender@example.com",
+            notification_email="customer@example.com",
+        )
+    staging = Settings(
+        db_password="test",
+        environment="staging",
+        cookie_secure=True,
+        smtp_host="smtp.example.com",
+        smtp_from="sender@example.com",
+        notification_email="customer@example.com",
+        staging_email_override="internal@example.com",
+    )
+    assert staging.notification_recipient == "internal@example.com"
+    assert SmtpEmailNotifier(staging).configured is True
+    with pytest.raises(ValidationError):
+        Settings(db_password="test", staging_email_override="internal@example.com")
 
 
 def test_admin_operations_default_deny_and_openapi():
@@ -224,6 +358,7 @@ def test_initial_migration_renders_postgresql_ddl():
         "TIMESTAMP WITH TIME ZONE",
         "uq_properties_slug",
         "CREATE TABLE kitchen_submissions",
+        "CREATE TABLE public_rate_limits",
         "uq_kitchen_submissions_idempotency_key_hash",
     ):
         assert required in sql
@@ -236,6 +371,9 @@ def test_initial_migration_renders_postgresql_ddl():
         {"cors_origins": ["https://example.com/path"]},
         {"cors_origins": ["https://user:secret@example.com"]},
         {"cookie_samesite": "none", "cookie_secure": False},
+        {"environment": "staging", "cookie_secure": False},
+        {"trust_proxy": True, "trusted_proxy_cidrs": []},
+        {"trusted_proxy_cidrs": ["not-a-network"]},
         {"session_hours": 0},
         {"session_hours": 25},
         {"smtp_user": "user", "smtp_password": None},

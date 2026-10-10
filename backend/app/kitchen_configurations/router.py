@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.dependencies import Database, current_user
+from app.auth.security import enforce_public_rate_limit
+from app.dependencies import Configuration, Database, current_user
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.schemas import KitchenCreate, KitchenOutput
 
@@ -15,7 +16,16 @@ router = APIRouter(prefix="/kitchen-configurations", tags=["Kitchen configuratio
     status_code=201,
     description="Public submission. Selection snapshots are customer input, not authoritative pricing.",
 )
-def create_configuration(payload: KitchenCreate, db: Database):
+def create_configuration(
+    payload: KitchenCreate, request: Request, db: Database, settings: Configuration
+):
+    enforce_public_rate_limit(
+        request,
+        db,
+        settings,
+        "kitchen-configurations",
+        settings.public_rate_limit_kitchen_configurations,
+    )
     item = KitchenConfiguration(**payload.model_dump())
     db.add(item)
     db.commit()

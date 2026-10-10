@@ -5,6 +5,7 @@ from sqlalchemy import event, func, select, text
 from sqlalchemy.exc import IntegrityError
 
 from app.appointments.models import Appointment
+from app.config import get_settings
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.submission_models import KitchenSubmission
 from app.kitchen_configurations.submissions import notifier_dependency
@@ -21,6 +22,47 @@ def create(client, path, payload):
 
 def test_health_real_postgres(client):
     assert client.get("/health").json() == {"status": "ok", "database": "ok"}
+
+
+def test_public_rate_limit_is_shared_in_postgres(anonymous_client):
+    from app.main import app
+
+    settings = get_settings().model_copy(
+        update={
+            "public_rate_limit_leads": 1,
+            "public_rate_limit_appointments": 1,
+            "public_rate_limit_kitchen_configurations": 1,
+            "public_rate_limit_kitchen_submissions": 1,
+            "public_rate_limit_window_seconds": 60,
+        }
+    )
+    app.dependency_overrides[get_settings] = lambda: settings
+    try:
+        requests = (
+            ("/api/v1/leads", contact_payload(), {}),
+            ("/api/v1/appointments", appointment_payload(), {}),
+            ("/api/v1/kitchen-configurations", kitchen_payload(), {}),
+            (
+                "/api/v1/kitchen-submissions",
+                {
+                    "configuration": kitchen_payload(),
+                    "appointment": appointment_payload(),
+                    "contact": contact_payload(),
+                },
+                {"Idempotency-Key": str(uuid4())},
+            ),
+        )
+        responses = []
+        for path, payload, headers in requests:
+            first = anonymous_client.post(path, json=payload, headers=headers)
+            limited = anonymous_client.post(path, json=payload, headers=headers)
+            responses.append((first, limited))
+    finally:
+        app.dependency_overrides.pop(get_settings, None)
+    for first, limited in responses:
+        assert first.status_code == 201, first.text
+        assert limited.status_code == 429
+        assert int(limited.headers["retry-after"]) >= 1
 
 
 def test_properties_crud_public_filter_slug_and_images(client):
