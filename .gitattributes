@@ -1,5 +1,4 @@
 # Preserve the original checkout line endings; never transform public copies.
-frontend/public/** -text
 index.html text eol=crlf
 script.js text eol=crlf
 modals.js text eol=lf
@@ -7,4 +6,5 @@ cocina-customizer.html text eol=crlf
 cotizador.js text eol=crlf
 galeria-configurador.js text eol=lf
 configurador-galeria.css text eol=lf
-style.css text eol=crlf
+style.css -text
+frontend/public/** -text
