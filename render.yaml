@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+
+previews:
+  generation: "off"
+
+services:
+  - type: web
+    runtime: docker
+    name: mhg-api-staging
+    region: oregon
+    plan: 0.5c-512mb
+    branch: phase-4a-staging-hardening
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000 --no-proxy-headers
+    preDeployCommand: alembic upgrade head && alembic current && alembic check
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
+    envVars:
+      - key: ENVIRONMENT
+        value: staging
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mhg-postgres-staging
+          property: connectionString
+      - key: DB_SSLMODE
+        value: require
+      - key: DB_POOL_SIZE
+        value: "5"
+      - key: DB_MAX_OVERFLOW
+        value: "5"
+      - key: DB_POOL_TIMEOUT_SECONDS
+        value: "10"
+      - key: DB_POOL_RECYCLE_SECONDS
+        value: "1800"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: lax
+      - key: COOKIE_NAME
+        value: mhg_staging_session
+      - key: SESSION_HOURS
+        value: "8"
+      - key: CORS_ORIGINS
+        sync: false
+      - key: OPENAPI_ENABLED
+        value: "false"
+      - key: MAX_REQUEST_BODY_BYTES
+        value: "1048576"
+      - key: TRUST_PROXY
+        value: "false"
+      - key: TRUSTED_PROXY_CIDRS
+        value: "[]"
+      - key: PUBLIC_RATE_LIMIT_ENABLED
+        value: "true"
+      - key: PUBLIC_RATE_LIMIT_WINDOW_SECONDS
+        value: "900"
+      - key: PUBLIC_RATE_LIMIT_KITCHEN_SUBMISSIONS
+        value: "10"
+      - key: PUBLIC_RATE_LIMIT_LEADS
+        value: "20"
+      - key: PUBLIC_RATE_LIMIT_APPOINTMENTS
+        value: "10"
+      - key: PUBLIC_RATE_LIMIT_KITCHEN_CONFIGURATIONS
+        value: "10"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: STAGING_EMAIL_OVERRIDE
+        sync: false
+
+databases:
+  - name: mhg-postgres-staging
+    region: oregon
+    plan: 0.1c-256mb
+    postgresMajorVersion: "17"
+    databaseName: mhg_staging
+    user: mhg_staging
+    diskSizeGB: 1
+    storageAutoscalingEnabled: false
+    connectionPool: none
+    ipAllowList: []
