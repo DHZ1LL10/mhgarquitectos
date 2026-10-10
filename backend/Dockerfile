@@ -8,7 +8,7 @@ COPY app ./app
 COPY alembic.ini .
 COPY migrations ./migrations
 USER app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
 
 FROM base AS test
 USER root

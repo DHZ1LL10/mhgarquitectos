@@ -31,6 +31,8 @@ CORS y no acceden al panel real.
 - `X-Forwarded-For` sólo se procesa cuando `TRUST_PROXY=true` y el peer inmediato está
   dentro de `TRUSTED_PROXY_CIDRS`. `Forwarded` se ignora. Una cadena inválida vuelve a la
   IP del peer. No se debe activar la confianza hasta confirmar los CIDR reales del PaaS.
+- Uvicorn arranca con `--no-proxy-headers`; la aplicación es la única autoridad que puede
+  interpretar `X-Forwarded-For`, evitando confianza implícita por configuración del servidor.
 - OpenAPI se controla con `OPENAPI_ENABLED`.
 
 ## Auditoría de endpoints públicos
