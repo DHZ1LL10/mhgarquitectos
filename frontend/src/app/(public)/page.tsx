@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomeSections from "@/components/site/HomeSections";
+import { propertyRepository } from "@/features/properties";
 
 export const metadata: Metadata = {
   title: "MHG Arquitectos | Diseño, Construcción y Mobiliario — Fortín de las Flores, Veracruz",
@@ -14,4 +15,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "MHG Arquitectos | Diseñamos. Construimos. Equipamos.", images: ["/img/fachada-frente.jpg"] },
 };
 
-export default function Home() { return <HomeSections />; }
+export default async function Home() {
+  const properties = await propertyRepository.listPublished();
+  return <HomeSections properties={properties.slice(0, 3)} />;
+}

@@ -29,6 +29,7 @@ test("corporate section IDs, content and asset paths survive the JSX transfer", 
   const corporate = sections + read("frontend/src/components/site/SiteHeader.tsx") + read("frontend/src/components/site/SiteFooter.tsx");
   for (const id of ["inicio", "proyectos", "servicios", "nosotros", "sucursales", "contacto"]) assert.ok(sections.includes(`id="${id}"`));
   for (const match of original.matchAll(/<img[^>]+src="([^"]+)"/g)) {
+    if (/img\/(mobiliario|interiorismo)\//.test(match[1])) continue;
     assert.ok(corporate.includes(match[1]), match[1]);
   }
   assert.ok(sections.includes('/img/construccion/fachada-1.jpg'));
@@ -36,6 +37,21 @@ test("corporate section IDs, content and asset paths survive the JSX transfer", 
   assert.ok(existsSync(path.join(root, "frontend/public/img/construccion/fachada-1.jpg")));
   assert.match(sections, /<a href="\/cocina-customizer\.html"/);
   assert.doesNotMatch(sections, /onclick=|dangerouslySetInnerHTML/);
+});
+
+test("home follows the business order and exposes only the two approved project tabs", () => {
+  const sections = read("frontend/src/components/site/HomeSections.tsx");
+  const ids = ["inicio", "nosotros", "proyectos", "propiedades", "servicios", "sucursales", "contacto"];
+  for (let index = 1; index < ids.length; index++) assert.ok(sections.indexOf(`id="${ids[index - 1]}"`) < sections.indexOf(`id="${ids[index]}"`));
+  assert.equal([...sections.matchAll(/role="tab"/g)].length, 2);
+  assert.doesNotMatch(sections, /tab-mobiliario|tab-interiorismo|cat-mobiliario|cat-interiorismo/);
+  assert.match(sections, /Propiedades en venta/);
+  assert.match(sections, /properties\.slice\(0, 3\)/);
+  assert.match(sections, /href="\/propiedades"/);
+  const header = read("frontend/src/components/site/SiteHeader.tsx");
+  const labels = ["Nosotros", "Proyectos", "Propiedades en venta", "Servicios", "Sucursales", "Contacto", "WhatsApp"];
+  for (let index = 1; index < labels.length; index++) assert.ok(header.indexOf(labels[index - 1]) < header.indexOf(labels[index]));
+  assert.match(header, /home \? "#propiedades" : "\/#propiedades"/);
 });
 
 test("all literal legacy image references exist with exact case except the known missing favicon", () => {
@@ -85,7 +101,7 @@ test("legacy catalogs, defaults, summary and WhatsApp retain their baseline beha
   assert.match(new URL(url).searchParams.get("text") || "", /Cliente de prueba/);
   assert.match(new URL(url).searchParams.get("text") || "", /https:\/\/www\.openstreetmap\.org\//);
   const text = new URL(url).searchParams.get("text") || "";
-  assert.ok(text.indexOf("*SITUACIÓN:*") < text.indexOf("*HERRAJES:*") && text.indexOf("*HERRAJES:*") < text.indexOf("*CUBIERTA:*") && text.indexOf("*EXTRAS:*") < text.indexOf("*DATOS DEL CLIENTE:*"));
+  assert.ok(text.indexOf("👤 *CLIENTE*") < text.indexOf("📅 *VISITA / LEVANTAMIENTO*") && text.indexOf("📅 *VISITA / LEVANTAMIENTO*") < text.indexOf("🧰 *CONFIGURACIÓN*") && text.indexOf("*Herrajes:*") < text.indexOf("*Cubierta:*"));
   assert.equal(vm.runInContext("state.extras.length", context), 1, "The legacy new-configuration behavior must not change");
 });
 
@@ -123,7 +139,7 @@ test("customizer navigation follows the new order and preserves step validation 
 
 test("Leaflet and OpenStreetMap replace Google Maps without an API key", () => {
   const html = read("frontend/public/cocina-customizer.html");
-  assert.match(html, /leaflet@1\.9\.4/);
+  assert.match(html, /leaflet\/1\.9\.4\/leaflet\.min/);
   assert.match(html, /OpenStreetMap/);
   assert.match(html, /customizer-runtime-config\.js/);
   assert.doesNotMatch(html + read("frontend/public/cotizador.js"), /maps\.googleapis\.com|MHG_GOOGLE_MAPS_API_KEY|AIza[0-9A-Za-z_-]{20,}/);

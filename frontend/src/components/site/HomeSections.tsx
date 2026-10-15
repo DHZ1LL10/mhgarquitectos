@@ -1,4 +1,8 @@
-export default function HomeSections() {
+import PropertyCard from "@/features/properties/components/PropertyCard";
+import type { Property } from "@/features/properties/types";
+import propertyStyles from "@/features/properties/styles/properties.module.css";
+
+export default function HomeSections({ properties }: { properties: Property[] }) {
   return (<>
 
   {/* ═══════════════ HERO ═══════════════ */}
@@ -31,6 +35,22 @@ export default function HomeSections() {
     </a>
   </section>
 
+  {/* ═══════════════ NOSOTROS ═══════════════ */}
+  <section className="section trust-section" id="nosotros">
+    <div className="container trust-container">
+      <div className="trust-visual"><div className="trust-img-wrap"><img src="/img/construccion/fachada-1.jpg" alt="Proyecto residencial terminado — MHG Arquitectos" className="trust-img" loading="lazy" /></div></div>
+      <div className="trust-content">
+        <span className="section-label">Quiénes somos</span>
+        <h2 className="section-title">6 años y medio<br/>construyendo confianza</h2>
+        <div className="trust-divider"></div>
+        <p className="trust-text">MHG Arquitectos nació con la visión de ofrecer diseño de calidad al alcance de familias y negocios en Veracruz. Desde nuestros inicios hemos documentado cada etapa de cada proyecto.</p>
+        <p className="trust-text">En más de <strong>6 años y medio</strong> de trayectoria hemos completado proyectos de construcción, cocinas integrales, mobiliario e interiorismo en Fortín de las Flores y Tuxtepec.</p>
+        <div className="trust-stats"><div><span className="trust-stat-num">6.5</span><span className="trust-stat-label">Años de experiencia</span></div></div>
+        <a href="https://wa.me/5212711055612?text=Hola%2C%20quisiera%20platicar%20sobre%20mi%20proyecto%20con%20MHG%20Arquitectos." className="btn btn-primary" target="_blank" rel="noopener noreferrer" id="trust-whatsapp-btn">Platicar sobre mi proyecto</a>
+      </div>
+    </div>
+  </section>
+
   {/* ═══════════════ PROYECTOS POR CATEGORÍA ═══════════════ */}
   <section className="section projects-section" id="proyectos">
     <div className="container">
@@ -44,8 +64,6 @@ export default function HomeSections() {
       <div className="proj-tabs" role="tablist" aria-label="Categorías de proyectos">
         <button className="proj-tab active" role="tab" data-cat="construccion" id="tab-construccion" aria-selected="true">Diseño y Construcción</button>
         <button className="proj-tab" role="tab" data-cat="cocinas" id="tab-cocinas" aria-selected="false">Cocinas</button>
-        <button className="proj-tab" role="tab" data-cat="mobiliario" id="tab-mobiliario" aria-selected="false">Mobiliario</button>
-        <button className="proj-tab" role="tab" data-cat="interiorismo" id="tab-interiorismo" aria-selected="false">Interiorismo</button>
       </div>
 
       {/* CONSTRUCCIÓN */}
@@ -128,74 +146,19 @@ export default function HomeSections() {
         </div>
       </div>
 
-      {/* MOBILIARIO */}
-      <div className="proj-panel" id="cat-mobiliario" role="tabpanel" aria-labelledby="tab-mobiliario" hidden>
-        <div className="proj-grid">
-          <div className="proj-item" id="proj-m1">
-            <img src="/img/mobiliario/closet-grande-1.jpg" alt="Closet grande de madera — MHG Arquitectos" loading="lazy" />
-            <div className="proj-overlay"><span>Closet Grande</span></div>
-          </div>
-          <div className="proj-item" id="proj-m2">
-            <img src="/img/mobiliario/closet-tux-1.jpg" alt="Closet residencial premium" loading="lazy" />
-            <div className="proj-overlay"><span>Closet Residencial</span></div>
-          </div>
-          <div className="proj-item" id="proj-m3">
-            <img src="/img/mobiliario/isla-showroom-1.jpg" alt="Isla de showroom en madera y vidrio" loading="lazy" />
-            <div className="proj-overlay"><span>Isla Showroom</span></div>
-          </div>
-          <div className="proj-item" id="proj-m4">
-            <img src="/img/mobiliario/closet-tux-2.jpg" alt="Diseño de closet a medida" loading="lazy" />
-            <div className="proj-overlay"><span>Closet a Medida</span></div>
-          </div>
-          <div className="proj-item" id="proj-m6">
-            <img src="/img/mobiliario/puerta-1.jpg" alt="Puerta de madera a medida" loading="lazy" />
-            <div className="proj-overlay"><span>Puertas a Medida</span></div>
-          </div>
-          <div className="proj-item" id="proj-m5">
-            <img src="/img/mobiliario/mueble-tv-1.jpg" alt="Mueble de TV moderno" loading="lazy" />
-            <div className="proj-overlay"><span>Mueble de TV</span></div>
-          </div>
-          <div className="proj-item" id="proj-m7">
-            <img src="/img/mobiliario/closet-tux-4.jpg" alt="Closet premium con acabados finos" loading="lazy" />
-            <div className="proj-overlay"><span>Closet Premium</span></div>
-          </div>
-        </div>
-        <div className="proj-sidebar">
-          <div className="proj-cta-card" id="proj-m-cta">
-            <p>Closets, muebles, puertas y más.</p>
-            <a href="https://wa.me/5212711055612?text=Hola%2C%20me%20interesa%20mobiliario%20a%20medida%20(closet%2C%20mueble%20de%20TV%2C%20puerta%20u%20otro).%20%C2%BFPueden%20asesorarme?" className="btn btn-primary" target="_blank" rel="noopener noreferrer" id="proj-wa-mobiliario">
-              Cotizar mobiliario
-            </a>
-          </div>
-        </div>
-      </div>
+    </div>
+  </section>
 
-      {/* INTERIORISMO */}
-      <div className="proj-panel" id="cat-interiorismo" role="tabpanel" aria-labelledby="tab-interiorismo" hidden>
-        <div className="proj-grid">
-          <div className="proj-item" id="proj-i1">
-            <img src="/img/interiorismo/espacio-1.jpg" alt="Espacio interior diseñado por MHG" loading="lazy" />
-            <div className="proj-overlay"><span>Diseño de Espacio</span></div>
-          </div>
-          <div className="proj-item" id="proj-i2">
-            <img src="/img/interiorismo/espacio-2.jpg" alt="Interiorismo — closet con diseño integrado" loading="lazy" />
-            <div className="proj-overlay"><span>Closet Integrado</span></div>
-          </div>
-          <div className="proj-item" id="proj-i3">
-            <img src="/img/interiorismo/espacio-3.jpg" alt="Detalle de interiorismo" loading="lazy" />
-            <div className="proj-overlay"><span>Detalle de Acabados</span></div>
-          </div>
-        </div>
-        <div className="proj-sidebar">
-          <div className="proj-cta-card" id="proj-i-cta">
-            <p>¿Quieres transformar un espacio?</p>
-            <a href="https://wa.me/5212711055612?text=Hola%2C%20me%20interesa%20el%20servicio%20de%20Interiorismo%20para%20mi%20espacio.%20%C2%BFPodr%C3%ADan%20asesorarme?" className="btn btn-primary" target="_blank" rel="noopener noreferrer" id="proj-wa-interiorismo">
-              Cotizar interiorismo
-            </a>
-          </div>
-        </div>
+  {/* ═══════════════ PROPIEDADES EN VENTA ═══════════════ */}
+  <section className="section properties-home" id="propiedades">
+    <div className="container">
+      <div className="section-header">
+        <span className="section-label">Oportunidades inmobiliarias</span>
+        <h2 className="section-title">Propiedades en venta</h2>
+        <p className="section-desc">Espacios seleccionados por MHG Arquitectos.</p>
       </div>
-
+      {properties.length ? <div className={propertyStyles.grid}>{properties.slice(0, 3).map(property => <PropertyCard key={property.id} property={property} />)}</div> : <div className="properties-empty"><h3>Próximamente nuevas propiedades</h3><p>Estamos preparando opciones seleccionadas para ti.</p></div>}
+      <div className="properties-home-action"><a className="btn btn-primary" href="/propiedades">Ver todas las propiedades</a></div>
     </div>
   </section>
 
@@ -265,38 +228,6 @@ export default function HomeSections() {
         </li>
 
       </ul>
-    </div>
-  </section>
-
-  {/* ═══════════════ NOSOTROS ═══════════════ */}
-  <section className="section trust-section" id="nosotros">
-    <div className="container trust-container">
-      <div className="trust-visual">
-        <div className="trust-img-wrap">
-          <img src="/img/construccion/fachada-1.jpg" alt="Proyecto residencial terminado — MHG Arquitectos" className="trust-img" loading="lazy" />
-        </div>
-      </div>
-      <div className="trust-content">
-        <span className="section-label">Quiénes somos</span>
-        <h2 className="section-title">6 años y medio<br/>construyendo confianza</h2>
-        <div className="trust-divider"></div>
-        <p className="trust-text">
-          MHG Arquitectos nació con la visión de ofrecer diseño de calidad al alcance de familias y negocios en Veracruz. Desde nuestros inicios hemos documentado cada etapa de cada proyecto.
-        </p>
-        <p className="trust-text">
-          En más de <strong>6 años y medio</strong> de trayectoria hemos completado proyectos de construcción, cocinas integrales, mobiliario e interiorismo en Fortín de las Flores y Tuxtepec.
-        </p>
-        <div className="trust-stats">
-          <div>
-            <span className="trust-stat-num">6.5</span>
-            <span className="trust-stat-label">Años de experiencia</span>
-          </div>
-        </div>
-        <a href="https://wa.me/5212711055612?text=Hola%2C%20quisiera%20platicar%20sobre%20mi%20proyecto%20con%20MHG%20Arquitectos." className="btn btn-primary" target="_blank" rel="noopener noreferrer" id="trust-whatsapp-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-          Platicar sobre mi proyecto
-        </a>
-      </div>
     </div>
   </section>
 
