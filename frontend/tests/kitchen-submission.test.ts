@@ -39,6 +39,8 @@ test("customizer builds the domain payload without UI step indexes", () => {
   assert.equal(payload.configuration.selection_version, 1);
   assert.equal(payload.appointment.address, payload.configuration.address);
   assert.equal(payload.appointment.requested_datetime, payload.configuration.requested_datetime);
+  assert.equal((payload.configuration as { latitude?: number }).latitude, 19.043);
+  assert.equal((payload.configuration as { longitude?: number }).longitude, -98.198);
   assert.equal(JSON.stringify(payload).includes("step"), false);
 });
 
@@ -73,9 +75,16 @@ test("map helper uses OpenStreetMap and rejects invalid coordinates", () => {
   assert.match(contract.openStreetMapUrl(19.043, -98.198), /^https:\/\/www\.openstreetmap\.org\//);
   assert.equal(contract.openStreetMapUrl(Number.NaN, -98.198), "");
   const html = readFileSync(new URL("../public/cocina-customizer.html", import.meta.url), "utf8");
-  assert.match(html, /leaflet@1\.9\.4/);
+  assert.match(html, /leaflet\/1\.9\.4\/leaflet\.min/);
   assert.match(html, /OpenStreetMap/);
   assert.doesNotMatch(html, /maps\.googleapis\.com|maps-config\.js|Mapa de Google/);
+  const customizer = readFileSync(new URL("../public/cotizador.js", import.meta.url), "utf8");
+  assert.match(customizer, /requestAnimationFrame\(initializeLocationMap\)/);
+  assert.match(customizer, /_locationMap\.invalidateSize\(\)/);
+  assert.match(customizer, /state\.cliente\.lat = _locationSelection\.lat/);
+  assert.match(customizer, /_locationSelection = state\.cliente\.lat != null/);
+  assert.match(customizer, /draggable: true, autoPan: true/);
+  assert.match(customizer, /leaflet\/1\.9\.4\/images\/marker-icon\.png/);
 });
 
 test("summary exposes explicit sending, success and retry states", () => {

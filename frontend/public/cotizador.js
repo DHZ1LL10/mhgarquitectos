@@ -2372,13 +2372,22 @@ function openLocationMap() {
     if (status) status.textContent = 'No se pudo cargar el mapa. Puedes escribir la dirección manualmente.';
     return;
   }
-  initializeLocationMap();
+  /* The modal is animated from a hidden state. Wait for two layout frames so
+     Leaflet never measures the map at 0px and renders an unclickable tile pane. */
+  window.requestAnimationFrame(function() {
+    window.requestAnimationFrame(initializeLocationMap);
+  });
 }
 
 function initializeLocationMap() {
   var node = document.getElementById('locationMap');
   var status = document.getElementById('locationMapStatus');
   if (!node || !window.L) return;
+  window.L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  });
   var center = _locationSelection || { lat: 18.90, lng: -96.97 };
   if (!_locationMap) {
     _locationMap = window.L.map(node, { zoomControl: true }).setView([center.lat, center.lng], 15);
@@ -2391,7 +2400,8 @@ function initializeLocationMap() {
   _locationMap.setView([center.lat, center.lng], _locationSelection ? 17 : 15);
   if (_locationSelection) setLocationMarker(_locationSelection, false);
   else if (_locationMarker) { _locationMap.removeLayer(_locationMarker); _locationMarker = null; }
-  window.setTimeout(function() { _locationMap.invalidateSize(); }, 0);
+  _locationMap.invalidateSize();
+  window.setTimeout(function() { if (_locationMap) _locationMap.invalidateSize(); }, 250);
   if (status) status.textContent = _locationSelection ? 'Puedes mover el pin y confirmar la ubicación.' : 'Haz clic en el mapa para colocar el pin.';
 }
 
@@ -2402,7 +2412,7 @@ function setLocationMarker(position, updateStatus) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
   _locationSelection = { lat: lat, lng: lng };
   if (!_locationMarker) {
-    _locationMarker = window.L.marker([lat, lng], { draggable: true, title: 'Ubicación de instalación' }).addTo(_locationMap);
+    _locationMarker = window.L.marker([lat, lng], { draggable: true, autoPan: true, title: 'Ubicación de instalación' }).addTo(_locationMap);
     _locationMarker.on('dragend', function(event) { setLocationMarker(event.target.getLatLng()); });
   } else {
     _locationMarker.setLatLng([lat, lng]);
@@ -2435,6 +2445,8 @@ function confirmLocationMap() {
   }
   state.cliente.lat = _locationSelection.lat;
   state.cliente.lng = _locationSelection.lng;
+  var saved = document.getElementById('locationSelectionStatus');
+  if (saved) saved.textContent = 'Pin guardado';
   closeLocationMap();
 }
 
@@ -2815,31 +2827,34 @@ function sendWhatsApp() {
     return '  • ' + lbl + (c&&c.length?' ('+c.join(', ')+')':'');
   }).join('\n') || '  • —';
 
-  var msg = '*CONFIGURACIÓN COCINA — MHG*\n\n' +
-    (_submissionReceipt ? '*FOLIO:* ' + _submissionReceipt.folio + '\n' : '') +
-    '*SITUACIÓN:* '   + (situacionLabel[state.situacion]||'—') + '\n' +
-    '*INTERIOR:* '    + (state.interior==='blanco-frosty'?'Blanco Frosty 15mm':'Gris Oxford 15mm') + '\n' +
-    '*FRENTES:*\n'    + frentesText + '\n' +
-    '*HERRAJES:*\n' +
+  var msg = '🏡 *SOLICITUD DE COCINA · MHG ARQUITECTOS*\n\n' +
+    '👤 *CLIENTE*\n' +
+    '*Nombre:* '        + state.cliente.nombre + '\n' +
+    '*Teléfono:* '      + state.cliente.tel + '\n' +
+    (state.cliente.email ? '*Correo:* ' + state.cliente.email + '\n' : '') +
+    (_submissionReceipt ? '*Folio:* ' + _submissionReceipt.folio + '\n' : '') +
+    '\n📅 *VISITA / LEVANTAMIENTO*\n' +
+    '*Fecha y hora:* '  + state.cliente.fecha + ' · ' + state.cliente.hora + '\n' +
+    '*Sucursal:* '      + state.cliente.sucursal + '\n' +
+    '*Dirección:* '     + state.cliente.dir + '\n' +
+    (state.cliente.lat != null && state.cliente.lng != null ? '*Mapa:* ' + locationMapUrl() + '\n' : '') +
+    '\n🧰 *CONFIGURACIÓN*\n' +
+    '*Situación:* '   + (situacionLabel[state.situacion]||'—') + '\n' +
+    '*Tablero interior:* ' + (state.interior==='blanco-frosty'?'Blanco Frosty 15 mm':'Gris Oxford 15 mm') + '\n' +
+    '*Frentes:*\n'    + frentesText + '\n' +
+    '*Herrajes:*\n' +
     '  • Bisagras: '   + herrajeResumen(HERRAJE_SECTIONS[0]) + '\n' +
     '  • Correderas: ' + herrajeResumen(HERRAJE_SECTIONS[1]) + '\n' +
     '  • Cajones: '    + herrajeResumen(HERRAJE_SECTIONS[2]) + '\n' +
     '  • Basurero: '   + herrajeResumen(HERRAJE_SECTIONS[3]) + '\n' +
     '  • Especiero: '   + herrajeResumen(HERRAJE_SECTIONS[4]) + '\n' +
     '  • Módulos: '    + herrajeResumen(HERRAJE_SECTIONS[5]) + '\n' +
-    '*CUBIERTA:* '    + (state.cubierta||'—') + (state.cubPrecio ? ' — ' + state.cubPrecio : '') + '\n' +
-    '*VARIANTE:* '    + cubiertaVarianteTexto() + '\n' +
-    '*EXTRAS:* '       + (state.extras.join(', ')||'Ninguno') + '\n\n' +
-    '*DATOS DEL CLIENTE:*\n' +
-    '*Cliente:* '       + state.cliente.nombre + '\n' +
-    '*Tel:* '           + state.cliente.tel + '\n' +
-    (state.cliente.email ? '*Email:* ' + state.cliente.email + '\n' : '') +
-    '*Dirección:* '     + state.cliente.dir + '\n' +
-    (state.cliente.lat != null && state.cliente.lng != null ? '*Ubicación:* ' + state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6) + '\n*Mapa:* ' + locationMapUrl() + '\n' : '') +
-    '*Levantamiento:* ' + state.cliente.fecha + '  ' + state.cliente.hora + '\n' +
-    '*Sucursal:* '      + state.cliente.sucursal + '\n' +
-    '*Atendido por:* '  + state.cliente.asesor + '\n' +
-    (state.cliente.obs ? '*Obs:* ' + state.cliente.obs + '\n\n' : '') +
+    '*Cubierta:* '    + (state.cubierta||'—') + '\n' +
+    '*Variante:* '    + cubiertaVarianteTexto() + '\n' +
+    '*Extras:* '       + (state.extras.join(', ')||'Ninguno') + '\n' +
+    (state.cliente.asesor ? '\n*Atendido por:* ' + state.cliente.asesor + '\n' : '') +
+    (state.cliente.obs ? '\n📝 *OBSERVACIONES*\n' + state.cliente.obs + '\n' : '') +
+    '\n' +
     '_Configuración enviada desde mhgarquitectos.com_';
 
   var whatsappNumber = (window.MHG_CUSTOMIZER_CONFIG || {}).whatsappNumber;
