@@ -127,6 +127,8 @@ def _email_data(
         countertop=configuration.countertop,
         finish=configuration.finish,
         extras=configuration.extras,
+        received_at=submission.created_at.isoformat(),
+        notes=configuration.notes,
     )
 
 
