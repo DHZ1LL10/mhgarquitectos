@@ -123,10 +123,13 @@ test("admin client and UI do not persist tokens or use demo storage", () => {
 });
 
 test("admin contact links use real lead phone, folio and OpenStreetMap", () => {
-  const lead = { name: "María", phone: "272 220 0485", submission: { folio: "MHG-ABC" } };
+  const lead = { name: "María", phone: "272 220 0485", submission: { folio: "MHG-ABC" }, appointment: { requested_datetime: "2030-10-12T16:00:00.000Z", confirmed_datetime: null, status: "pending_confirmation", branch: "Fortín", address: "Centro", latitude: 19.043, longitude: -98.198 } };
   const whatsapp = leadWhatsAppUrl(lead as never);
   assert.match(whatsapp || "", /^https:\/\/wa\.me\/522722200485\?text=/);
   assert.match(decodeURIComponent(whatsapp || ""), /MHG-ABC/);
+  assert.match(decodeURIComponent(whatsapp || ""), /Fortín/);
+  assert.match(decodeURIComponent(whatsapp || ""), /12\/10\/2030/);
+  assert.match(decodeURIComponent(whatsapp || ""), /Queremos confirmar/);
   assert.match(openStreetMapUrl(19.043, -98.198) || "", /openstreetmap\.org/);
   assert.equal(openStreetMapUrl(null, -98.198), null);
 });
