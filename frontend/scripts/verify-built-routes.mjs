@@ -34,7 +34,7 @@ try {
   }
   assert.ok(ready, `Server did not start: ${logs}`);
 
-  for (const route of ["/", "/index.html", "/propiedades", "/propiedades/casa-demo-fortin", "/propiedades/departamento-demo-tuxtepec", "/admin", "/admin/login"]) {
+  for (const route of ["/", "/index.html", "/propiedades", "/propiedades/residencia-mata-larga-fortin", "/admin", "/admin/login"]) {
     const response = await get(route);
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("x-robots-tag") || "", /noindex/, route);
@@ -54,18 +54,19 @@ try {
     if (route.startsWith("/propiedades")) {
       assert.match(html, /rel="canonical"/);
       assert.match(html, /property="og:title"/);
-      assert.match(html, /Catálogo de demostración/);
-      assert.doesNotMatch(html, /casa-demo-borrador|departamento-demo-archivado/);
+      assert.doesNotMatch(html, /Catálogo de demostración|Información ficticia|Fotografías de ejemplo|solo ilustrativa/i);
+      assert.doesNotMatch(html, /casa-demo-fortin|departamento-demo-tuxtepec|casa-demo-borrador|departamento-demo-archivado/);
     }
     if (route === "/propiedades") {
-      assert.match(html, /href="\/propiedades\/casa-demo-fortin"/);
-      assert.match(html, /href="\/propiedades\/departamento-demo-tuxtepec"/);
+      assert.match(html, /href="\/propiedades\/residencia-mata-larga-fortin"/);
+      assert.match(html, /\$2,990,000/);
     }
-    if (route === "/propiedades/casa-demo-fortin") {
-      assert.match(html, /<h1[^>]*>Casa de ejemplo en Fortín<\/h1>/);
+    if (route === "/propiedades/residencia-mata-larga-fortin") {
+      assert.match(html, /<h1[^>]*>Residencia en venta en Mata Larga, Fortín<\/h1>/);
       assert.match(html, /name="description"/); assert.match(html, /property="og:image"/);
-      assert.match(html, /rel="canonical" href="[^"]*\/propiedades\/casa-demo-fortin"/);
-      assert.match(html, /Características de ejemplo/);
+      assert.match(html, /rel="canonical" href="[^"]*\/propiedades\/residencia-mata-larga-fortin"/);
+      assert.match(html, /Precio de lista/); assert.match(html, /Bono especial/);
+      assert.match(html, /Agendar visita por WhatsApp/);
     }
     if (route === "/admin") {
       assert.match(html, /Administración MHG/);
@@ -80,7 +81,7 @@ try {
     results.push(`200 + initial HTML + noindex: ${route}`);
   }
 
-  for (const route of ["/no-existe", "/propiedades/no-existe", "/propiedades/casa-demo-borrador", "/propiedades/departamento-demo-archivado", "/.browser-validation/Local%20State", "/INFORME-FOTOSMAX.md"]) {
+  for (const route of ["/no-existe", "/propiedades/no-existe", "/propiedades/casa-demo-fortin", "/propiedades/departamento-demo-tuxtepec", "/propiedades/casa-demo-borrador", "/propiedades/departamento-demo-archivado", "/.browser-validation/Local%20State", "/INFORME-FOTOSMAX.md"]) {
     assert.equal((await get(route)).status, 404, route);
     results.push(`404: ${route}`);
   }
@@ -99,8 +100,8 @@ try {
   assert.doesNotMatch(runtimeConfigBody, /password|secret|token/i);
   results.push("200 + safe runtime config: /customizer-runtime-config.js");
   const sitemap = await (await get("/sitemap.xml")).text();
-  assert.match(sitemap, /casa-demo-fortin/); assert.match(sitemap, /departamento-demo-tuxtepec/);
-  assert.doesNotMatch(sitemap, /\/admin|borrador|archivado/);
+  assert.match(sitemap, /residencia-mata-larga-fortin/);
+  assert.doesNotMatch(sitemap, /\/admin|casa-demo|departamento-demo|borrador|archivado/);
   const robots = await (await get("/robots.txt")).text(); assert.match(robots, /Disallow: \//);
   results.push("Sitemap contains only public routes; robots blocks demo indexing.");
   console.log(results.join("\n"));

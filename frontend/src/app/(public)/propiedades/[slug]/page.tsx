@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { propertyRepository } from "@/features/properties";
 import PropertyDetail from "@/features/properties/components/PropertyDetail";
+import { propertySeoDescription } from "@/features/properties/presentation";
 
 type Props = { params: Promise<{ slug: string }> };
 export const dynamicParams = false;
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const property = await propertyRepository.getPublishedBySlug((await params).slug);
   if (!property) notFound();
   const title = `${property.title} | MHG Arquitectos`;
-  const description = property.description;
+  const description = propertySeoDescription(property);
   const url = `/propiedades/${property.slug}`;
   const images = property.images.slice(0, 1).map(image => ({ url: image.src, width: image.width, height: image.height, alt: image.alt }));
   return {
