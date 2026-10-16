@@ -318,7 +318,7 @@ def test_atomic_submission_context():
 
 def test_kitchen_email_has_plaintext_html_and_openstreetmap_link():
     data = KitchenEmailData(
-        folio="MHG-TEST",
+        folio="COC-00001",
         submission_id=str(uuid4()),
         name="María <Cliente>",
         phone="+52 272 220 0485",
@@ -339,7 +339,7 @@ def test_kitchen_email_has_plaintext_html_and_openstreetmap_link():
         notes="Medidas <pendientes> & confirmar",
     )
     message = build_kitchen_email(data, "web@example.com", "ventas@example.com")
-    assert message["Subject"] == "Nueva solicitud de cocina MHG-TEST"
+    assert message["Subject"] == "Nueva solicitud de cocina COC-00001"
     assert message.get_body(preferencelist=("plain",)).get_content().find("María <Cliente>") >= 0
     html = message.get_body(preferencelist=("html",)).get_content()
     assert "María &lt;Cliente&gt;" in html
@@ -377,6 +377,7 @@ def test_initial_migration_renders_postgresql_ddl():
         "uq_properties_slug",
         "CREATE TABLE kitchen_submissions",
         "CREATE TABLE public_rate_limits",
+        "CREATE TABLE service_folio_counters",
         "uq_kitchen_submissions_idempotency_key_hash",
     ):
         assert required in sql
