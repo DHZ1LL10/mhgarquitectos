@@ -14,9 +14,7 @@ def upgrade():
         "service_folio_counters",
         sa.Column("service_prefix", sa.String(12), primary_key=True),
         sa.Column("last_value", sa.BigInteger(), nullable=False),
-        sa.CheckConstraint(
-            "last_value >= 0", name="ck_service_folio_counter_nonnegative"
-        ),
+        sa.CheckConstraint("last_value >= 0", name="ck_service_folio_counter_nonnegative"),
     )
     op.execute(
         """
