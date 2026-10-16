@@ -26,6 +26,22 @@ test("HTTP adapter maps decimal/snake_case DTO to the existing view contract", (
   assert.equal(property.images[0].src, "/img/test.jpg");
 });
 
+test("HTTP adapter maps optional real-listing features and nullable parking", () => {
+  const property = mapApiProperty(dto({ features: {
+    area_m2: 174, construction_area_m2: 174, land_area_m2: 202, garden_area_m2: 105,
+    bedrooms: 3, bathrooms: 2, half_bathrooms: 1, parking_spaces: null,
+    construction_progress: 85, construction_status: "Etapa final de construcción",
+    distribution: ["Sala – comedor", "Cochera"], amenities: ["Acabados en mármol"],
+    list_price: 3190000, bonus: 200000, commercial_label: "Precio de oportunidad",
+  } }));
+  assert.equal(property.features.constructionAreaM2, 174);
+  assert.equal(property.features.landAreaM2, 202);
+  assert.equal(property.features.parkingSpaces, null);
+  assert.equal(property.features.constructionProgress, 85);
+  assert.deepEqual(property.features.distribution, ["Sala – comedor", "Cochera"]);
+  assert.equal(property.features.listPrice, 3190000);
+});
+
 test("HTTP adapter pages through published properties", async () => {
   const urls: string[] = [];
   const fetcher: typeof fetch = async input => {
@@ -50,6 +66,7 @@ test("adapter rejects malformed/private/mismatched records instead of masking fa
     { price: "" }, { price: null }, { operation: "other" }, { images: null }]) {
     assert.throws(() => mapApiProperty(dto(overrides)));
   }
+  assert.throws(() => mapApiProperty(dto({ features: { area_m2: 1, bedrooms: 1, bathrooms: 1, construction_progress: 101 } })), /percentage/);
   const repository = new ApiPropertyRepository("http://localhost/api/v1", async () => reply(dto()));
   await assert.rejects(() => repository.getPublishedBySlug("different"), /different slug/);
   const repeated = new ApiPropertyRepository("http://localhost/api/v1", async () => reply(Array.from({ length: 100 }, () => dto())));

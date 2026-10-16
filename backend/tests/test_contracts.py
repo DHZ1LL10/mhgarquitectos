@@ -27,8 +27,41 @@ from app.notifications.email import (
     build_kitchen_email,
     map_url,
 )
-from app.properties.schemas import PropertyCreate, PropertyOutput
+from app.properties.schemas import Features, PropertyCreate, PropertyOutput
 from tests.payloads import appointment_payload, contact_payload, kitchen_payload, property_payload
+
+
+def test_property_features_support_real_listing_and_legacy_records():
+    legacy = Features.model_validate(
+        {"area_m2": 180, "bedrooms": 3, "bathrooms": 2, "parking_spaces": 2}
+    )
+    assert legacy.parking_spaces == 2
+    real = Features.model_validate(
+        {
+            "area_m2": 174,
+            "construction_area_m2": 174,
+            "land_area_m2": 202,
+            "garden_area_m2": 105,
+            "bedrooms": 3,
+            "bathrooms": 2,
+            "half_bathrooms": 1,
+            "parking_spaces": None,
+            "construction_progress": 85,
+            "construction_status": "Etapa final de construcción",
+            "distribution": ["Sala – comedor", "Cochera"],
+            "amenities": ["Acabados en mármol"],
+            "list_price": 3_190_000,
+            "bonus": 200_000,
+            "commercial_label": "Precio de oportunidad",
+        }
+    )
+    assert real.parking_spaces is None
+    assert real.land_area_m2 == 202
+    assert real.construction_progress == 85
+    with pytest.raises(ValidationError):
+        Features.model_validate(
+            {"area_m2": 1, "bedrooms": 1, "bathrooms": 1, "construction_progress": 101}
+        )
 
 
 def test_health_contract_and_unavailable_db():

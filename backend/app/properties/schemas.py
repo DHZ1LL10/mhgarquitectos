@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import Field, field_validator
@@ -13,11 +14,25 @@ class Location(InputModel):
     neighborhood: str = Field(min_length=1, max_length=160)
 
 
+FeatureDetail = Annotated[str, Field(min_length=1, max_length=500)]
+
+
 class Features(InputModel):
     area_m2: float = Field(ge=0, allow_inf_nan=False)
+    construction_area_m2: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    land_area_m2: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    garden_area_m2: float | None = Field(default=None, ge=0, allow_inf_nan=False)
     bedrooms: int = Field(ge=0, le=100)
     bathrooms: int = Field(ge=0, le=100)
-    parking_spaces: int = Field(ge=0, le=100)
+    half_bathrooms: int | None = Field(default=None, ge=0, le=100)
+    parking_spaces: int | None = Field(default=None, ge=0, le=100)
+    construction_progress: int | None = Field(default=None, ge=0, le=100)
+    construction_status: str | None = Field(default=None, min_length=1, max_length=200)
+    distribution: list[FeatureDetail] | None = Field(default=None, max_length=50)
+    amenities: list[FeatureDetail] | None = Field(default=None, max_length=50)
+    list_price: int | None = Field(default=None, ge=0, le=999_999_999_999)
+    bonus: int | None = Field(default=None, ge=0, le=999_999_999_999)
+    commercial_label: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class ImageInput(InputModel):

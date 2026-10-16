@@ -9,6 +9,25 @@ export interface PropertyImage {
   height: number;
 }
 
+export interface PropertyFeatures {
+  /** Legacy/general area retained for API compatibility. */
+  areaM2: number;
+  constructionAreaM2?: number;
+  landAreaM2?: number;
+  gardenAreaM2?: number;
+  bedrooms: number;
+  bathrooms: number;
+  halfBathrooms?: number;
+  parkingSpaces?: number | null;
+  constructionProgress?: number;
+  constructionStatus?: string;
+  distribution?: string[];
+  amenities?: string[];
+  listPrice?: number;
+  bonus?: number;
+  commercialLabel?: string;
+}
+
 export interface Property {
   id: string;
   slug: string;
@@ -20,6 +39,6 @@ export interface Property {
   price: number;
   currency: "MXN";
   location: { city: string; state: string; neighborhood: string };
-  features: { areaM2: number; bedrooms: number; bathrooms: number; parkingSpaces: number };
+  features: PropertyFeatures;
   images: PropertyImage[];
 }

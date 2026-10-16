@@ -5,7 +5,13 @@ export type PropertyInput = {
   slug: string; title: string; description: string; status: "draft" | "published" | "archived";
   operation: "sale" | "rent"; property_type: "house" | "apartment" | "land"; price: string; currency: string;
   location: { city: string; state: string; neighborhood: string };
-  features: { area_m2: number; bedrooms: number; bathrooms: number; parking_spaces: number };
+  features: {
+    area_m2: number; construction_area_m2?: number; land_area_m2?: number;
+    garden_area_m2?: number; bedrooms: number; bathrooms: number;
+    half_bathrooms?: number; parking_spaces: number | null; construction_progress?: number;
+    construction_status?: string; distribution?: string[]; amenities?: string[];
+    list_price?: number; bonus?: number; commercial_label?: string;
+  };
   latitude: number | null; longitude: number | null; images: ImageInput[];
 };
 export type Property = PropertyInput & { id: string; created_at: string; updated_at: string };

@@ -7,7 +7,7 @@ export function parseUser(value: unknown): User {
   return user;
 }
 export function emptyProperty(): PropertyInput {
-  return { slug: "", title: "", description: "", status: "draft", operation: "sale", property_type: "house", price: "0.00", currency: "MXN", location: { city: "", state: "", neighborhood: "" }, features: { area_m2: 0, bedrooms: 0, bathrooms: 0, parking_spaces: 0 }, latitude: null, longitude: null, images: [] };
+  return { slug: "", title: "", description: "", status: "draft", operation: "sale", property_type: "house", price: "0.00", currency: "MXN", location: { city: "", state: "", neighborhood: "" }, features: { area_m2: 0, bedrooms: 0, bathrooms: 0, parking_spaces: null }, latitude: null, longitude: null, images: [] };
 }
 export function propertyInput(value: PropertyInput): PropertyInput {
   // Whitelist write fields: never send database IDs, timestamps or image positions.

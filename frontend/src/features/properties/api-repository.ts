@@ -18,6 +18,25 @@ function number(value: unknown, integer = false): number {
   }
   return value;
 }
+function optionalNumber(value: unknown, integer = false): number | undefined {
+  return value === undefined || value === null ? undefined : number(value, integer);
+}
+function nullableNumber(value: unknown, integer = false): number | null | undefined {
+  return value === undefined ? undefined : value === null ? null : number(value, integer);
+}
+function optionalPercentage(value: unknown): number | undefined {
+  const parsed = optionalNumber(value, true);
+  if (parsed !== undefined && parsed > 100) throw new Error("Invalid property API percentage");
+  return parsed;
+}
+function optionalString(value: unknown): string | undefined {
+  return value === undefined || value === null ? undefined : string(value);
+}
+function optionalStrings(value: unknown): string[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) throw new Error("Invalid property API text list");
+  return value.map(string);
+}
 
 export function mapApiProperty(value: unknown): Property {
   const data = object(value);
@@ -42,8 +61,23 @@ export function mapApiProperty(value: unknown): Property {
     operation: data.operation, propertyType: data.property_type,
     price: number(Number(rawPrice)), currency: "MXN",
     location: { city: string(location.city), state: string(location.state), neighborhood: string(location.neighborhood) },
-    features: { areaM2: number(features.area_m2), bedrooms: number(features.bedrooms, true),
-      bathrooms: number(features.bathrooms, true), parkingSpaces: number(features.parking_spaces, true) },
+    features: {
+      areaM2: number(features.area_m2),
+      constructionAreaM2: optionalNumber(features.construction_area_m2),
+      landAreaM2: optionalNumber(features.land_area_m2),
+      gardenAreaM2: optionalNumber(features.garden_area_m2),
+      bedrooms: number(features.bedrooms, true),
+      bathrooms: number(features.bathrooms, true),
+      halfBathrooms: optionalNumber(features.half_bathrooms, true),
+      parkingSpaces: nullableNumber(features.parking_spaces, true),
+      constructionProgress: optionalPercentage(features.construction_progress),
+      constructionStatus: optionalString(features.construction_status),
+      distribution: optionalStrings(features.distribution),
+      amenities: optionalStrings(features.amenities),
+      listPrice: optionalNumber(features.list_price, true),
+      bonus: optionalNumber(features.bonus, true),
+      commercialLabel: optionalString(features.commercial_label),
+    },
     images: data.images.map(value => {
       const image = object(value);
       const src = string(image.url);
