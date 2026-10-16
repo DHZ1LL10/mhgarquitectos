@@ -1237,3 +1237,9 @@ a { text-decoration: none; color: inherit; }
 .frente-modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #fdfdfd; }
 .frente-modal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; }
 .frente-modal-grid .frente-color-card-img { height: 100px; }
+/* Home property selection */
+.properties-home { background: #f7f9f8; }
+.properties-home-action { display: flex; justify-content: center; margin-top: 34px; }
+.properties-empty { margin-top: 28px; padding: 42px 24px; border: 1px solid #dde3df; border-radius: 12px; background: #fff; text-align: center; }
+.properties-empty h3 { margin: 0 0 8px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7rem; color: #1a4f2e; }
+.properties-empty p { margin: 0; color: #65716a; }

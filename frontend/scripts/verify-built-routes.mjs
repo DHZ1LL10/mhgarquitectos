@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { readFile } from "node:fs/promises";
 import { once } from "node:events";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -43,14 +42,14 @@ try {
     assert.match(html, /<h1\b/, `${route}: server-rendered heading`);
     assert.match(html, /<meta name="robots" content="[^"]*noindex/, route);
     if (route === "/" || route === "/index.html") {
-      for (const id of ["inicio", "proyectos", "servicios", "nosotros", "sucursales", "contacto"]) assert.ok(html.includes(`id="${id}"`), `${route}: ${id}`);
+      const sectionIds = ["inicio", "nosotros", "proyectos", "propiedades", "servicios", "sucursales", "contacto"];
+      for (const id of sectionIds) assert.ok(html.includes(`id="${id}"`), `${route}: ${id}`);
+      for (let index = 1; index < sectionIds.length; index++) assert.ok(html.indexOf(`id="${sectionIds[index - 1]}"`) < html.indexOf(`id="${sectionIds[index]}"`), `${route}: section order`);
       assert.match(html, /href="\/cocina-customizer\.html"/);
       assert.match(html, /href="\/propiedades"/);
-      const original = await readFile(path.join(frontend, "../index.html"), "utf8");
-      const originalImages = [...original.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)].map(match => "/" + match[1]);
-      const migratedImages = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(match => match[1]);
-      assert.deepEqual(migratedImages, originalImages, "Corporate images and their order must be unchanged");
-      assert.equal([...html.matchAll(/class="proj-item"/g)].length, 23);
+      assert.equal([...html.matchAll(/class="proj-item"/g)].length, 13);
+      assert.equal([...html.matchAll(/role="tab"/g)].length, 2);
+      assert.doesNotMatch(html, /tab-mobiliario|tab-interiorismo|cat-mobiliario|cat-interiorismo/);
     }
     if (route.startsWith("/propiedades")) {
       assert.match(html, /rel="canonical"/);

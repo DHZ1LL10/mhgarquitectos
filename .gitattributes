@@ -7,4 +7,4 @@ cotizador.js text eol=crlf
 galeria-configurador.js text eol=lf
 configurador-galeria.css text eol=lf
 style.css -text
-frontend/public/** -text
+frontend/public/** -text whitespace=cr-at-eol

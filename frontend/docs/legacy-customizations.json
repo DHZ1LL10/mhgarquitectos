@@ -1,12 +1,12 @@
 {
     "modified":  {
-                     "cocina-customizer.html":  "b7eda67dd21b9b910b6fd53dac82ec81bd3712d81f5d89ce4b36e2da92c47848",
-                     "cotizador.js":  "397d5aed9b04d09543b833d593862a83c44d7aa3b3cbee31ef3a2129934d67c6",
+                     "cocina-customizer.html":  "def45e377801fa030efeefe7c92014efb4fe10cccb118aa39da2d24e3f6b3b15",
+                     "cotizador.js":  "fd19aac35313d4daca4c41cf4483f2bdbaf61da00a63d3868e7e431e287f7e8c",
                      "configurador-galeria.css":  "61a28cd89d3f37f4431a151122c48126b3df7d0d509b735e77a70ecd70ca311d",
-                     "style.css":  "eb411b2581d4e2eab33c0e493d0700a176425991ad130e5d728c250243ce76c8"
+                     "style.css":  "99079d8c57031fea6c40d2fbb7b208147b309e54b8623fd66a1348fbffed09f9"
                  },
     "additions":  {
-                      "kitchen-submission.js":  "c3a0c0d214e511e3edd285ce40c80f24673f9e6abe332824c9d25284cee7a8c0",
+                      "kitchen-submission.js":  "05ec61f122df886e3854afcddf167e51c27b5eaeceb5b2ae0a44b70dcbb7bcf1",
                       "img/construccion/nosotros-led.jpg":  "c1c00babcca48fa9989a2009d7c9ccd8564d5f41abe4a969198dbecaf47b7a7e"
                   }
 }

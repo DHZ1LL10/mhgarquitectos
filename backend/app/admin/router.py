@@ -1,5 +1,7 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 
 from app.appointments.models import Appointment
 from app.appointments.schemas import AppointmentOutput
@@ -18,6 +20,7 @@ router = APIRouter(prefix="/admin", tags=["Administration"], dependencies=[Depen
 
 class LeadDetails(LeadOutput):
     submission: SubmissionReference | None = None
+    appointment: AppointmentOutput | None = None
     address: str | None = None
     latitude: float | None = None
     longitude: float | None = None
@@ -43,6 +46,18 @@ def submission_map(db: Database, field, ids) -> dict:
 
 @router.get("/dashboard")
 def dashboard(db: Database, user: AuthenticatedUser):
+    now = datetime.now(UTC)
+    appointment_counts = db.execute(
+        select(
+            func.count().filter(Appointment.status == "requested"),
+            func.count().filter(Appointment.status == "pending_confirmation"),
+            func.count().filter(Appointment.status == "confirmed"),
+            func.count().filter(
+                Appointment.status == "confirmed", Appointment.confirmed_datetime >= now
+            ),
+            func.count().filter(Appointment.status == "completed"),
+        )
+    ).one()
     return {
         "properties": db.scalar(select(func.count()).select_from(Property))
         if user.role == "admin"
@@ -50,6 +65,17 @@ def dashboard(db: Database, user: AuthenticatedUser):
         "leads": db.scalar(select(func.count()).select_from(Lead)),
         "appointments": db.scalar(select(func.count()).select_from(Appointment)),
         "kitchen_configurations": db.scalar(select(func.count()).select_from(KitchenConfiguration)),
+        "new_leads": db.scalar(select(func.count()).select_from(Lead).where(Lead.status == "new")),
+        "requested_appointments": appointment_counts[0],
+        "pending_confirmation_appointments": appointment_counts[1],
+        "confirmed_appointments": appointment_counts[2],
+        "upcoming_appointments": appointment_counts[3],
+        "completed_appointments": appointment_counts[4],
+        "published_properties": db.scalar(
+            select(func.count()).select_from(Property).where(Property.status == "published")
+        )
+        if user.role == "admin"
+        else None,
     }
 
 
@@ -108,6 +134,11 @@ def leads(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Quer
         LeadDetails(
             **LeadOutput.model_validate(item).model_dump(),
             submission=submissions.get(item.id),
+            appointment=(
+                AppointmentOutput.model_validate(appointments[item.appointment_id])
+                if item.appointment_id in appointments
+                else None
+            ),
             address=location(item).address if location(item) else None,
             latitude=location(item).latitude if location(item) else None,
             longitude=location(item).longitude if location(item) else None,
@@ -118,9 +149,16 @@ def leads(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Quer
 
 @router.get("/appointments", response_model=list[AppointmentDetails])
 def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
+    priority = case(
+        (Appointment.status == "pending_confirmation", 0),
+        (Appointment.status == "requested", 1),
+        (Appointment.status == "confirmed", 2),
+        (Appointment.status == "completed", 3),
+        else_=4,
+    )
     items = db.scalars(
         select(Appointment)
-        .order_by(Appointment.requested_datetime.desc(), Appointment.id)
+        .order_by(priority, Appointment.requested_datetime.asc(), Appointment.id)
         .limit(limit)
         .offset(offset)
     ).all()

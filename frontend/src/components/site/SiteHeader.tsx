@@ -1,6 +1,5 @@
 "use client";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -15,10 +14,10 @@ export default function SiteHeader() {
         <span></span><span></span><span></span>
       </button>
       <nav className="nav-menu" id="nav-menu">
-        <a href={home ? "#proyectos" : "/#proyectos"} className="nav-link">Proyectos</a>
-        <Link href="/propiedades" className="nav-link" aria-current={pathname.startsWith("/propiedades") ? "page" : undefined}>Propiedades</Link>
-        <a href={home ? "#servicios" : "/#servicios"} className="nav-link">Servicios</a>
         <a href={home ? "#nosotros" : "/#nosotros"} className="nav-link">Nosotros</a>
+        <a href={home ? "#proyectos" : "/#proyectos"} className="nav-link">Proyectos</a>
+        <a href={home ? "#propiedades" : "/#propiedades"} className="nav-link" aria-current={pathname.startsWith("/propiedades") ? "page" : undefined}>Propiedades en venta</a>
+        <a href={home ? "#servicios" : "/#servicios"} className="nav-link">Servicios</a>
         <a href={home ? "#sucursales" : "/#sucursales"} className="nav-link">Sucursales</a>
         <a href={home ? "#contacto" : "/#contacto"} className="nav-link">Contacto</a>
         <a href="https://wa.me/5212711055612?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20servicios." className="btn btn-nav" target="_blank" rel="noopener noreferrer" id="nav-whatsapp-btn">

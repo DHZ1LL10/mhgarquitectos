@@ -3,7 +3,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from typing import Annotated, Literal
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import model_validator
@@ -15,6 +15,7 @@ from app.appointments.schemas import AppointmentCreate
 from app.auth.security import enforce_public_rate_limit
 from app.common import InputModel, OutputModel
 from app.dependencies import Configuration, Database
+from app.kitchen_configurations.folios import KITCHEN_FOLIO_PREFIX, next_service_folio
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.schemas import KitchenCreate
 from app.kitchen_configurations.submission_models import KitchenSubmission
@@ -127,6 +128,8 @@ def _email_data(
         countertop=configuration.countertop,
         finish=configuration.finish,
         extras=configuration.extras,
+        received_at=submission.created_at.isoformat(),
+        notes=configuration.notes,
     )
 
 
@@ -211,7 +214,7 @@ def create_submission(
         db.add(lead)
         db.flush()
         submission = KitchenSubmission(
-            folio="MHG-" + uuid4().hex.upper(),
+            folio=next_service_folio(db, KITCHEN_FOLIO_PREFIX),
             idempotency_key_hash=key_hash,
             payload_hash=payload_hash,
             configuration_id=configuration.id,

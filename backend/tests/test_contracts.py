@@ -318,7 +318,7 @@ def test_atomic_submission_context():
 
 def test_kitchen_email_has_plaintext_html_and_openstreetmap_link():
     data = KitchenEmailData(
-        folio="MHG-TEST",
+        folio="COC-00001",
         submission_id=str(uuid4()),
         name="María <Cliente>",
         phone="+52 272 220 0485",
@@ -335,13 +335,31 @@ def test_kitchen_email_has_plaintext_html_and_openstreetmap_link():
         countertop={"label": "Superficie sólida Corian"},
         finish={"label": "Blanco"},
         extras=[{"label": "Iluminación LED"}],
+        received_at="2030-10-10T18:30:00+00:00",
+        notes="Medidas <pendientes> & confirmar",
     )
     message = build_kitchen_email(data, "web@example.com", "ventas@example.com")
-    assert message["Subject"] == "Nueva solicitud de cocina MHG-TEST"
+    assert message["Subject"] == "Nueva solicitud de cocina COC-00001"
     assert message.get_body(preferencelist=("plain",)).get_content().find("María <Cliente>") >= 0
     html = message.get_body(preferencelist=("html",)).get_content()
     assert "María &lt;Cliente&gt;" in html
+    assert "Medidas &lt;pendientes&gt; &amp; confirmar" in html
+    assert "Datos del cliente" in html
+    assert "Cita / levantamiento" in html
+    assert "Bisagras" in html
+    assert "{" not in html and "&quot;" not in html
     assert "openstreetmap.org" in html
+    plain = message.get_body(preferencelist=("plain",)).get_content()
+    assert "DATOS DEL CLIENTE" in plain
+    assert "CONFIGURACIÓN" in plain
+    assert "Medidas <pendientes> & confirmar" in plain
+    without_pin = build_kitchen_email(
+        KitchenEmailData(**{**data.__dict__, "latitude": None, "longitude": None}),
+        "web@example.com",
+        "ventas@example.com",
+    )
+    assert "openstreetmap.org" not in without_pin.get_body(preferencelist=("html",)).get_content()
+    assert "Sin pin seleccionado" in without_pin.get_body(preferencelist=("plain",)).get_content()
     assert map_url(None, None) is None
 
 
@@ -359,6 +377,7 @@ def test_initial_migration_renders_postgresql_ddl():
         "uq_properties_slug",
         "CREATE TABLE kitchen_submissions",
         "CREATE TABLE public_rate_limits",
+        "CREATE TABLE service_folio_counters",
         "uq_kitchen_submissions_idempotency_key_hash",
     ):
         assert required in sql

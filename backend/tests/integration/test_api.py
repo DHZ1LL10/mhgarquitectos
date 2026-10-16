@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.appointments.models import Appointment
 from app.config import get_settings
+from app.kitchen_configurations.folios import KITCHEN_FOLIO_PREFIX, ServiceFolioCounter
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.submission_models import KitchenSubmission
 from app.kitchen_configurations.submissions import notifier_dependency
@@ -219,7 +220,7 @@ def test_atomic_submission_success(client, connection):
     result = response.json()
     assert result["status"] == "received"
     assert result["replayed"] is False
-    assert result["folio"].startswith("MHG-")
+    assert result["folio"] == "COC-00001"
     assert result["configuration_id"] and result["appointment_id"] and result["lead_id"]
     for model in (KitchenConfiguration, Appointment, Lead, KitchenSubmission):
         assert connection.scalar(select(func.count()).select_from(model)) == 1
@@ -255,7 +256,7 @@ def test_atomic_submission_rollback(client, connection):
     def fail_final_write(mapper, connection, target):
         raise RuntimeError("Intentional last-write failure")
 
-    event.listen(Lead, "before_insert", fail_final_write)
+    event.listen(KitchenSubmission, "before_insert", fail_final_write)
     try:
         response = client.post(
             "/api/v1/kitchen-submissions",
@@ -269,9 +270,17 @@ def test_atomic_submission_rollback(client, connection):
         assert response.status_code == 500
         assert "Intentional" not in response.text
     finally:
-        event.remove(Lead, "before_insert", fail_final_write)
+        event.remove(KitchenSubmission, "before_insert", fail_final_write)
     for model in (KitchenConfiguration, Appointment, Lead, KitchenSubmission):
         assert connection.scalar(select(func.count()).select_from(model)) == 0
+    assert (
+        connection.scalar(
+            select(ServiceFolioCounter.last_value).where(
+                ServiceFolioCounter.service_prefix == KITCHEN_FOLIO_PREFIX
+            )
+        )
+        == 0
+    )
 
 
 def test_smtp_failure_preserves_submission_and_admin_relations(client, connection):

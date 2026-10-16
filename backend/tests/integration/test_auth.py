@@ -227,6 +227,13 @@ def test_administrative_related_records_and_no_store(client):
         client.get("/api/v1/admin/appointments").json()[0]["leads"][0]["name"]
         == "Persona de prueba"
     )
+    lead = client.get("/api/v1/admin/leads").json()[0]
+    assert lead["appointment"]["requested_datetime"] == "2030-10-12T16:00:00Z"
+    dashboard = client.get("/api/v1/admin/dashboard").json()
+    assert dashboard["new_leads"] == 1
+    assert dashboard["requested_appointments"] == 1
+    assert dashboard["pending_confirmation_appointments"] == 0
+    assert dashboard["published_properties"] == 0
     assert client.get("/api/v1/admin/leads?limit=101").status_code == 422
 
 

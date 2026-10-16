@@ -1,6 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import config from "../next.config.ts";
+import config, { buildContentSecurityPolicy } from "../next.config.ts";
+
+test("development CSP allows eval required by Next.js dev mode", () => {
+  assert.match(buildContentSecurityPolicy("development"), /script-src[^;]*'unsafe-eval'/);
+});
+
+test("production CSP does not allow unsafe-eval", () => {
+  assert.doesNotMatch(buildContentSecurityPolicy("production"), /'unsafe-eval'/);
+});
+
+test("staging CSP does not allow unsafe-eval", () => {
+  assert.doesNotMatch(buildContentSecurityPolicy("staging"), /'unsafe-eval'/);
+});
 
 test("staging security headers preserve the legacy external dependencies", async () => {
   assert.equal(typeof config.headers, "function");
