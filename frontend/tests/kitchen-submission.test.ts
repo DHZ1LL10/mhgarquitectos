@@ -59,14 +59,16 @@ test("idempotency identity persists for the same payload and rotates after an ed
 
 test("submission request reports success and exposes network/API failures", async () => {
   const id = "11111111-1111-4111-8111-111111111111";
-  const receipt = { submission_id: id, configuration_id: id, appointment_id: id, lead_id: id, folio: "MHG-ABC123", status: "received", replayed: false };
+  const receipt = { submission_id: id, configuration_id: id, appointment_id: id, lead_id: id, folio: "COC-00001", status: "received", replayed: false };
   const success = await contract.send("https://api.example.com/api/v1", {}, { key: id }, async (url, init) => {
     assert.equal(url, "https://api.example.com/api/v1/kitchen-submissions");
     assert.equal(new Headers(init?.headers).get("Idempotency-Key"), id);
     assert.equal(init?.credentials, "omit");
     return Response.json(receipt, { status: 201 });
   });
-  assert.equal(success.folio, "MHG-ABC123");
+  assert.equal(success.folio, "COC-00001");
+  assert.equal(contract.parseReceipt({ ...receipt, folio: "MHG-ABC123" }).folio, "MHG-ABC123");
+  assert.throws(() => contract.parseReceipt({ ...receipt, folio: "COC-12" }), /respuesta inválida/);
   await assert.rejects(contract.send("https://api.example.com/api/v1", {}, { key: id }, async () => { throw new TypeError("offline"); }), /conectar/);
   await assert.rejects(contract.send("https://api.example.com/api/v1", {}, { key: id }, async () => Response.json({ error: { message: "Invalid input" } }, { status: 422 })), /Invalid input/);
 });
@@ -76,15 +78,23 @@ test("map helper uses OpenStreetMap and rejects invalid coordinates", () => {
   assert.equal(contract.openStreetMapUrl(Number.NaN, -98.198), "");
   const html = readFileSync(new URL("../public/cocina-customizer.html", import.meta.url), "utf8");
   assert.match(html, /leaflet\/1\.9\.4\/leaflet\.min/);
+  assert.match(html, /rel="preconnect" href="https:\/\/tile\.openstreetmap\.org"/);
   assert.match(html, /OpenStreetMap/);
   assert.doesNotMatch(html, /maps\.googleapis\.com|maps-config\.js|Mapa de Google/);
   const customizer = readFileSync(new URL("../public/cotizador.js", import.meta.url), "utf8");
-  assert.match(customizer, /requestAnimationFrame\(initializeLocationMap\)/);
+  assert.match(customizer, /function warmLocationMap\(\)/);
+  assert.match(customizer, /requestIdleCallback\(warm/);
   assert.match(customizer, /_locationMap\.invalidateSize\(\)/);
   assert.match(customizer, /state\.cliente\.lat = _locationSelection\.lat/);
   assert.match(customizer, /_locationSelection = state\.cliente\.lat != null/);
   assert.match(customizer, /draggable: true, autoPan: true/);
   assert.match(customizer, /leaflet\/1\.9\.4\/images\/marker-icon\.png/);
+});
+
+test("PDF and WhatsApp use the human folio returned by the API", () => {
+  const customizer = readFileSync(new URL("../public/cotizador.js", import.meta.url), "utf8");
+  assert.match(customizer, /var folio = _submissionReceipt \? _submissionReceipt\.folio/);
+  assert.match(customizer, /\(_submissionReceipt \? '\*Folio:\* ' \+ _submissionReceipt\.folio/);
 });
 
 test("summary exposes explicit sending, success and retry states", () => {

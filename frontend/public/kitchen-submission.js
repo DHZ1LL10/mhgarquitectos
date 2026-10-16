@@ -114,7 +114,8 @@
   function parseReceipt(value) {
     if (!value || typeof value !== 'object') throw new Error('La API devolvió una respuesta inválida.');
     var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuid.test(value.submission_id) || !uuid.test(value.configuration_id) || !uuid.test(value.appointment_id) || !uuid.test(value.lead_id) || typeof value.folio !== 'string' || !/^MHG-[A-Z0-9]+$/.test(value.folio) || value.status !== 'received') {
+    var folio = /^(?:COC-[0-9]{5,}|MHG-[A-Z0-9]+)$/;
+    if (!uuid.test(value.submission_id) || !uuid.test(value.configuration_id) || !uuid.test(value.appointment_id) || !uuid.test(value.lead_id) || typeof value.folio !== 'string' || !folio.test(value.folio) || value.status !== 'received') {
       throw new Error('La API devolvió una respuesta inválida.');
     }
     return {

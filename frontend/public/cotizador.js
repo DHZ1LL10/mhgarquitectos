@@ -4,31 +4,105 @@
 ═══════════════════════════════════════════════════════════ */
 
 /* ─── STATE ─── */
-var state = {
-  cliente:   { nombre:'', tel:'', email:'', fecha:'', hora:'', sucursal:'', asesor:'', dir:'', obs:'', lat:null, lng:null },
-  situacion: null,
-  interior:  null,
-  frentes:   {},
-  bisagra:   'Bisagra cierre suave',
-  corredera: null,
-  cajones:   [],
-  basurero:  null,
-  especias:  null,
-  modulos:   [],
-  cubierta:  null,
-  cubPrecio: null,
-  cubiertaCategoria: null,
-  cubiertaVariante: null,
-  extras:    [],
-  herrajesAtendidos: {},
-  herrajesNoAplica: {},
-  herrajeOpenId: 'bisagras',
-  herrajeNextIndex: 0,
-};
+function initialCustomizerState() {
+  return {
+    cliente:   { nombre:'', tel:'', email:'', fecha:'', hora:'', sucursal:'', asesor:'', dir:'', obs:'', lat:null, lng:null },
+    situacion: null,
+    interior:  null,
+    frentes:   {},
+    bisagra:   'Bisagra cierre suave',
+    corredera: null,
+    cajones:   [],
+    basurero:  null,
+    especias:  null,
+    modulos:   [],
+    cubierta:  null,
+    cubPrecio: null,
+    cubiertaCategoria: null,
+    cubiertaVariante: null,
+    extras:    [],
+    herrajesAtendidos: {},
+    herrajesNoAplica: {},
+    herrajeOpenId: 'bisagras',
+    herrajeNextIndex: 0,
+    herrajeStepIndex: 0,
+  };
+}
+
+var state = initialCustomizerState();
 var _submissionIdentity = null;
 var _submissionReceipt = null;
 var _submissionStatus = 'idle';
 var _submissionRequest = null;
+var CUSTOMIZER_DRAFT_KEY = 'mhg:kitchen-customizer:draft:v1';
+var _draftSaveTimer = null;
+
+function storageAvailable() {
+  try { return !!window.sessionStorage; } catch (error) { return false; }
+}
+
+function normalizedDraftState(candidate) {
+  var clean = initialCustomizerState();
+  if (!candidate || typeof candidate !== 'object') return clean;
+  ['situacion','interior','bisagra','corredera','basurero','especias','cubierta','cubPrecio','cubiertaCategoria','cubiertaVariante','herrajeOpenId'].forEach(function(key) {
+    if (candidate[key] === null || typeof candidate[key] === 'string' || (key === 'cubiertaVariante' && typeof candidate[key] === 'object')) clean[key] = candidate[key];
+  });
+  ['cajones','modulos','extras'].forEach(function(key) { if (Array.isArray(candidate[key])) clean[key] = candidate[key].slice(); });
+  ['frentes','herrajesAtendidos','herrajesNoAplica'].forEach(function(key) {
+    if (candidate[key] && typeof candidate[key] === 'object' && !Array.isArray(candidate[key])) clean[key] = JSON.parse(JSON.stringify(candidate[key]));
+  });
+  if (candidate.cliente && typeof candidate.cliente === 'object') {
+    Object.keys(clean.cliente).forEach(function(key) {
+      var value = candidate.cliente[key];
+      if (key === 'lat' || key === 'lng') clean.cliente[key] = Number.isFinite(value) ? value : null;
+      else if (typeof value === 'string') clean.cliente[key] = value;
+    });
+  }
+  if (Number.isInteger(candidate.herrajeNextIndex)) clean.herrajeNextIndex = Math.max(0, Math.min(6, candidate.herrajeNextIndex));
+  if (Number.isInteger(candidate.herrajeStepIndex)) clean.herrajeStepIndex = Math.max(0, Math.min(5, candidate.herrajeStepIndex));
+  return clean;
+}
+
+function restoreCustomizerDraft() {
+  if (!storageAvailable()) return false;
+  try {
+    var draft = JSON.parse(window.sessionStorage.getItem(CUSTOMIZER_DRAFT_KEY) || 'null');
+    if (!draft || draft.version !== 1) return false;
+    state = normalizedDraftState(draft.state);
+    _currentStep = Number.isInteger(draft.currentStep) ? Math.max(0, Math.min(STEPS.length - 1, draft.currentStep)) : 0;
+    _submissionIdentity = draft.submissionIdentity || null;
+    _submissionReceipt = draft.submissionReceipt || null;
+    _submissionStatus = _submissionReceipt ? 'success' : 'idle';
+    return true;
+  } catch (error) {
+    window.sessionStorage.removeItem(CUSTOMIZER_DRAFT_KEY);
+    return false;
+  }
+}
+
+function saveCustomizerDraft() {
+  if (!storageAvailable()) return false;
+  try {
+    window.sessionStorage.setItem(CUSTOMIZER_DRAFT_KEY, JSON.stringify({
+      version: 1,
+      state: state,
+      currentStep: _currentStep,
+      submissionIdentity: _submissionIdentity,
+      submissionReceipt: _submissionReceipt,
+    }));
+    return true;
+  } catch (error) { return false; }
+}
+
+function scheduleDraftSave() {
+  if (!storageAvailable()) return;
+  window.clearTimeout(_draftSaveTimer);
+  _draftSaveTimer = window.setTimeout(saveCustomizerDraft, 80);
+}
+
+function clearCustomizerDraft() {
+  if (storageAvailable()) window.sessionStorage.removeItem(CUSTOMIZER_DRAFT_KEY);
+}
 
 /* ─── STEPS META ─── */
 var STEPS = [
@@ -46,7 +120,7 @@ var STEP_HEADERS = [
   { eyebrow:'Paso 1 de 8', title:'<em>Situación</em> actual',     sub:'Cuéntanos cómo está el espacio hoy para ajustar la propuesta.' },
   { eyebrow:'Paso 2 de 8', title:'<em>Tableros</em> interiores',  sub:'El acabado interior de todos los muebles lleva este material.' },
   { eyebrow:'Paso 3 de 8', title:'<em>Frentes</em> exteriores',   sub:'Los frentes son las puertas visibles de tu cocina. Puedes combinar líneas y colores por zonas.' },
-  { eyebrow:'Paso 4 de 8', title:'<em>Herrajes</em>',             sub:'Selecciona los herrajes de tu cocina. Cada sección se despliega al tocarla.' },
+  { eyebrow:'Paso 4 de 8', title:'<em>Herrajes</em>',             sub:'Elige tus herrajes paso a paso. Puedes volver para editar cualquier selección.' },
   { eyebrow:'Paso 5 de 8', title:'<em>Cubierta</em>',             sub:'El material de la superficie de trabajo de tu cocina.' },
   { eyebrow:'Paso 6 de 8', title:'<em>Extras</em>',               sub:'Agrega elementos adicionales que complementen tu proyecto.' },
   { eyebrow:'Paso 7 de 8', title:'Tus <em>datos</em>',            sub:'Llena tu información de contacto y la ubicación de instalación.' },
@@ -1445,10 +1519,13 @@ var HERRAJE_SECTIONS = [
 
 /* ─── INIT ─── */
 document.addEventListener('DOMContentLoaded', function() {
+  restoreCustomizerDraft();
   actualizarTarjetasCubierta();
   buildFrente();
   buildHerrajeContainer();
-  renderStep(0);
+  applyStateToCustomizerUI();
+  bindDraftInputs();
+  renderStep(_currentStep, 0);
 });
 
 /* ─── FRENTE BUILDER ─── */
@@ -1467,7 +1544,7 @@ function buildFrente() {
     var badgeText = isSel ? (colorCount + ' color' + (colorCount !== 1 ? 'es' : '')) : 'Seleccionado';
     var editText = isSel ? 'Cambiar color' : 'Ver colores';
     return '<div class="frente-line-card' + (isSel ? ' selected' : '') + '" id="fr-' + l.key + '" onclick="openFrenteModal(\'' + l.key + '\')">' +
-      '<img class="frente-line-card-img" src="' + l.img + '" alt="' + l.label + '" />' +
+      '<img class="frente-line-card-img" src="' + l.img + '" alt="' + l.label + '" loading="lazy" />' +
       '<div class="frente-line-card-overlay"></div>' +
       '<div class="frente-line-card-badge">' + badgeText + '</div>' +
       '<div class="frente-line-card-edit">' + editText + '</div>' +
@@ -1625,48 +1702,43 @@ function herrajeResumen(section) {
 }
 
 function actualizarEstadoSeccionesHerrajes() {
-  HERRAJE_SECTIONS.forEach(function(section, index) {
-    var element = document.getElementById('sec-' + section.id);
-    if (!element) return;
-    var complete = herrajeSeccionCompleta(section);
-    element.classList.toggle('completed', complete);
-    element.setAttribute('data-status', element.classList.contains('open') ? 'current' : (complete ? 'completed' : 'pending'));
-    var status = element.querySelector('.herraje-section-status');
-    if (status) status.textContent = complete ? 'Completado' : (element.classList.contains('open') ? 'En curso' : 'Pendiente');
-    var next = element.querySelector('.herraje-multi-continue');
-    if (next) next.disabled = !(Array.isArray(state[section.key]) && state[section.key].length > 0);
-  });
+  var section = HERRAJE_SECTIONS[state.herrajeStepIndex];
+  var element = section && document.getElementById('sec-' + section.id);
+  if (!element) return;
+  var complete = herrajeSeccionCompleta(section);
+  element.classList.toggle('completed', complete);
+  element.setAttribute('data-status', complete ? 'completed' : 'current');
+  var next = element.querySelector('.herraje-multi-continue');
+  if (next) next.disabled = !(Array.isArray(state[section.key]) && state[section.key].length > 0);
+  var required = element.querySelector('.herraje-required-continue');
+  if (required) required.disabled = !state[section.key] || !!state.herrajesNoAplica[section.id];
+  var progress = document.getElementById('hardwareProgressFill');
+  if (progress) progress.style.width = ((state.herrajeStepIndex + 1) / HERRAJE_SECTIONS.length * 100) + '%';
 }
 
-function abrirSeccionHerrajes(id, scroll) {
+function abrirSeccionHerrajes(id, scroll, direction) {
   var sectionId = id.slice(4);
-  if (!HERRAJE_SECTIONS.some(function(section) { return section.id === sectionId; })) return;
+  var index = HERRAJE_SECTIONS.findIndex(function(section) { return section.id === sectionId; });
+  if (index < 0) return;
+  var previous = state.herrajeStepIndex;
   state.herrajeOpenId = sectionId;
-  document.querySelectorAll('.herraje-section').forEach(function(section) {
-    section.classList.toggle('open', section.id === id);
-    var header = section.querySelector('.herraje-section-header');
-    if (header) header.setAttribute('aria-expanded', String(section.id === id));
-  });
-  actualizarEstadoSeccionesHerrajes();
-  var element = document.getElementById(id);
-  if (scroll && element && typeof element.scrollIntoView === 'function') {
-    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    element.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
-  }
+  state.herrajeStepIndex = index;
+  buildHerrajeContainer(direction || (index >= previous ? 1 : -1));
+  if (scroll) focusHardwareHeading();
+  scheduleDraftSave();
 }
 
 function avanzarHerrajesDespuesDe(section) {
   var index = HERRAJE_SECTIONS.indexOf(section);
-  if (index !== state.herrajeNextIndex) {
-    actualizarEstadoSeccionesHerrajes();
-    updateSidebar();
-    return;
-  }
-  state.herrajeNextIndex = index + 1;
+  state.herrajeNextIndex = Math.max(state.herrajeNextIndex, index + 1);
   while (state.herrajeNextIndex < HERRAJE_SECTIONS.length && herrajeSeccionCompleta(HERRAJE_SECTIONS[state.herrajeNextIndex])) state.herrajeNextIndex++;
-  if (state.herrajeNextIndex < HERRAJE_SECTIONS.length) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[state.herrajeNextIndex].id, true);
-  else actualizarEstadoSeccionesHerrajes();
+  if (index < HERRAJE_SECTIONS.length - 1) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[index + 1].id, true, 1);
+  else {
+    actualizarEstadoSeccionesHerrajes();
+    showHardwareValidation('Herrajes completos. Ya puedes continuar a Cubierta.', false);
+  }
   updateSidebar();
+  scheduleDraftSave();
 }
 
 function resolverHerraje(section, noAplica) {
@@ -1711,7 +1783,9 @@ function seleccionarHerrajeRadio(id, val) {
     if (continueButton) continueButton.disabled = false;
   }
   actualizarEstadoSeccionesHerrajes();
+  showHardwareValidation('Selección guardada. Pulsa Continuar para confirmar.', false);
   updateSidebar();
+  scheduleDraftSave();
   return true;
 }
 
@@ -1740,8 +1814,12 @@ function confirmarHerrajeUnico(id) {
 function buildHerrajeContainer() {
   var container = document.getElementById('herrajeContainer');
   if (!container) return;
-  container.innerHTML = HERRAJE_SECTIONS.map(function(sec) {
-    var isOpen = sec.id === state.herrajeOpenId;
+  var direction = arguments.length ? arguments[0] : 0;
+  var index = Math.max(0, Math.min(HERRAJE_SECTIONS.length - 1, state.herrajeStepIndex || 0));
+  var sec = HERRAJE_SECTIONS[index];
+  state.herrajeStepIndex = index;
+  state.herrajeOpenId = sec.id;
+  var panelHTML = (function() {
     var noAplica = state.herrajesNoAplica[sec.id];
     var optsHTML;
 
@@ -1752,13 +1830,13 @@ function buildHerrajeContainer() {
           var selCls = isPresel ? ' selected' : '';
           var currentSelected = !noAplica && state[sec.key] === o.val;
           if (herrajeImagenes(o).length) {
-            return '<div class="herr-card' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
-              '<div class="herr-card-photo"><img src="' + herrajeImagenes(o)[0] + '" alt="' + o.label + '" loading="lazy" />' +
+            return '<div class="herr-card' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(!!(selCls || currentSelected)) + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
+              '<div class="herr-card-photo"><img src="' + herrajeImagenes(o)[0] + '" alt="' + o.label + '" loading="eager" fetchpriority="high" />' +
               '<div class="herr-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div></div>' +
               '<div class="herr-card-body"><div class="herr-card-name">' + o.label + '</div><div class="herr-card-desc">' + o.desc + '</div></div>' +
             '</div>';
           } else {
-            return '<div class="herr-opt' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
+            return '<div class="herr-opt' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(!!(selCls || currentSelected)) + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
               '<div class="herr-radio"></div>' +
               '<div><div class="herr-opt-name">' + o.label + '</div><div class="herr-opt-desc">' + o.desc + '</div></div>' +
             '</div>';
@@ -1769,13 +1847,15 @@ function buildHerrajeContainer() {
       optsHTML = '<div class="herr-cards">' +
         sec.opts.map(function(o) {
           if (herrajeImagenes(o).length) {
-            return '<div class="herr-card multi" id="' + o.id + '" onclick="toggleMultiOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
-              '<div class="herr-card-photo"><img src="' + herrajeImagenes(o)[0] + '" alt="' + o.label + '" loading="lazy" />' +
+            var selected = !noAplica && state[sec.key].indexOf(o.val) >= 0;
+            return '<div class="herr-card multi' + (selected ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(selected) + '" onclick="toggleMultiOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
+              '<div class="herr-card-photo"><img src="' + herrajeImagenes(o)[0] + '" alt="' + o.label + '" loading="eager" fetchpriority="high" />' +
               '<div class="herr-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div></div>' +
               '<div class="herr-card-body"><div class="herr-card-name">' + o.label + '</div><div class="herr-card-desc">' + o.desc + '</div></div>' +
             '</div>';
           } else {
-            return '<div class="herr-opt multi-cb-row" id="' + o.id + '" onclick="toggleMultiOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')">' +
+            var selectedText = !noAplica && state[sec.key].indexOf(o.val) >= 0;
+            return '<div class="herr-opt multi-cb-row' + (selectedText ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(selectedText) + '" onclick="toggleMultiOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
               '<div class="herr-cb"></div>' +
               '<div><div class="herr-opt-name">' + o.label + '</div><div class="herr-opt-desc">' + o.desc + '</div></div>' +
             '</div>';
@@ -1785,41 +1865,62 @@ function buildHerrajeContainer() {
     }
 
     if (sec.optional) optsHTML += '<button type="button" class="herraje-no-aplica' + (noAplica ? ' selected' : '') + '" aria-pressed="' + String(!!noAplica) + '" onclick="resolverHerrajeOpcional(\'' + sec.id + '\')">No aplica</button>';
-    if (sec.type === 'radio') optsHTML += '<button type="button" class="herraje-required-continue" onclick="confirmarHerrajeUnico(\'' + sec.id + '\')"' + (state[sec.key] ? '' : ' disabled') + '>' + (sec.id === 'bisagras' ? 'Confirmar bisagra y continuar' : 'Continuar') + '</button>';
-    if (sec.type === 'multi') optsHTML += '<button type="button" class="herraje-multi-continue" onclick="continuarHerrajeMultiple(\'' + sec.id + '\')"' + (state[sec.key].length ? '' : ' disabled') + '>Continuar</button>';
+    if (sec.type === 'radio') optsHTML += '<button type="button" class="herraje-required-continue" onclick="confirmarHerrajeUnico(\'' + sec.id + '\')"' + (state[sec.key] && !noAplica ? '' : ' disabled') + '>Continuar</button>';
+    if (sec.type === 'multi') optsHTML += '<button type="button" class="herraje-multi-continue" onclick="continuarHerrajeMultiple(\'' + sec.id + '\')"' + (state[sec.key].length && !noAplica ? '' : ' disabled') + '>Continuar</button>';
     var complete = herrajeSeccionCompleta(sec);
-    return '<div class="herraje-section' + (isOpen ? ' open' : '') + (complete ? ' completed' : '') + '" id="sec-' + sec.id + '" data-status="' + (complete ? 'completed' : (isOpen ? 'current' : 'pending')) + '">' +
-      '<div class="herraje-section-header" role="button" tabindex="0" aria-expanded="' + String(isOpen) + '" onclick="toggleHerrajeSection(\'sec-' + sec.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleHerrajeSection(\'sec-' + sec.id + '\')}">' +
-        '<span class="herraje-section-title">' + sec.title + '</span><span class="herraje-section-status">' + (complete ? 'Completado' : (isOpen ? 'En curso' : 'Pendiente')) + '</span>' +
-        '<svg class="herraje-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>' +
-      '</div>' +
+    return '<article class="herraje-section open' + (complete ? ' completed' : '') + '" id="sec-' + sec.id + '" data-status="' + (complete ? 'completed' : 'current') + '">' +
+      '<h3 class="hardware-step-title" id="hardwareStepTitle" tabindex="-1">' + sec.title + '</h3>' +
+      '<p class="hardware-step-help">' + (sec.optional ? 'Elige las opciones que necesites o marca No aplica.' : 'Elige una opción para continuar.') + '</p>' +
       '<div class="herraje-section-body">' + optsHTML + '</div>' +
-    '</div>';
-  }).join('');
-  HERRAJE_SECTIONS.forEach(function(section) {
-    section.opts.forEach(function(option) {
-      var card = document.getElementById(option.id);
-      var photo = card && card.querySelector('.herr-card-photo');
-      if (photo) prepararGaleriaHerraje(photo, option);
-    });
+    '</article>';
+  })();
+  container.innerHTML = '<div class="hardware-wizard">' +
+    '<header class="hardware-progress"><div><span>Herrajes · ' + (index + 1) + ' de ' + HERRAJE_SECTIONS.length + '</span><strong>' + sec.title + '</strong></div>' +
+    '<div class="hardware-progress-track" aria-hidden="true"><span id="hardwareProgressFill" style="width:' + ((index + 1) / HERRAJE_SECTIONS.length * 100) + '%"></span></div></header>' +
+    '<div class="hardware-panel hardware-enter-' + (direction < 0 ? 'back' : 'forward') + '">' + panelHTML + '</div>' +
+    '<p class="hardware-validation" id="hardwareValidation" role="status" aria-live="polite"></p>' +
+    '<footer class="hardware-nav"><button type="button" class="nav-btn" onclick="previousHardwareStep()"' + (index === 0 ? ' disabled' : '') + '>Anterior</button>' +
+    '<span>' + HERRAJE_SECTIONS.map(function(item, itemIndex) { return '<button type="button" class="hardware-dot' + (itemIndex === index ? ' active' : '') + (herrajeSeccionCompleta(item) ? ' complete' : '') + '" aria-label="Editar ' + item.title + '" onclick="abrirSeccionHerrajes(\'sec-' + item.id + '\',true)"></button>'; }).join('') + '</span></footer></div>';
+  sec.opts.forEach(function(option) {
+    var card = document.getElementById(option.id);
+    var photo = card && card.querySelector('.herr-card-photo');
+    if (photo) prepararGaleriaHerraje(photo, option);
   });
   actualizarEstadoSeccionesHerrajes();
+  preloadNextHardwareImages();
 }
 
 
 function escQ(s) { return s.replace(/'/g, "\\'"); }
 
 function toggleHerrajeSection(id) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  var isOpen = el.classList.contains('open');
-  if (!isOpen) abrirSeccionHerrajes(id, false);
-  else {
-    el.classList.remove('open');
-    el.querySelector('.herraje-section-header').setAttribute('aria-expanded', 'false');
-    state.herrajeOpenId = '';
-    actualizarEstadoSeccionesHerrajes();
-  }
+  abrirSeccionHerrajes(id, false);
+}
+
+function previousHardwareStep() {
+  if (state.herrajeStepIndex > 0) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[state.herrajeStepIndex - 1].id, true, -1);
+}
+
+function focusHardwareHeading() {
+  var heading = document.getElementById('hardwareStepTitle');
+  if (heading && typeof heading.focus === 'function') heading.focus({ preventScroll: true });
+}
+
+function showHardwareValidation(message, error) {
+  var node = document.getElementById('hardwareValidation');
+  if (!node) return;
+  node.textContent = message || '';
+  node.classList.toggle('error', error === true);
+}
+
+function activateHardwareCard(event, element) {
+  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); element.click(); }
+}
+
+function preloadNextHardwareImages() {
+  var next = HERRAJE_SECTIONS[state.herrajeStepIndex + 1];
+  if (!next) return;
+  preloadImageSources(next.opts.map(function(option) { return herrajeImagenes(option)[0]; }).filter(Boolean).slice(0, 4));
 }
 
 function selectHerrajeOpt(el, key, val) {
@@ -1829,6 +1930,7 @@ function selectHerrajeOpt(el, key, val) {
   var body = el.closest('.herraje-section-body');
   if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(o){ o.classList.remove('selected'); });
   seleccionarHerrajeRadio(section.id, val);
+  el.setAttribute('aria-pressed', 'true');
 }
 
 function toggleMultiOpt(el, key, val) {
@@ -1840,13 +1942,16 @@ function toggleMultiOpt(el, key, val) {
   var noAplica = sectionElement.querySelector('.herraje-no-aplica');
   if (noAplica) { noAplica.classList.remove('selected'); noAplica.setAttribute('aria-pressed', 'false'); }
   el.classList.toggle('selected');
+  el.setAttribute('aria-pressed', String(el.classList.contains('selected')));
   if (el.classList.contains('selected')) {
     if (state[key].indexOf(val) === -1) state[key].push(val);
   } else {
     state[key] = state[key].filter(function(v){ return v !== val; });
   }
   actualizarEstadoSeccionesHerrajes();
+  showHardwareValidation(state[key].length ? 'Selección guardada. Pulsa Continuar cuando termines.' : 'Selecciona al menos una opción o marca No aplica.', !state[key].length);
   updateSidebar();
+  scheduleDraftSave();
 }
 
 /* ─── SELECTIONS ─── */
@@ -2184,15 +2289,126 @@ function toggleExtra(el, key, label) {
 
 /* ─── NAVIGATION / RENDER ─── */
 var _currentStep = 0;
+var _stepTransitioning = false;
 
-function renderStep(step) {
+function captureClientDraft() {
+  var fields = { nombre:'c-nombre', tel:'c-tel', email:'c-email', fecha:'c-fecha', hora:'c-hora', asesor:'c-asesor', dir:'c-dir', obs:'c-obs' };
+  Object.keys(fields).forEach(function(key) {
+    var input = document.getElementById(fields[key]);
+    if (input) state.cliente[key] = String(input.value || '').trim();
+  });
+  var branch = document.getElementById('c-sucursal');
+  if (branch) state.cliente.sucursal = branch.selectedIndex > 0 ? branch.options[branch.selectedIndex].text : '';
+  scheduleDraftSave();
+}
+
+function bindDraftInputs() {
+  document.querySelectorAll('#panel-6 input, #panel-6 select, #panel-6 textarea').forEach(function(input) {
+    input.addEventListener('input', captureClientDraft);
+    input.addEventListener('change', captureClientDraft);
+  });
+}
+
+function setDraftField(id, value) {
+  var input = document.getElementById(id);
+  if (input) input.value = value || '';
+}
+
+function applyStateToCustomizerUI() {
+  document.querySelectorAll('.option-card.selected, .material-card.selected, .extra-card.active').forEach(function(element) {
+    element.classList.remove('selected', 'active');
+  });
+  var situationIds = {'sin-cocina':'sit-0','barra-concreto':'sit-1','remodelacion':'sit-2'};
+  var situation = document.getElementById(situationIds[state.situacion]);
+  if (situation) situation.classList.add('selected');
+  var interior = document.getElementById(state.interior === 'blanco-frosty' ? 'int-0' : state.interior === 'gris-oxford' ? 'int-1' : '');
+  if (interior) interior.classList.add('selected');
+  document.querySelectorAll('.cubierta-item').forEach(function(card) { card.classList.remove('selected'); });
+  var countertop = document.getElementById(state.cubiertaCategoria ? 'cub-' + state.cubiertaCategoria : '');
+  if (countertop) countertop.classList.add('selected');
+  [['Iluminación LED','ext-led'],['Isla / Barra','ext-isla'],['Alacena','ext-alacena'],['Torre de contactos','ext-contactos']].forEach(function(item) {
+    var card = document.getElementById(item[1]);
+    if (card) card.classList.toggle('active', state.extras.indexOf(item[0]) >= 0);
+  });
+  setDraftField('c-nombre', state.cliente.nombre);
+  setDraftField('c-tel', state.cliente.tel);
+  setDraftField('c-email', state.cliente.email);
+  setDraftField('c-fecha', state.cliente.fecha);
+  setDraftField('c-hora', state.cliente.hora || '10:00');
+  setDraftField('c-asesor', state.cliente.asesor === 'En línea' ? '' : state.cliente.asesor);
+  setDraftField('c-dir', state.cliente.dir);
+  setDraftField('c-obs', state.cliente.obs);
+  var branch = document.getElementById('c-sucursal');
+  if (branch) {
+    Array.from(branch.options).some(function(option, index) {
+      if (option.text === state.cliente.sucursal || option.value === state.cliente.sucursal) { branch.selectedIndex = index; return true; }
+      return false;
+    });
+  }
+  var location = document.getElementById('locationSelectionStatus');
+  if (location) location.textContent = state.cliente.lat != null && state.cliente.lng != null ? 'Pin guardado' : 'Sin pin guardado';
+}
+
+function startNewConfiguration() {
+  clearCustomizerDraft();
+  state = initialCustomizerState();
+  _submissionIdentity = null;
+  _submissionReceipt = null;
+  _submissionStatus = 'idle';
+  _submissionRequest = null;
+  _locationSelection = null;
+  if (_locationMarker && _locationMap) { _locationMap.removeLayer(_locationMarker); _locationMarker = null; }
+  buildFrente();
+  buildHerrajeContainer();
+  applyStateToCustomizerUI();
+  renderStep(0, -1);
+  clearCustomizerDraft();
+}
+
+function reducedMotionPreferred() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+function setNavigationLocked(locked) {
+  ['btnPrev','btnNext'].forEach(function(id) {
+    var button = document.getElementById(id);
+    if (button) button.disabled = locked || (id === 'btnPrev' && _currentStep === 0);
+  });
+  document.querySelectorAll('.sidebar-step').forEach(function(button) { button.disabled = locked; });
+}
+
+function renderStep(step, direction) {
+  if (_stepTransitioning || !Number.isInteger(step) || step < 0 || step >= STEPS.length) return false;
+  var previousStep = _currentStep;
+  var previousPanel = document.getElementById('panel-' + previousStep);
+  var nextPanel = document.getElementById('panel-' + step);
   _currentStep = step;
-  if (step === 3) abrirSeccionHerrajes('sec-' + (state.herrajeOpenId || HERRAJE_SECTIONS[Math.min(state.herrajeNextIndex, HERRAJE_SECTIONS.length - 1)].id), false);
+  if (step === 3) buildHerrajeContainer(direction || (step >= previousStep ? 1 : -1));
   var total = STEPS.length;
 
-  document.querySelectorAll('.step-panel').forEach(function(p){
-    p.classList.toggle('active', p.id === 'panel-' + step);
-  });
+  function finishTransition() {
+    document.querySelectorAll('.step-panel').forEach(function(panel) {
+      panel.classList.toggle('active', panel === nextPanel);
+      panel.classList.remove('step-exit-forward', 'step-exit-back', 'step-enter-forward', 'step-enter-back');
+      panel.setAttribute('aria-hidden', String(panel !== nextPanel));
+    });
+    _stepTransitioning = false;
+    setNavigationLocked(false);
+    var titleNode = document.getElementById('contentTitle');
+    if (titleNode && typeof titleNode.focus === 'function') titleNode.focus({ preventScroll: true });
+  }
+
+  if (previousPanel && nextPanel && previousPanel !== nextPanel) {
+    var forward = direction === undefined ? step > previousStep : direction >= 0;
+    _stepTransitioning = true;
+    setNavigationLocked(true);
+    previousPanel.classList.add('active', forward ? 'step-exit-forward' : 'step-exit-back');
+    nextPanel.classList.add('active', forward ? 'step-enter-forward' : 'step-enter-back');
+    if (reducedMotionPreferred()) finishTransition();
+    else window.setTimeout(finishTransition, 220);
+  } else {
+    finishTransition();
+  }
 
   var h = STEP_HEADERS[step];
   var eyebrow = document.getElementById('contentEyebrow');
@@ -2227,7 +2443,13 @@ function renderStep(step) {
     submitKitchenConfiguration(false);
   }
   updateSidebar();
-  window.scrollTo(0, 0);
+  if (_stepTransitioning) setNavigationLocked(true);
+  clearValidation();
+  if (step === 6) warmLocationMap();
+  preloadNextStepImages(step);
+  scheduleDraftSave();
+  window.scrollTo({ top: 0, behavior: reducedMotionPreferred() ? 'auto' : 'smooth' });
+  return true;
 }
 
 function updateSidebar() {
@@ -2249,6 +2471,7 @@ function updateSidebar() {
       '</span>' +
     '</button>';
   }).join('');
+  scheduleDraftSave();
 }
 
 function stepIsComplete(step) {
@@ -2258,6 +2481,21 @@ function stepIsComplete(step) {
   if (step === 3) return herrajesCompletos();
   if (step === 6) return !!(state.cliente.nombre && state.cliente.tel && state.cliente.dir && state.cliente.fecha && state.cliente.hora && state.cliente.sucursal);
   return step < _currentStep;
+}
+
+function showValidation(message, focusTarget) {
+  var node = document.getElementById('stepValidation');
+  if (node) {
+    node.textContent = message || '';
+    node.hidden = !message;
+    if (message && typeof node.focus === 'function') node.focus({ preventScroll: true });
+  }
+  if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus({ preventScroll: true });
+}
+
+function clearValidation() {
+  var node = document.getElementById('stepValidation');
+  if (node) { node.textContent = ''; node.hidden = true; }
 }
 
 function validateStep(step) {
@@ -2274,10 +2512,14 @@ function validateStep(step) {
     var s  = sEl ? sEl.value : '';
     var emailField = document.getElementById('c-email');
     if (emailField && e && !emailField.checkValidity()) {
-      alert('Ingresa un correo electrónico válido o deja el campo vacío.');
+      showValidation('Ingresa un correo electrónico válido o deja el campo vacío.', emailField);
       ok = false;
     } else if (!n.trim()||!t.trim()||!d.trim()||!f||!h||!s) {
-      alert('Por favor completa: nombre, teléfono, dirección, fecha, hora y sucursal.');
+      var requiredFields = [
+        document.getElementById('c-nombre'), document.getElementById('c-tel'), document.getElementById('c-dir'),
+        document.getElementById('c-fecha'), document.getElementById('c-hora'), document.getElementById('c-sucursal')
+      ];
+      showValidation('Completa nombre, teléfono, dirección, fecha, hora y sucursal.', requiredFields.find(function(field) { return field && !field.value; }));
       ok = false;
     } else {
       state.cliente = {
@@ -2293,14 +2535,15 @@ function validateStep(step) {
         lat:      state.cliente.lat,
         lng:      state.cliente.lng,
       };
+      scheduleDraftSave();
     }
   }
-  if (step === 0 && !state.situacion)                    { alert('Selecciona una opción de situación actual.'); ok = false; }
-  if (step === 1 && !state.interior)                     { alert('Selecciona el tablero interior.'); ok = false; }
+  if (step === 0 && !state.situacion) { showValidation('Selecciona una opción de situación actual.'); ok = false; }
+  if (step === 1 && !state.interior) { showValidation('Selecciona el tablero interior.'); ok = false; }
   if (step === 2) {
     var lineas = Object.keys(state.frentes);
     if (lineas.length === 0) {
-      alert('Selecciona al menos una línea de frentes.');
+      showValidation('Selecciona al menos una línea de frentes.');
       ok = false;
     } else {
       var hasColor = false;
@@ -2311,7 +2554,7 @@ function validateStep(step) {
         }
       }
       if (!hasColor) {
-        alert('Por favor selecciona al menos un color dentro de la línea elegida.');
+        showValidation('Selecciona al menos un color dentro de la línea elegida.');
         ok = false;
       }
     }
@@ -2319,29 +2562,54 @@ function validateStep(step) {
 
   if (step === 3 && !herrajesCompletos()) {
     var pending = HERRAJE_SECTIONS.find(function(section) { return !herrajeSeccionCompleta(section); });
-    if (pending) abrirSeccionHerrajes('sec-' + pending.id, true);
-    alert('Completa los apartados de Herrajes: elige una opción o marca No aplica donde está disponible.');
+    if (pending) {
+      abrirSeccionHerrajes('sec-' + pending.id, true);
+      showHardwareValidation('Completa este subpaso antes de avanzar a Cubierta.', true);
+    }
+    showValidation('Completa Herrajes. Te llevamos al primer subpaso pendiente.');
     ok = false;
   }
+  if (ok) clearValidation();
   return ok;
 }
 
 function navigateToStep(target) {
-  if (!Number.isInteger(target) || target < 0 || target >= STEPS.length) return;
+  if (_stepTransitioning || !Number.isInteger(target) || target < 0 || target >= STEPS.length) return false;
   if (target > _currentStep) {
     for (var step = _currentStep; step < target; step++) {
-      if (!validateStep(step)) return;
+      if (!validateStep(step)) return false;
     }
   }
-  renderStep(target);
+  return renderStep(target, target >= _currentStep ? 1 : -1);
 }
 
 function nextStep() {
-  if (_currentStep < STEPS.length - 1) navigateToStep(_currentStep + 1);
+  if (!_stepTransitioning && _currentStep < STEPS.length - 1) navigateToStep(_currentStep + 1);
 }
 
 function prevStep() {
-  if (_currentStep > 0) renderStep(_currentStep - 1);
+  if (!_stepTransitioning && _currentStep > 0) navigateToStep(_currentStep - 1);
+}
+
+function preloadImageSources(sources) {
+  if (!sources.length || typeof window.Image !== 'function') return;
+  var work = function() {
+    sources.forEach(function(src) { if (src) { var image = new window.Image(); image.decoding = 'async'; image.src = src; } });
+  };
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(work, { timeout: 1200 });
+  else window.setTimeout(work, 180);
+}
+
+function preloadNextStepImages(step) {
+  var current = document.getElementById('panel-' + step);
+  if (current) current.querySelectorAll('img').forEach(function(image, index) {
+    image.loading = index < 4 ? 'eager' : 'lazy';
+    if (index === 0) image.fetchPriority = 'high';
+  });
+  var next = document.getElementById('panel-' + (step + 1));
+  if (!next) return;
+  var sources = Array.from(next.querySelectorAll('img')).slice(0, 4).map(function(image) { return image.currentSrc || image.getAttribute('src'); });
+  preloadImageSources(sources.filter(Boolean));
 }
 
 /* ─── LEAFLET + OPENSTREETMAP LOCATION PICKER ─── */
@@ -2351,6 +2619,19 @@ var _locationSelection = null;
 var _locationPreviousOverflow = '';
 var _locationReturnFocus = null;
 var _locationEscapeHandler = null;
+var _locationWarmScheduled = false;
+
+function warmLocationMap() {
+  if (_locationMap || _locationWarmScheduled || !window.L) return;
+  _locationWarmScheduled = true;
+  var warm = function() {
+    _locationWarmScheduled = false;
+    _locationSelection = state.cliente.lat != null && state.cliente.lng != null ? { lat: state.cliente.lat, lng: state.cliente.lng } : null;
+    initializeLocationMap();
+  };
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(warm, { timeout: 1500 });
+  else window.setTimeout(warm, 250);
+}
 
 function openLocationMap() {
   var modal = document.getElementById('locationMapModal');
@@ -2447,6 +2728,7 @@ function confirmLocationMap() {
   state.cliente.lng = _locationSelection.lng;
   var saved = document.getElementById('locationSelectionStatus');
   if (saved) saved.textContent = 'Pin guardado';
+  saveCustomizerDraft();
   closeLocationMap();
 }
 
@@ -2592,6 +2874,7 @@ function submitKitchenConfiguration(forceRetry) {
       _submissionStatus = 'idle';
     }
     _submissionIdentity = nextIdentity;
+    saveCustomizerDraft();
   } catch (error) {
     _submissionStatus = 'error';
     renderSubmissionStatus(error.message || 'No pudimos preparar tu solicitud.');
@@ -2614,6 +2897,7 @@ function submitKitchenConfiguration(forceRetry) {
         _submissionReceipt = receipt;
         _submissionStatus = 'success';
         renderSubmissionStatus('Solicitud recibida correctamente.');
+        saveCustomizerDraft();
       }
       return receipt;
     })

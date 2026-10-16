@@ -8,6 +8,7 @@
   <link rel="icon" href="img/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha256-tXCrvaljxgtN5LT/Syb5Mm9T+yzPFGH98JVcoJT7JTk=" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="style.css?v=2">
@@ -44,7 +45,7 @@
     .top-logo-text { font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--green); }
     .top-progress-wrap { flex: 1; display: flex; align-items: center; gap: 14px; }
     .top-progress-bar { flex: 1; height: 2px; background: var(--border); border-radius: 99px; overflow: hidden; }
-    .top-progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-l)); border-radius: 99px; transition: width .5s cubic-bezier(.4,0,.2,1); width: 0%; }
+    .top-progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-l)); border-radius: 99px; transition: width .22s cubic-bezier(.4,0,.2,1); width: 0%; }
     .top-counter { font-size: .7rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
     .top-back { font-size: .72rem; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color var(--tr); }
     .top-back:hover { color: var(--green); }
@@ -68,14 +69,24 @@
     .step-text-val { font-size: .64rem; color: var(--green); font-weight: 500; }
 
     /* CONTENT */
-    .content-area { flex: 1; display: flex; flex-direction: column; max-width: 880px; padding: 52px 52px 140px; }
+    .content-area { position: relative; flex: 1; display: flex; flex-direction: column; max-width: 880px; padding: 52px 52px 140px; }
     .content-eyebrow { font-size: .65rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--green); margin-bottom: 10px; opacity: .8; }
-    .content-title { font-family: var(--font-serif); font-size: 2.2rem; font-weight: 300; line-height: 1.15; margin-bottom: 8px; letter-spacing: -.01em; }
+    .content-title { min-height: 2.55rem; font-family: var(--font-serif); font-size: 2.2rem; font-weight: 300; line-height: 1.15; margin-bottom: 8px; letter-spacing: -.01em; outline: none; }
     .content-title em { font-style: italic; color: var(--green); font-weight: 400; }
-    .content-subtitle { font-size: .82rem; color: var(--muted); margin-bottom: 36px; line-height: 1.6; font-weight: 400; }
-    .step-panel { display: none; animation: fadeIn .3s ease; }
+    .content-subtitle { min-height: 2.65rem; font-size: .82rem; color: var(--muted); margin-bottom: 20px; line-height: 1.6; font-weight: 400; }
+    .step-validation { margin-bottom: 16px; padding: 11px 14px; border-left: 3px solid #a13d3d; border-radius: 6px; background: #fff5f5; color: #7d2929; font-size: .76rem; line-height: 1.5; outline: none; }
+    .step-validation[hidden] { display: none; }
+    .step-panel { display: none; position: relative; }
     .step-panel.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .step-panel.step-exit-forward, .step-panel.step-exit-back { position: absolute; width: calc(100% - 104px); pointer-events: none; }
+    .step-panel.step-exit-forward { animation: stepExitForward .22s ease both; }
+    .step-panel.step-exit-back { animation: stepExitBack .22s ease both; }
+    .step-panel.step-enter-forward { animation: stepEnterForward .22s ease both; }
+    .step-panel.step-enter-back { animation: stepEnterBack .22s ease both; }
+    @keyframes stepExitForward { to { opacity: 0; transform: translateX(-24px); } }
+    @keyframes stepExitBack { to { opacity: 0; transform: translateX(24px); } }
+    @keyframes stepEnterForward { from { opacity: 0; transform: translateX(24px); } }
+    @keyframes stepEnterBack { from { opacity: 0; transform: translateX(-24px); } }
 
     /* OPTION CARDS (situacion) */
     .options-list { display: flex; flex-direction: column; gap: 12px; }
@@ -500,6 +511,28 @@
     .herr-opt { min-height: 72px; margin: 0; padding: 13px 14px; align-items: center; background: linear-gradient(135deg, #fff, var(--green-fade)); }
     .herr-opt > div:last-child { min-width: 0; }
     .herr-opt-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .hardware-wizard { overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: rgba(255,255,255,.72); box-shadow: var(--shadow-sm); }
+    .hardware-progress { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); background: #fff; }
+    .hardware-progress > div { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+    .hardware-progress span { color: var(--green); font-size: .68rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+    .hardware-progress strong { font: 500 1rem var(--font-serif); }
+    .hardware-progress-track { height: 5px; margin-top: 12px; overflow: hidden; border-radius: 99px; background: var(--light); }
+    .hardware-progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), var(--green-l)); transition: width .22s ease; }
+    .hardware-panel { padding: 18px 20px 8px; }
+    .hardware-enter-forward { animation: stepEnterForward .22s ease both; }
+    .hardware-enter-back { animation: stepEnterBack .22s ease both; }
+    .hardware-step-title { font: 500 1.45rem var(--font-serif); outline: none; }
+    .hardware-step-help { margin: 3px 0 14px; color: var(--muted); font-size: .72rem; }
+    .hardware-wizard .herraje-section { margin: 0; }
+    .hardware-wizard .herraje-section-body { display: block; padding: 0; border: 0; background: transparent; }
+    .hardware-validation { min-height: 1.25rem; margin: 4px 20px 10px; color: var(--green); font-size: .72rem; }
+    .hardware-validation.error { color: #8d3030; }
+    .hardware-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 20px 18px; }
+    .hardware-nav > span { display: flex; gap: 7px; }
+    .hardware-dot { width: 10px; height: 10px; padding: 0; border: 1px solid var(--border-d); border-radius: 50%; background: #fff; cursor: pointer; }
+    .hardware-dot.complete { background: var(--green-fade); border-color: var(--green); }
+    .hardware-dot.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,79,46,.13); }
+    .hardware-wizard .herraje-no-aplica, .hardware-wizard .herraje-required-continue, .hardware-wizard .herraje-multi-continue { min-height: 44px; margin-top: 14px; }
 
     /* Cubiertas: catálogo coherente; el modal y su lógica permanecen intactos. */
     .cubierta-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -538,6 +571,7 @@
 
     @media (max-width: 768px) {
       .content-area { width: 100%; padding: 24px 16px 104px; }
+      .step-panel.step-exit-forward, .step-panel.step-exit-back { width: calc(100% - 32px); }
       .content-title { font-size: 1.9rem; }
       .content-subtitle { margin-bottom: 20px; line-height: 1.5; }
       .options-list { grid-template-columns: 1fr; gap: 12px; }
@@ -637,7 +671,7 @@
 
 <header class="top-bar">
   <a href="index.html" class="top-logo">
-    <img src="img/logo.jpg" alt="MHG" onerror="this.style.display='none'" />
+    <img src="img/logo.jpg" alt="MHG" loading="eager" fetchpriority="high" onerror="this.style.display='none'" />
     <span class="top-logo-text">Configurador · MHG Cocinas</span>
   </a>
   <div class="top-progress-wrap">
@@ -654,8 +688,9 @@
   <nav class="sidebar" id="sidebarSteps"></nav>
   <main class="content-area">
     <p class="content-eyebrow" id="contentEyebrow">Paso 1 de 8</p>
-    <h1 class="content-title" id="contentTitle"><em>Situación</em> actual</h1>
+    <h1 class="content-title" id="contentTitle" tabindex="-1"><em>Situación</em> actual</h1>
     <p class="content-subtitle" id="contentSubtitle">Cuéntanos cómo está el espacio hoy para ajustar la propuesta.</p>
+    <p class="step-validation" id="stepValidation" role="alert" aria-live="assertive" tabindex="-1" hidden></p>
 
     <!-- PASO 7: DATOS DEL CLIENTE -->
     <section class="step-panel" id="panel-6">
@@ -722,7 +757,7 @@
       <div class="options-list">
         <div class="option-card" id="sit-0" onclick="selectSituation(this,'sin-cocina')">
           <div class="option-photo">
-            <img src="img/customizer/notengococina.jpg" alt="Espacio vacío" />
+            <img src="img/customizer/notengococina.jpg" alt="Espacio vacío" loading="eager" fetchpriority="high" />
             <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           </div>
           <div class="option-info">
@@ -733,7 +768,7 @@
         </div>
         <div class="option-card" id="sit-1" onclick="selectSituation(this,'barra-concreto')">
           <div class="option-photo">
-            <img src="img/customizer/solotarja.jpg" alt="Base de concreto existente" />
+            <img src="img/customizer/solotarja.jpg" alt="Base de concreto existente" loading="eager" />
             <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           </div>
           <div class="option-info">
@@ -744,7 +779,7 @@
         </div>
         <div class="option-card" id="sit-2" onclick="selectSituation(this,'remodelacion')">
           <div class="option-photo">
-            <img src="img/customizer/tengococina.jpg" alt="Cocina a remodelar" />
+            <img src="img/customizer/tengococina.jpg" alt="Cocina a remodelar" loading="eager" />
             <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           </div>
           <div class="option-info">
@@ -762,7 +797,7 @@
       <div class="material-grid">
         <div class="material-card" id="int-0" onclick="selectInterior(this,'blanco-frosty')">
           <div class="material-card-swatch">
-            <img src="img/customizer/tabintblancofrosty.jpg" alt="Blanco Frosty" />
+            <img src="img/customizer/tabintblancofrosty.jpg" alt="Blanco Frosty" loading="lazy" />
             <div class="material-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           </div>
           <div class="material-card-info">
@@ -772,7 +807,7 @@
         </div>
         <div class="material-card" id="int-1" onclick="selectInterior(this,'gris-oxford')">
           <div class="material-card-swatch">
-            <img src="img/customizer/tablerointerioroxford.jpg" alt="Gris Oxford" />
+            <img src="img/customizer/tablerointerioroxford.jpg" alt="Gris Oxford" loading="lazy" />
             <div class="material-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           </div>
           <div class="material-card-info">
@@ -798,7 +833,7 @@
     <section class="step-panel" id="panel-4">
       <div class="cubierta-list" id="cubiertas-list">
         <div class="cubierta-item" id="cub-solida" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="cubiertaModal" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }" onclick="selectCubierta(this,'solida')">
-          <div class="cubierta-swatch"><img src="img/customizer/superficiesolida.jpg" alt="Superficie sólida Corian" /></div>
+          <div class="cubierta-swatch"><img src="img/customizer/superficiesolida.jpg" alt="Superficie sólida Corian" loading="lazy" /></div>
           <div class="cubierta-info">
             <div class="cubierta-name">Superficie sólida Corian</div>
             <div class="cubierta-desc">Superficie homogénea y no porosa que permite diseños continuos, uniones discretas y fácil mantenimiento.</div>
@@ -807,7 +842,7 @@
           <div class="cubierta-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
         </div>
         <div class="cubierta-item" id="cub-granito" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="cubiertaModal" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }" onclick="selectCubierta(this,'granito')">
-          <div class="cubierta-swatch"><img src="img/customizer/granito/granitosangabrielcocina.webp" alt="Granito" /></div>
+          <div class="cubierta-swatch"><img src="img/customizer/granito/granitosangabrielcocina.webp" alt="Granito" loading="lazy" /></div>
           <div class="cubierta-info">
             <div class="cubierta-name">Granito</div>
             <div class="cubierta-desc">Piedra natural de gran dureza y durabilidad. Cada placa presenta vetas y variaciones únicas.</div>
@@ -816,7 +851,7 @@
           <div class="cubierta-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
         </div>
         <div class="cubierta-item" id="cub-cuarzo" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="cubiertaModal" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }" onclick="selectCubierta(this,'cuarzo')">
-          <div class="cubierta-swatch"><img src="img/customizer/cuarzo/Marquina-Black-1024x758.jpg" alt="Cuarzo" /></div>
+          <div class="cubierta-swatch"><img src="img/customizer/cuarzo/Marquina-Black-1024x758.jpg" alt="Cuarzo" loading="lazy" /></div>
           <div class="cubierta-info">
             <div class="cubierta-name">Cuarzo</div>
             <div class="cubierta-desc">Superficie de cuarzo de alta densidad, no porosa y de mantenimiento sencillo, disponible en una amplia variedad de diseños.</div>
@@ -825,7 +860,7 @@
           <div class="cubierta-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
         </div>
         <div class="cubierta-item" id="cub-sinterizado" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="cubiertaModal" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }" onclick="selectCubierta(this,'sinterizado')">
-          <div class="cubierta-swatch"><img src="img/customizer/piedrasinterizada/allure-black-cocina.webp" alt="Piedra sinterizada" /></div>
+          <div class="cubierta-swatch"><img src="img/customizer/piedrasinterizada/allure-black-cocina.webp" alt="Piedra sinterizada" loading="lazy" /></div>
           <div class="cubierta-info">
             <div class="cubierta-name">Piedra sinterizada</div>
             <div class="cubierta-desc">Superficie mineral de muy baja porosidad diseñada para ofrecer alta resistencia frente al uso intenso, calor y agentes cotidianos.</div>
@@ -841,7 +876,7 @@
     <section class="step-panel" id="panel-5">
       <div class="extras-grid">
         <div class="extra-card" id="ext-led" onclick="toggleExtra(this,'led','Iluminación LED')">
-          <div class="extra-card-photo"><img class="extra-card-img" src="img/construccion/nosotros-led.jpg" alt="Iluminación LED" /></div>
+          <div class="extra-card-photo"><img class="extra-card-img" src="img/construccion/nosotros-led.jpg" alt="Iluminación LED" loading="lazy" /></div>
           <div class="extra-card-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           <div class="extra-card-body">
             <div class="extra-card-name">Iluminación LED</div>
@@ -849,7 +884,7 @@
           </div>
         </div>
         <div class="extra-card" id="ext-isla" onclick="toggleExtra(this,'isla','Isla / Barra')">
-          <div class="extra-card-photo"><img class="extra-card-img" src="img/customizer/islabarra.jpg" alt="Isla / Barra" /></div>
+          <div class="extra-card-photo"><img class="extra-card-img" src="img/customizer/islabarra.jpg" alt="Isla / Barra" loading="lazy" /></div>
           <div class="extra-card-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           <div class="extra-card-body">
             <div class="extra-card-name">Isla / Barra</div>
@@ -857,7 +892,7 @@
           </div>
         </div>
         <div class="extra-card" id="ext-alacena" onclick="toggleExtra(this,'alacena','Alacena')">
-          <div class="extra-card-photo"><img class="extra-card-img" src="img/customizer/alacena.jpg" alt="Alacena" /></div>
+          <div class="extra-card-photo"><img class="extra-card-img" src="img/customizer/alacena.jpg" alt="Alacena" loading="lazy" /></div>
           <div class="extra-card-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           <div class="extra-card-body">
             <div class="extra-card-name">Alacena</div>
@@ -865,7 +900,7 @@
           </div>
         </div>
         <div class="extra-card" id="ext-contactos" onclick="toggleExtra(this,'contactos','Torre de contactos')">
-          <div class="extra-card-photo"><img class="extra-card-img" src="img/customizer/extras/torredecontactos.jpg" alt="Torre de contactos" /></div>
+          <div class="extra-card-photo"><img class="extra-card-img" src="img/customizer/extras/torredecontactos.jpg" alt="Torre de contactos" loading="lazy" /></div>
           <div class="extra-card-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
           <div class="extra-card-body">
             <div class="extra-card-name">Torre de contactos</div>
@@ -891,7 +926,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
           Enviar por WhatsApp
         </button>
-        <button class="action-btn" onclick="renderStep(0)">
+        <button class="action-btn" onclick="startNewConfiguration()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
           Nueva configuración
         </button>

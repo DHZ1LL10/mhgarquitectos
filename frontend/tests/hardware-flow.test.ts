@@ -109,10 +109,19 @@ test("No aplica can be replaced with a product and does not erase later subselec
 test("leaving Herrajes is blocked until every required and optional subsection has a decision", () => {
   const { context, alerts } = createContext();
   assert.equal(vm.runInContext("validateStep(3)", context), false);
-  assert.match(alerts[0], /Completa los apartados de Herrajes/);
+  assert.equal(alerts.length, 0);
+  assert.match(source, /Completa Herrajes\. Te llevamos al primer subpaso pendiente/);
+  assert.match(source, /showHardwareValidation\('Completa este subpaso/);
   vm.runInContext("state.bisagra=HERRAJE_SECTIONS[0].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[0],false); state.corredera=HERRAJE_SECTIONS[1].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[1],false); resolverHerraje(HERRAJE_SECTIONS[2],true); resolverHerraje(HERRAJE_SECTIONS[3],true); resolverHerraje(HERRAJE_SECTIONS[4],true); resolverHerraje(HERRAJE_SECTIONS[5],true)", context);
   assert.equal(vm.runInContext("validateStep(3)", context), true);
   assert.equal(vm.runInContext("stepIsComplete(3)", context), true);
+});
+
+test("Herrajes renders one internal wizard panel with directional navigation", () => {
+  assert.match(source, /Herrajes · ' \+ \(index \+ 1\) \+ ' de ' \+ HERRAJE_SECTIONS\.length/);
+  assert.match(source, /function previousHardwareStep\(\)/);
+  assert.match(source, /hardware-enter-' \+ \(direction < 0 \? 'back' : 'forward'\)/);
+  assert.doesNotMatch(source.slice(source.indexOf("function buildHerrajeContainer"), source.indexOf("function escQ")), /HERRAJE_SECTIONS\.map\(function\(sec\)/);
 });
 
 test("hinge image opens its associated single-photo lightbox and single photos omit thumbnail galleries", () => {

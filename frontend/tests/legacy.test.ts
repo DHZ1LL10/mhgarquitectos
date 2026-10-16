@@ -111,21 +111,21 @@ test("customizer navigation follows the new order and preserves step validation 
     "c-fecha": { value: "" }, "c-hora": { value: "" }, "c-asesor": { value: "" }, "c-obs": { value: "" },
     "c-sucursal": { value: "", selectedIndex: 0, options: [{ text: "Fortín de las Flores" }] },
   };
-  const alerts: string[] = [];
+  const validation = { textContent: "", hidden: true, focus() {} };
   const context = vm.createContext({
-    document: { addEventListener() {}, getElementById(id: string) { return fields[id] || null; }, querySelectorAll() { return []; } },
-    window: { scrollTo() {}, open() {} }, alert(message: string) { alerts.push(message); },
+    document: { addEventListener() {}, getElementById(id: string) { return id === "stepValidation" ? validation : fields[id] || null; }, querySelectorAll() { return []; } },
+    window: { scrollTo() {}, open() {}, matchMedia() { return { matches: true }; } }, alert() { throw new Error("browser alert must not be used for step validation"); },
   });
   vm.runInContext(read("frontend/public/cotizador.js"), context);
   vm.runInContext("renderStep(0); navigateToStep(7)", context);
   assert.equal(vm.runInContext("_currentStep", context), 0);
-  assert.match(alerts.pop() || "", /situación actual/);
+  assert.match(validation.textContent, /situación actual/);
   vm.runInContext("state.situacion='sin-cocina'; navigateToStep(7)", context);
-  assert.match(alerts.pop() || "", /tablero interior/);
+  assert.match(validation.textContent, /tablero interior/);
   vm.runInContext("state.interior='blanco-frosty'; navigateToStep(7)", context);
-  assert.match(alerts.pop() || "", /línea de frentes/);
+  assert.match(validation.textContent, /línea de frentes/);
   vm.runInContext("state.frentes.economica=['Blanco']; state.bisagra=HERRAJE_SECTIONS[0].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[0],false); state.corredera=HERRAJE_SECTIONS[1].opts[0].val; resolverHerraje(HERRAJE_SECTIONS[1],false); resolverHerraje(HERRAJE_SECTIONS[2],true); resolverHerraje(HERRAJE_SECTIONS[3],true); resolverHerraje(HERRAJE_SECTIONS[4],true); resolverHerraje(HERRAJE_SECTIONS[5],true); navigateToStep(7)", context);
-  assert.match(alerts.pop() || "", /nombre, teléfono, dirección/);
+  assert.match(validation.textContent, /nombre, teléfono, dirección/);
   Object.assign(fields["c-nombre"], { value: "Persona" }); Object.assign(fields["c-tel"], { value: "2710000000" });
   Object.assign(fields["c-dir"], { value: "Calle de prueba" }); Object.assign(fields["c-fecha"], { value: "2026-11-01" });
   Object.assign(fields["c-hora"], { value: "10:00" }); Object.assign(fields["c-sucursal"], { value: "Fortin" });
