@@ -1,6 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
+from uuid import uuid4
 
-from sqlalchemy import delete
+import pytest
+from sqlalchemy import delete, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal, engine
@@ -10,6 +13,7 @@ from app.kitchen_configurations.folios import (
     format_service_folio,
     next_service_folio,
 )
+from tests.payloads import appointment_payload, contact_payload, kitchen_payload
 
 
 def test_kitchen_folio_starts_at_one_increments_and_pads(connection):
@@ -30,6 +34,43 @@ def test_folio_allocation_rolls_back_with_its_transaction(connection):
         assert next_service_folio(db, "RLB") == "RLB-00001"
         transaction.rollback()
         assert next_service_folio(db, "RLB") == "RLB-00001"
+
+
+def test_submission_folio_unique_constraint_and_legacy_coexistence(client, connection):
+    payload = {
+        "configuration": kitchen_payload(),
+        "appointment": appointment_payload(),
+        "contact": contact_payload(),
+    }
+
+    def submit():
+        response = client.post(
+            "/api/v1/kitchen-submissions",
+            json=payload,
+            headers={"Idempotency-Key": str(uuid4())},
+        )
+        assert response.status_code == 201, response.text
+        return response.json()
+
+    first = submit()
+    second = submit()
+    assert [first["folio"], second["folio"]] == ["COC-00001", "COC-00002"]
+    with pytest.raises(IntegrityError), connection.begin_nested():
+        connection.execute(
+            text("UPDATE kitchen_submissions SET folio = :folio WHERE id = :id"),
+            {"folio": first["folio"], "id": second["submission_id"]},
+        )
+
+    legacy_folio = "MHG-" + uuid4().hex.upper()
+    connection.execute(
+        text("UPDATE kitchen_submissions SET folio = :folio WHERE id = :id"),
+        {"folio": legacy_folio, "id": first["submission_id"]},
+    )
+    third = submit()
+    assert third["folio"] == "COC-00003"
+    stored = set(connection.execute(text("SELECT folio FROM kitchen_submissions")).scalars())
+    assert legacy_folio in stored
+    assert {second["folio"], third["folio"]}.issubset(stored)
 
 
 def test_folio_allocation_is_unique_under_real_postgres_concurrency(migrated_database):
