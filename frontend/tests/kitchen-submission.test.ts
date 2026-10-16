@@ -82,11 +82,11 @@ test("map helper uses OpenStreetMap and rejects invalid coordinates", () => {
   assert.match(html, /OpenStreetMap/);
   assert.doesNotMatch(html, /maps\.googleapis\.com|maps-config\.js|Mapa de Google/);
   const customizer = readFileSync(new URL("../public/cotizador.js", import.meta.url), "utf8");
-  assert.match(customizer, /function warmLocationMap\(\)/);
-  assert.match(customizer, /requestIdleCallback\(warm/);
-  assert.match(customizer, /_locationMap\.invalidateSize\(\)/);
+  assert.match(customizer, /function prepareLocationMapResources\(\)/);
+  assert.doesNotMatch(customizer, /requestIdleCallback\(warm/);
+  assert.match(customizer, /_locationMap\.invalidateSize\(\{ pan: false, animate: false \}\)/);
   assert.match(customizer, /state\.cliente\.lat = _locationSelection\.lat/);
-  assert.match(customizer, /_locationSelection = state\.cliente\.lat != null/);
+  assert.match(customizer, /if \(!_locationSelection && state\.cliente\.lat != null/);
   assert.match(customizer, /draggable: true, autoPan: true/);
   assert.match(customizer, /leaflet\/1\.9\.4\/images\/marker-icon\.png/);
 });

@@ -45,7 +45,7 @@
     .top-logo-text { font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--green); }
     .top-progress-wrap { flex: 1; display: flex; align-items: center; gap: 14px; }
     .top-progress-bar { flex: 1; height: 2px; background: var(--border); border-radius: 99px; overflow: hidden; }
-    .top-progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-l)); border-radius: 99px; transition: width .22s cubic-bezier(.4,0,.2,1); width: 0%; }
+    .top-progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-l)); border-radius: 99px; transition: width .38s cubic-bezier(.22,1,.36,1); width: 0%; }
     .top-counter { font-size: .7rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
     .top-back { font-size: .72rem; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color var(--tr); }
     .top-back:hover { color: var(--green); }
@@ -79,10 +79,10 @@
     .step-panel { display: none; position: relative; }
     .step-panel.active { display: block; }
     .step-panel.step-exit-forward, .step-panel.step-exit-back { position: absolute; width: calc(100% - 104px); pointer-events: none; }
-    .step-panel.step-exit-forward { animation: stepExitForward .22s ease both; }
-    .step-panel.step-exit-back { animation: stepExitBack .22s ease both; }
-    .step-panel.step-enter-forward { animation: stepEnterForward .22s ease both; }
-    .step-panel.step-enter-back { animation: stepEnterBack .22s ease both; }
+    .step-panel.step-exit-forward { animation: stepExitForward .38s cubic-bezier(.22,1,.36,1) both; }
+    .step-panel.step-exit-back { animation: stepExitBack .38s cubic-bezier(.22,1,.36,1) both; }
+    .step-panel.step-enter-forward { animation: stepEnterForward .38s cubic-bezier(.22,1,.36,1) both; }
+    .step-panel.step-enter-back { animation: stepEnterBack .38s cubic-bezier(.22,1,.36,1) both; }
     @keyframes stepExitForward { to { opacity: 0; transform: translateX(-24px); } }
     @keyframes stepExitBack { to { opacity: 0; transform: translateX(24px); } }
     @keyframes stepEnterForward { from { opacity: 0; transform: translateX(24px); } }
@@ -320,14 +320,15 @@
     .map-note a { color: var(--green); text-decoration: none; }
     .map-picker-button { border: 0; padding: 0; background: none; color: var(--green); font: inherit; cursor: pointer; text-decoration: underline; }
     .map-picker-button:hover { color: var(--green-l); }
-    .map-picker-modal { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(13,20,16,.62); visibility: hidden; pointer-events: none; opacity: 0; transition: opacity .2s ease, visibility .2s ease; }
+    .map-picker-modal { position: fixed; inset: 0; z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(13,20,16,.62); visibility: hidden; pointer-events: none; opacity: 0; transition: opacity .2s ease, visibility .2s ease; isolation: isolate; }
     .map-picker-modal.active { visibility: visible; pointer-events: auto; opacity: 1; }
-    .map-picker-dialog { width: min(900px, 100%); background: #fff; border-radius: 12px; overflow: hidden; transform: translateY(8px); transition: transform .2s ease; }
-    .map-picker-modal.active .map-picker-dialog { transform: translateY(0); }
-    .map-picker-header, .map-picker-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; }
+    .map-picker-dialog { position: relative; z-index: 0; display: grid; grid-template-rows: auto minmax(260px, 1fr) auto; width: min(900px, 100%); max-height: calc(100dvh - 36px); background: #fff; border-radius: 12px; overflow: hidden; isolation: isolate; contain: layout paint; opacity: .98; transition: opacity .2s ease; }
+    .map-picker-modal.active .map-picker-dialog { opacity: 1; }
+    .map-picker-header, .map-picker-footer { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; background: #fff; }
     .map-picker-header { border-bottom: 1px solid var(--border); }
     .map-picker-header h2 { margin: 0; font: 500 1.2rem var(--font-serif); }
-    .map-picker-map { height: min(62vh, 520px); min-height: 300px; background: var(--light); }
+    .map-picker-map { position: relative; z-index: 0; width: 100%; height: min(62vh, 520px); min-height: 300px; overflow: hidden; isolation: isolate; background: var(--light); }
+    .map-picker-map .leaflet-control-container { position: relative; z-index: 1; }
     .map-picker-status { margin: 0; color: var(--muted); font-size: .75rem; }
     .map-picker-footer { border-top: 1px solid var(--border); }
     .map-picker-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
@@ -414,6 +415,12 @@
       .option-card { flex-direction: column; }
       .frente-modal-body { flex-direction: column; }
       .modal-preview-pane { border-right: none; border-bottom: 1px solid var(--border); flex: none; height: 240px; }
+      .map-picker-modal { padding: 8px; }
+      .map-picker-dialog { max-height: calc(100dvh - 16px); }
+      .map-picker-map { min-height: 260px; }
+      .map-picker-footer { align-items: stretch; flex-direction: column; }
+      .map-picker-actions { justify-content: stretch; }
+      .map-picker-actions .action-btn { flex: 1; justify-content: center; }
     }
 
     /* ── Lenguaje visual global: catálogo arquitectónico ── */
@@ -517,10 +524,10 @@
     .hardware-progress span { color: var(--green); font-size: .68rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
     .hardware-progress strong { font: 500 1rem var(--font-serif); }
     .hardware-progress-track { height: 5px; margin-top: 12px; overflow: hidden; border-radius: 99px; background: var(--light); }
-    .hardware-progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), var(--green-l)); transition: width .22s ease; }
+    .hardware-progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), var(--green-l)); transition: width .38s cubic-bezier(.22,1,.36,1); }
     .hardware-panel { padding: 18px 20px 8px; }
-    .hardware-enter-forward { animation: stepEnterForward .22s ease both; }
-    .hardware-enter-back { animation: stepEnterBack .22s ease both; }
+    .hardware-enter-forward { animation: stepEnterForward .38s cubic-bezier(.22,1,.36,1) both; }
+    .hardware-enter-back { animation: stepEnterBack .38s cubic-bezier(.22,1,.36,1) both; }
     .hardware-step-title { font: 500 1.45rem var(--font-serif); outline: none; }
     .hardware-step-help { margin: 3px 0 14px; color: var(--muted); font-size: .72rem; }
     .hardware-wizard .herraje-section { margin: 0; }
@@ -532,7 +539,9 @@
     .hardware-dot { width: 10px; height: 10px; padding: 0; border: 1px solid var(--border-d); border-radius: 50%; background: #fff; cursor: pointer; }
     .hardware-dot.complete { background: var(--green-fade); border-color: var(--green); }
     .hardware-dot.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,79,46,.13); }
-    .hardware-wizard .herraje-no-aplica, .hardware-wizard .herraje-required-continue, .hardware-wizard .herraje-multi-continue { min-height: 44px; margin-top: 14px; }
+    .hardware-wizard .herraje-no-aplica, .hardware-wizard .herraje-multi-continue { min-height: 44px; margin-top: 14px; }
+    body.selection-feedback :is(.option-card, .material-card, .herr-card, .herr-opt, .herraje-no-aplica, .herraje-multi-continue) { pointer-events: none; }
+    body.selection-feedback :is(.option-card.selected, .material-card.selected, .herr-card.selected, .herr-opt.selected) { transform: scale(1.01); }
 
     /* Cubiertas: catálogo coherente; el modal y su lógica permanecen intactos. */
     .cubierta-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -755,7 +764,7 @@
     <!-- PASO 1: SITUACION -->
     <section class="step-panel active" id="panel-0">
       <div class="options-list">
-        <div class="option-card" id="sit-0" onclick="selectSituation(this,'sin-cocina')">
+        <div class="option-card" id="sit-0" role="button" tabindex="0" aria-pressed="false" onclick="selectSituation(this,'sin-cocina')" onkeydown="activateChoiceCard(event,this)">
           <div class="option-photo">
             <img src="img/customizer/notengococina.jpg" alt="Espacio vacío" loading="eager" fetchpriority="high" />
             <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
@@ -766,7 +775,7 @@
             <p class="option-desc">El espacio está vacío o sin cocina instalada. Diseñamos y fabricamos todo desde cero, adaptado a tus medidas.</p>
           </div>
         </div>
-        <div class="option-card" id="sit-1" onclick="selectSituation(this,'barra-concreto')">
+        <div class="option-card" id="sit-1" role="button" tabindex="0" aria-pressed="false" onclick="selectSituation(this,'barra-concreto')" onkeydown="activateChoiceCard(event,this)">
           <div class="option-photo">
             <img src="img/customizer/solotarja.jpg" alt="Base de concreto existente" loading="eager" />
             <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
@@ -777,7 +786,7 @@
             <p class="option-desc">Hay una base construida pero sin muebles ni frentes. Integramos los módulos a la estructura existente para optimizar el espacio.</p>
           </div>
         </div>
-        <div class="option-card" id="sit-2" onclick="selectSituation(this,'remodelacion')">
+        <div class="option-card" id="sit-2" role="button" tabindex="0" aria-pressed="false" onclick="selectSituation(this,'remodelacion')" onkeydown="activateChoiceCard(event,this)">
           <div class="option-photo">
             <img src="img/customizer/tengococina.jpg" alt="Cocina a remodelar" loading="eager" />
             <div class="photo-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
@@ -795,7 +804,7 @@
     <section class="step-panel" id="panel-1">
       <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Este acabado se aplicará al interior de todos los muebles.</p>
       <div class="material-grid">
-        <div class="material-card" id="int-0" onclick="selectInterior(this,'blanco-frosty')">
+        <div class="material-card" id="int-0" role="button" tabindex="0" aria-pressed="false" onclick="selectInterior(this,'blanco-frosty')" onkeydown="activateChoiceCard(event,this)">
           <div class="material-card-swatch">
             <img src="img/customizer/tabintblancofrosty.jpg" alt="Blanco Frosty" loading="lazy" />
             <div class="material-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
@@ -805,7 +814,7 @@
             <div class="material-card-meta">15 mm · Línea Arauco · $750 / tablero</div>
           </div>
         </div>
-        <div class="material-card" id="int-1" onclick="selectInterior(this,'gris-oxford')">
+        <div class="material-card" id="int-1" role="button" tabindex="0" aria-pressed="false" onclick="selectInterior(this,'gris-oxford')" onkeydown="activateChoiceCard(event,this)">
           <div class="material-card-swatch">
             <img src="img/customizer/tablerointerioroxford.jpg" alt="Gris Oxford" loading="lazy" />
             <div class="material-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
@@ -940,7 +949,7 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     Anterior
   </button>
-  <span class="step-indicator" id="stepIndicator">Paso 1 de 8</span>
+  <span class="step-indicator" id="stepIndicator" role="status" aria-live="polite">Paso 1 de 8</span>
   <button class="nav-btn primary" id="btnNext" onclick="nextStep()">
     Siguiente
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -1009,7 +1018,7 @@
   <section class="map-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="locationMapTitle">
     <header class="map-picker-header"><h2 id="locationMapTitle">Selecciona la ubicación</h2><button type="button" class="action-btn" onclick="closeLocationMap()" aria-label="Cerrar mapa">×</button></header>
     <div class="map-picker-map" id="locationMap" role="application" aria-label="Mapa de OpenStreetMap para elegir la ubicación"></div>
-    <footer class="map-picker-footer"><p class="map-picker-status" id="locationMapStatus" aria-live="polite">Haz clic en el mapa para colocar el pin.</p><div class="map-picker-actions"><button type="button" class="action-btn" onclick="useCurrentLocation()">Usar mi ubicación</button><button type="button" class="action-btn" onclick="closeLocationMap()">Cancelar</button><button type="button" class="action-btn green" onclick="confirmLocationMap()">Confirmar ubicación</button></div></footer>
+    <footer class="map-picker-footer"><p class="map-picker-status" id="locationMapStatus" role="status" aria-live="polite">Haz clic en el mapa para colocar el pin.</p><div class="map-picker-actions"><button type="button" class="action-btn" id="useCurrentLocationButton" aria-describedby="locationMapStatus" onclick="useCurrentLocation()">Usar mi ubicación</button><button type="button" class="action-btn" onclick="closeLocationMap()">Cancelar</button><button type="button" class="action-btn green" onclick="confirmLocationMap()">Confirmar ubicación</button></div></footer>
   </section>
 </div>
 

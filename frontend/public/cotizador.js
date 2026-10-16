@@ -36,6 +36,7 @@ var _submissionStatus = 'idle';
 var _submissionRequest = null;
 var CUSTOMIZER_DRAFT_KEY = 'mhg:kitchen-customizer:draft:v1';
 var _draftSaveTimer = null;
+var _locationSelection = null;
 
 function storageAvailable() {
   try { return !!window.sessionStorage; } catch (error) { return false; }
@@ -73,6 +74,12 @@ function restoreCustomizerDraft() {
     _submissionIdentity = draft.submissionIdentity || null;
     _submissionReceipt = draft.submissionReceipt || null;
     _submissionStatus = _submissionReceipt ? 'success' : 'idle';
+    var savedLocation = draft.locationSelection;
+    if (savedLocation && Number.isFinite(savedLocation.lat) && Number.isFinite(savedLocation.lng)) {
+      _locationSelection = { lat: savedLocation.lat, lng: savedLocation.lng };
+    } else if (state.cliente.lat != null && state.cliente.lng != null) {
+      _locationSelection = { lat: state.cliente.lat, lng: state.cliente.lng };
+    }
     return true;
   } catch (error) {
     window.sessionStorage.removeItem(CUSTOMIZER_DRAFT_KEY);
@@ -87,6 +94,7 @@ function saveCustomizerDraft() {
       version: 1,
       state: state,
       currentStep: _currentStep,
+      locationSelection: _locationSelection,
       submissionIdentity: _submissionIdentity,
       submissionReceipt: _submissionReceipt,
     }));
@@ -1457,6 +1465,7 @@ var HERRAJE_SECTIONS = [
     id:'cajones', title:'Cajones',
     type:'multi', key:'cajones',
     optional:true,
+    confirmLabel:'Confirmar selección',
     opts:[
       { id:'caj-mdf', label:'Con MDF',             desc:'Cajón con estructura interior de MDF, acabado sólido y resistente.',       val:'Con MDF',              img:'img/customizer/cajonmdf.jpg' },
       { id:'caj-alu', label:'Tiro de aluminio',     desc:'Perfil lateral de aluminio anodizado. Apariencia premium y gran dureza.',  val:'Tiro aluminio',        img:'img/customizer/cajontiraaluminio.webp' },
@@ -1509,6 +1518,7 @@ var HERRAJE_SECTIONS = [
     id:'modulos', title:'Módulos especiales',
     type:'multi', key:'modulos',
     optional:true,
+    confirmLabel:'Continuar con módulos',
     opts:[
       { id:'mod-esq', label:'Esquinero extraíble',       desc:'Sistema giratorio para aprovechar las esquinas ciegas.',  val:'Esquinero extraíble', img:'img/customizer/herrajes/esquineroextraible4.jpg', images:['img/customizer/herrajes/esquineroextraible4.jpg', 'img/customizer/herrajes/esquineroextraible1.jpeg', 'img/customizer/herrajes/esquineroextraible2.jpg', 'img/customizer/herrajes/esquineroextraible3.jpg'] },
       { id:'mod-hor', label:'Torre de horno',            desc:'Módulo vertical para horno empotrado a la medida.',       val:'Torre de horno',      img:null },
@@ -1710,8 +1720,6 @@ function actualizarEstadoSeccionesHerrajes() {
   element.setAttribute('data-status', complete ? 'completed' : 'current');
   var next = element.querySelector('.herraje-multi-continue');
   if (next) next.disabled = !(Array.isArray(state[section.key]) && state[section.key].length > 0);
-  var required = element.querySelector('.herraje-required-continue');
-  if (required) required.disabled = !state[section.key] || !!state.herrajesNoAplica[section.id];
   var progress = document.getElementById('hardwareProgressFill');
   if (progress) progress.style.width = ((state.herrajeStepIndex + 1) / HERRAJE_SECTIONS.length * 100) + '%';
 }
@@ -1735,20 +1743,22 @@ function avanzarHerrajesDespuesDe(section) {
   if (index < HERRAJE_SECTIONS.length - 1) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[index + 1].id, true, 1);
   else {
     actualizarEstadoSeccionesHerrajes();
-    showHardwareValidation('Herrajes completos. Ya puedes continuar a Cubierta.', false);
+    showHardwareValidation('Herrajes completos. Continuamos a Cubierta.', false);
+    saveCustomizerDraft();
+    if (_currentStep === 3 && herrajesCompletos()) navigateToStep(4);
   }
   updateSidebar();
   scheduleDraftSave();
 }
 
-function resolverHerraje(section, noAplica) {
+function resolverHerraje(section, noAplica, withFeedback) {
   if (!section || (noAplica && !section.optional)) return false;
   var sectionElement = document.getElementById('sec-' + section.id);
   var noAplicaButton = sectionElement && sectionElement.querySelector('.herraje-no-aplica');
   if (noAplica) {
     state.herrajesNoAplica[section.id] = true;
     state[section.key] = section.type === 'multi' ? [] : null;
-    if (sectionElement) sectionElement.querySelectorAll('.herr-card, .herr-opt').forEach(function(option) { option.classList.remove('selected'); });
+    if (sectionElement) sectionElement.querySelectorAll('.herr-card, .herr-opt').forEach(function(option) { option.classList.remove('selected'); option.setAttribute('aria-pressed', 'false'); });
     if (noAplicaButton) { noAplicaButton.classList.add('selected'); noAplicaButton.setAttribute('aria-pressed', 'true'); }
   } else {
     delete state.herrajesNoAplica[section.id];
@@ -1757,13 +1767,16 @@ function resolverHerraje(section, noAplica) {
   }
   state.herrajesAtendidos[section.id] = true;
   actualizarEstadoSeccionesHerrajes();
+  updateSidebar();
+  saveCustomizerDraft();
+  if (withFeedback) return queueSelectionAdvance(function() { avanzarHerrajesDespuesDe(section); });
   avanzarHerrajesDespuesDe(section);
   return true;
 }
 
 function resolverHerrajeOpcional(id) {
   var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
-  resolverHerraje(section, true);
+  resolverHerraje(section, true, true);
 }
 
 function seleccionarHerrajeRadio(id, val) {
@@ -1771,44 +1784,27 @@ function seleccionarHerrajeRadio(id, val) {
   if (!section || !section.opts.some(function(option) { return option.val === val; })) return false;
   delete state.herrajesNoAplica[section.id];
   state[section.key] = val;
-  state.herrajesAtendidos[section.id] = false;
+  state.herrajesAtendidos[section.id] = true;
   var sectionElement = document.getElementById('sec-' + section.id);
   if (sectionElement) {
     sectionElement.querySelectorAll('.herr-card, .herr-opt').forEach(function(option) {
       option.classList.toggle('selected', option.id === section.opts.find(function(item) { return item.val === val; }).id);
+      option.setAttribute('aria-pressed', String(option.id === section.opts.find(function(item) { return item.val === val; }).id));
     });
     var noAplicaButton = sectionElement.querySelector('.herraje-no-aplica');
     if (noAplicaButton) { noAplicaButton.classList.remove('selected'); noAplicaButton.setAttribute('aria-pressed', 'false'); }
-    var continueButton = sectionElement.querySelector('.herraje-required-continue');
-    if (continueButton) continueButton.disabled = false;
   }
   actualizarEstadoSeccionesHerrajes();
-  showHardwareValidation('Selección guardada. Pulsa Continuar para confirmar.', false);
+  showHardwareValidation('Selección guardada. Continuamos al siguiente subpaso.', false);
   updateSidebar();
-  scheduleDraftSave();
-  return true;
+  saveCustomizerDraft();
+  return queueSelectionAdvance(function() { avanzarHerrajesDespuesDe(section); });
 }
 
 function continuarHerrajeMultiple(id) {
   var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
   if (!section || section.type !== 'multi' || !state[section.key].length) return;
-  resolverHerraje(section, false);
-}
-
-function confirmarHerrajeUnico(id) {
-  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
-  if (!section || section.type !== 'radio') return;
-  var option = section.opts.find(function(item) { return item.val === state[section.key]; });
-  if (!option || state.herrajesNoAplica[section.id]) return;
-  var card = document.getElementById(option.id);
-  if (card) {
-    var body = card.closest('.herraje-section-body');
-    if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(item) { item.classList.remove('selected'); });
-    card.classList.add('selected');
-  }
-  state[section.key] = option.val;
-  resolverHerraje(section, false);
-  updateSidebar();
+  resolverHerraje(section, false, true);
 }
 
 function buildHerrajeContainer() {
@@ -1865,12 +1861,11 @@ function buildHerrajeContainer() {
     }
 
     if (sec.optional) optsHTML += '<button type="button" class="herraje-no-aplica' + (noAplica ? ' selected' : '') + '" aria-pressed="' + String(!!noAplica) + '" onclick="resolverHerrajeOpcional(\'' + sec.id + '\')">No aplica</button>';
-    if (sec.type === 'radio') optsHTML += '<button type="button" class="herraje-required-continue" onclick="confirmarHerrajeUnico(\'' + sec.id + '\')"' + (state[sec.key] && !noAplica ? '' : ' disabled') + '>Continuar</button>';
-    if (sec.type === 'multi') optsHTML += '<button type="button" class="herraje-multi-continue" onclick="continuarHerrajeMultiple(\'' + sec.id + '\')"' + (state[sec.key].length && !noAplica ? '' : ' disabled') + '>Continuar</button>';
+    if (sec.type === 'multi') optsHTML += '<button type="button" class="herraje-multi-continue" onclick="continuarHerrajeMultiple(\'' + sec.id + '\')"' + (state[sec.key].length && !noAplica ? '' : ' disabled') + '>' + sec.confirmLabel + '</button>';
     var complete = herrajeSeccionCompleta(sec);
     return '<article class="herraje-section open' + (complete ? ' completed' : '') + '" id="sec-' + sec.id + '" data-status="' + (complete ? 'completed' : 'current') + '">' +
       '<h3 class="hardware-step-title" id="hardwareStepTitle" tabindex="-1">' + sec.title + '</h3>' +
-      '<p class="hardware-step-help">' + (sec.optional ? 'Elige las opciones que necesites o marca No aplica.' : 'Elige una opción para continuar.') + '</p>' +
+      '<p class="hardware-step-help">' + (sec.type === 'multi' ? 'Elige las opciones que necesites y confirma cuando termines, o marca No aplica.' : (sec.optional ? 'Elige una opción o marca No aplica.' : 'Elige una opción para continuar.')) + '</p>' +
       '<div class="herraje-section-body">' + optsHTML + '</div>' +
     '</article>';
   })();
@@ -1898,7 +1893,7 @@ function toggleHerrajeSection(id) {
 }
 
 function previousHardwareStep() {
-  if (state.herrajeStepIndex > 0) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[state.herrajeStepIndex - 1].id, true, -1);
+  if (!_selectionFeedbackPending && state.herrajeStepIndex > 0) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[state.herrajeStepIndex - 1].id, true, -1);
 }
 
 function focusHardwareHeading() {
@@ -1924,16 +1919,18 @@ function preloadNextHardwareImages() {
 }
 
 function selectHerrajeOpt(el, key, val) {
+  if (_selectionFeedbackPending) return;
   var sectionElement = el.closest('.herraje-section');
   var section = sectionElement && HERRAJE_SECTIONS.find(function(item) { return 'sec-' + item.id === sectionElement.id; });
   if (!section || section.type !== 'radio') return;
   var body = el.closest('.herraje-section-body');
-  if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(o){ o.classList.remove('selected'); });
+  if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(o){ o.classList.remove('selected'); o.setAttribute('aria-pressed', 'false'); });
   seleccionarHerrajeRadio(section.id, val);
   el.setAttribute('aria-pressed', 'true');
 }
 
 function toggleMultiOpt(el, key, val) {
+  if (_selectionFeedbackPending) return;
   var sectionElement = el.closest('.herraje-section');
   var section = sectionElement && HERRAJE_SECTIONS.find(function(item) { return 'sec-' + item.id === sectionElement.id; });
   if (!section) return;
@@ -1956,17 +1953,29 @@ function toggleMultiOpt(el, key, val) {
 
 /* ─── SELECTIONS ─── */
 function selectSituation(el, val) {
-  document.querySelectorAll('.option-card').forEach(function(c){ c.classList.remove('selected'); });
+  if (_selectionFeedbackPending) return;
+  document.querySelectorAll('.option-card').forEach(function(c){ c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
   el.classList.add('selected');
+  el.setAttribute('aria-pressed', 'true');
   state.situacion = val;
   updateSidebar();
+  saveCustomizerDraft();
+  queueSelectionAdvance(function() { navigateToStep(1); });
 }
 
 function selectInterior(el, val) {
-  document.querySelectorAll('.material-card').forEach(function(c){ c.classList.remove('selected'); });
+  if (_selectionFeedbackPending) return;
+  document.querySelectorAll('.material-card').forEach(function(c){ c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
   el.classList.add('selected');
+  el.setAttribute('aria-pressed', 'true');
   state.interior = val;
   updateSidebar();
+  saveCustomizerDraft();
+  queueSelectionAdvance(function() { navigateToStep(2); });
+}
+
+function activateChoiceCard(event, element) {
+  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); element.click(); }
 }
 
 function cubiertaPrecioTexto(key) {
@@ -2290,6 +2299,23 @@ function toggleExtra(el, key, label) {
 /* ─── NAVIGATION / RENDER ─── */
 var _currentStep = 0;
 var _stepTransitioning = false;
+var _selectionFeedbackPending = false;
+var SELECTION_FEEDBACK_MS = 180;
+var STEP_TRANSITION_MS = 380;
+
+function queueSelectionAdvance(callback) {
+  if (_stepTransitioning || _selectionFeedbackPending || typeof callback !== 'function') return false;
+  _selectionFeedbackPending = true;
+  saveCustomizerDraft();
+  setNavigationLocked(true);
+  if (document.body) document.body.classList.add('selection-feedback');
+  window.setTimeout(function() {
+    _selectionFeedbackPending = false;
+    if (document.body) document.body.classList.remove('selection-feedback');
+    callback();
+  }, reducedMotionPreferred() ? 0 : SELECTION_FEEDBACK_MS);
+  return true;
+}
 
 function captureClientDraft() {
   var fields = { nombre:'c-nombre', tel:'c-tel', email:'c-email', fecha:'c-fecha', hora:'c-hora', asesor:'c-asesor', dir:'c-dir', obs:'c-obs' };
@@ -2317,12 +2343,13 @@ function setDraftField(id, value) {
 function applyStateToCustomizerUI() {
   document.querySelectorAll('.option-card.selected, .material-card.selected, .extra-card.active').forEach(function(element) {
     element.classList.remove('selected', 'active');
+    if (element.hasAttribute('aria-pressed')) element.setAttribute('aria-pressed', 'false');
   });
   var situationIds = {'sin-cocina':'sit-0','barra-concreto':'sit-1','remodelacion':'sit-2'};
   var situation = document.getElementById(situationIds[state.situacion]);
-  if (situation) situation.classList.add('selected');
+  if (situation) { situation.classList.add('selected'); situation.setAttribute('aria-pressed', 'true'); }
   var interior = document.getElementById(state.interior === 'blanco-frosty' ? 'int-0' : state.interior === 'gris-oxford' ? 'int-1' : '');
-  if (interior) interior.classList.add('selected');
+  if (interior) { interior.classList.add('selected'); interior.setAttribute('aria-pressed', 'true'); }
   document.querySelectorAll('.cubierta-item').forEach(function(card) { card.classList.remove('selected'); });
   var countertop = document.getElementById(state.cubiertaCategoria ? 'cub-' + state.cubiertaCategoria : '');
   if (countertop) countertop.classList.add('selected');
@@ -2378,7 +2405,7 @@ function setNavigationLocked(locked) {
 }
 
 function renderStep(step, direction) {
-  if (_stepTransitioning || !Number.isInteger(step) || step < 0 || step >= STEPS.length) return false;
+  if (_stepTransitioning || _selectionFeedbackPending || !Number.isInteger(step) || step < 0 || step >= STEPS.length) return false;
   var previousStep = _currentStep;
   var previousPanel = document.getElementById('panel-' + previousStep);
   var nextPanel = document.getElementById('panel-' + step);
@@ -2405,7 +2432,7 @@ function renderStep(step, direction) {
     previousPanel.classList.add('active', forward ? 'step-exit-forward' : 'step-exit-back');
     nextPanel.classList.add('active', forward ? 'step-enter-forward' : 'step-enter-back');
     if (reducedMotionPreferred()) finishTransition();
-    else window.setTimeout(finishTransition, 220);
+    else window.setTimeout(finishTransition, STEP_TRANSITION_MS);
   } else {
     finishTransition();
   }
@@ -2430,7 +2457,7 @@ function renderStep(step, direction) {
   var next = document.getElementById('btnNext');
   if (prev) prev.disabled = step === 0;
   if (next) {
-    if (step === total - 1) {
+    if (step === total - 1 || step === 3) {
       next.style.display = 'none';
     } else {
       next.style.display = '';
@@ -2445,7 +2472,7 @@ function renderStep(step, direction) {
   updateSidebar();
   if (_stepTransitioning) setNavigationLocked(true);
   clearValidation();
-  if (step === 6) warmLocationMap();
+  if (step === 6) prepareLocationMapResources();
   preloadNextStepImages(step);
   scheduleDraftSave();
   window.scrollTo({ top: 0, behavior: reducedMotionPreferred() ? 'auto' : 'smooth' });
@@ -2574,7 +2601,7 @@ function validateStep(step) {
 }
 
 function navigateToStep(target) {
-  if (_stepTransitioning || !Number.isInteger(target) || target < 0 || target >= STEPS.length) return false;
+  if (_stepTransitioning || _selectionFeedbackPending || !Number.isInteger(target) || target < 0 || target >= STEPS.length) return false;
   if (target > _currentStep) {
     for (var step = _currentStep; step < target; step++) {
       if (!validateStep(step)) return false;
@@ -2614,23 +2641,17 @@ function preloadNextStepImages(step) {
 
 /* ─── LEAFLET + OPENSTREETMAP LOCATION PICKER ─── */
 var _locationMap = null;
+var _locationTileLayer = null;
 var _locationMarker = null;
-var _locationSelection = null;
 var _locationPreviousOverflow = '';
 var _locationReturnFocus = null;
 var _locationEscapeHandler = null;
-var _locationWarmScheduled = false;
+var _locationRequestPending = false;
 
-function warmLocationMap() {
-  if (_locationMap || _locationWarmScheduled || !window.L) return;
-  _locationWarmScheduled = true;
-  var warm = function() {
-    _locationWarmScheduled = false;
-    _locationSelection = state.cliente.lat != null && state.cliente.lng != null ? { lat: state.cliente.lat, lng: state.cliente.lng } : null;
-    initializeLocationMap();
-  };
-  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(warm, { timeout: 1500 });
-  else window.setTimeout(warm, 250);
+function prepareLocationMapResources() {
+  /* Leaflet is loaded by the document and OSM is preconnected in <head>.
+     Do not construct or measure a full map while its modal is hidden. */
+  return !!window.L;
 }
 
 function openLocationMap() {
@@ -2642,19 +2663,19 @@ function openLocationMap() {
   _locationPreviousOverflow = document.body.style.overflow;
   _locationReturnFocus = document.activeElement;
   document.body.style.overflow = 'hidden';
+  if (_locationEscapeHandler) document.removeEventListener('keydown', _locationEscapeHandler);
   _locationEscapeHandler = function(event) { if (event.key === 'Escape') closeLocationMap(); };
   document.addEventListener('keydown', _locationEscapeHandler);
   var closeButton = modal.querySelector('button[aria-label="Cerrar mapa"]');
   if (closeButton) closeButton.focus({ preventScroll: true });
-  _locationSelection = state.cliente.lat != null && state.cliente.lng != null
-    ? { lat: state.cliente.lat, lng: state.cliente.lng }
-    : null;
+  if (!_locationSelection && state.cliente.lat != null && state.cliente.lng != null) {
+    _locationSelection = { lat: state.cliente.lat, lng: state.cliente.lng };
+  }
   if (!window.L) {
     if (status) status.textContent = 'No se pudo cargar el mapa. Puedes escribir la dirección manualmente.';
     return;
   }
-  /* The modal is animated from a hidden state. Wait for two layout frames so
-     Leaflet never measures the map at 0px and renders an unclickable tile pane. */
+  /* Wait until the modal has participated in layout before Leaflet measures it. */
   window.requestAnimationFrame(function() {
     window.requestAnimationFrame(initializeLocationMap);
   });
@@ -2671,27 +2692,35 @@ function initializeLocationMap() {
   });
   var center = _locationSelection || { lat: 18.90, lng: -96.97 };
   if (!_locationMap) {
-    _locationMap = window.L.map(node, { zoomControl: true }).setView([center.lat, center.lng], 15);
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    _locationMap = window.L.map(node, {
+      zoomControl: true,
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+    }).setView([center.lat, center.lng], 15);
+    _locationTileLayer = window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      updateWhenIdle: true,
+      keepBuffer: 2,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(_locationMap);
+    });
+    _locationTileLayer.addTo(_locationMap);
     _locationMap.on('click', function(event) { setLocationMarker(event.latlng); });
   }
   _locationMap.setView([center.lat, center.lng], _locationSelection ? 17 : 15);
   if (_locationSelection) setLocationMarker(_locationSelection, false);
   else if (_locationMarker) { _locationMap.removeLayer(_locationMarker); _locationMarker = null; }
-  _locationMap.invalidateSize();
-  window.setTimeout(function() { if (_locationMap) _locationMap.invalidateSize(); }, 250);
+  _locationMap.invalidateSize({ pan: false, animate: false });
   if (status) status.textContent = _locationSelection ? 'Puedes mover el pin y confirmar la ubicación.' : 'Haz clic en el mapa para colocar el pin.';
 }
 
 function setLocationMarker(position, updateStatus) {
-  if (!_locationMap || !window.L) return;
   var lat = typeof position.lat === 'function' ? position.lat() : Number(position.lat);
   var lng = typeof position.lng === 'function' ? position.lng() : Number(position.lng);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
   _locationSelection = { lat: lat, lng: lng };
+  saveCustomizerDraft();
+  if (!_locationMap || !window.L) return;
   if (!_locationMarker) {
     _locationMarker = window.L.marker([lat, lng], { draggable: true, autoPan: true, title: 'Ubicación de instalación' }).addTo(_locationMap);
     _locationMarker.on('dragend', function(event) { setLocationMarker(event.target.getLatLng()); });
@@ -2704,17 +2733,31 @@ function setLocationMarker(position, updateStatus) {
 
 function useCurrentLocation() {
   var status = document.getElementById('locationMapStatus');
+  var button = document.getElementById('useCurrentLocationButton');
   if (!navigator.geolocation) {
     if (status) status.textContent = 'Tu navegador no permite obtener la ubicación. Coloca el pin manualmente.';
     return;
   }
+  if (_locationRequestPending) return;
+  _locationRequestPending = true;
+  if (button) button.disabled = true;
   if (status) status.textContent = 'Obteniendo tu ubicación…';
   navigator.geolocation.getCurrentPosition(function(position) {
     var point = { lat: position.coords.latitude, lng: position.coords.longitude };
     setLocationMarker(point);
     if (_locationMap) _locationMap.setView([point.lat, point.lng], 17);
-  }, function() {
-    if (status) status.textContent = 'No fue posible obtener tu ubicación. Coloca el pin manualmente.';
+    _locationRequestPending = false;
+    if (button) button.disabled = false;
+    if (status) status.textContent = 'Ubicación obtenida. Puedes ajustar el pin y confirmar.';
+  }, function(error) {
+    _locationRequestPending = false;
+    if (button) button.disabled = false;
+    var messages = {
+      1: 'El permiso de ubicación está bloqueado. Permítelo en la configuración del sitio o coloca el pin manualmente.',
+      2: 'Tu dispositivo no pudo determinar la ubicación. Intenta de nuevo o coloca el pin manualmente.',
+      3: 'La solicitud de ubicación tardó demasiado. Intenta de nuevo o coloca el pin manualmente.',
+    };
+    if (status) status.textContent = messages[error && error.code] || 'No fue posible obtener tu ubicación. Coloca el pin manualmente.';
   }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
 }
 
