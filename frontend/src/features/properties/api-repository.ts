@@ -110,8 +110,8 @@ export class ApiPropertyRepository implements PropertyRepository {
   private async request(path: string): Promise<Response> {
     return this.fetcher(this.baseUrl + path, {
       headers: { Accept: "application/json" },
-      // Preserve the existing build-time property pages until publication/ISR is designed.
-      cache: "force-cache",
+      // Publishing in the CRM must be visible without rebuilding the frontend.
+      cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
   }

@@ -5,11 +5,7 @@ import PropertyDetail from "@/features/properties/components/PropertyDetail";
 import { propertySeoDescription } from "@/features/properties/presentation";
 
 type Props = { params: Promise<{ slug: string }> };
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
-  return (await propertyRepository.listPublished()).map(property => ({ slug: property.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const property = await propertyRepository.getPublishedBySlug((await params).slug);

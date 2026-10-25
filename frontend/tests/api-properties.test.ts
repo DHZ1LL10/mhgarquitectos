@@ -73,11 +73,22 @@ test("adapter rejects malformed/private/mismatched records instead of masking fa
   await assert.rejects(() => repeated.listPublished(), /duplicate/);
 });
 
-test("configuration keeps local default and requires explicit API configuration", async () => {
-  assert.ok((await createConfiguredPropertyRepository({}).listPublished()).length > 0);
+test("configuration keeps API authoritative and local fixtures require an explicit opt-in", async () => {
+  assert.throws(() => createConfiguredPropertyRepository({}), /required/);
+  assert.ok((await createConfiguredPropertyRepository({ PROPERTY_REPOSITORY: "local" }).listPublished()).length > 0);
   assert.throws(() => createConfiguredPropertyRepository({ PROPERTY_REPOSITORY: "api" }), /required/);
   assert.throws(() => createConfiguredPropertyRepository({ PROPERTY_REPOSITORY: "typo" }), /local or api/);
   assert.ok(createConfiguredPropertyRepository({ PROPERTY_REPOSITORY: "api", PROPERTY_API_BASE_URL: "http://localhost:8000/api/v1" }) instanceof ApiPropertyRepository);
   assert.throws(() => new ApiPropertyRepository("https://user:password@example.com/api/v1"), /without credentials/);
+});
+
+test("public API reads bypass stale build caches", async () => {
+  let options: RequestInit | undefined;
+  const repository = new ApiPropertyRepository("http://localhost:8000/api/v1", async (_url, request) => {
+    options = request;
+    return reply([]);
+  });
+  await repository.listPublished();
+  assert.equal(options?.cache, "no-store");
 });
 

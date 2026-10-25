@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import HomeSections from "@/components/site/HomeSections";
 import { propertyRepository } from "@/features/properties";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "MHG Arquitectos | Diseño, Construcción y Mobiliario — Fortín de las Flores, Veracruz",
   description: "MHG Arquitectos: Diseño y construcción, cocinas integrales, mobiliario general e interiorismo en Fortín de las Flores y Tuxtepec, Veracruz. Más de 6 años de experiencia.",

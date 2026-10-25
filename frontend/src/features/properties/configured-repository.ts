@@ -8,7 +8,7 @@ type RepositoryEnvironment = {
 };
 
 export function createConfiguredPropertyRepository(env: RepositoryEnvironment): PropertyRepository {
-  const source = env.PROPERTY_REPOSITORY || "local";
+  const source = env.PROPERTY_REPOSITORY || "api";
   if (source === "local") return createLocalPropertyRepository();
   if (source !== "api") throw new Error("PROPERTY_REPOSITORY must be local or api");
   if (!env.PROPERTY_API_BASE_URL) throw new Error("PROPERTY_API_BASE_URL is required in api mode");
