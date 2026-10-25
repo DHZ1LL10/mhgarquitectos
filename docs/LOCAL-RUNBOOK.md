@@ -43,14 +43,15 @@ En `frontend/.env.local`, usa:
 
 ```dotenv
 SITE_URL=http://localhost:3000
-PROPERTY_REPOSITORY=local
+PROPERTY_REPOSITORY=api
 PROPERTY_API_BASE_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
 CUSTOMIZER_API_BASE_URL=http://localhost:8000/api/v1
 NEXT_TELEMETRY_DISABLED=1
 ```
 
-`PROPERTY_API_BASE_URL` sólo se consulta si `PROPERTY_REPOSITORY=api`. Las demás URLs
+`PROPERTY_REPOSITORY=api` mantiene landing, catálogo y administración sobre PostgreSQL.
+`local` queda únicamente como fixture explícito para pruebas aisladas. Las demás URLs
 locales mantienen el admin y el customizador contra la API Docker.
 
 ## C. Backend, PostgreSQL y migraciones
@@ -111,6 +112,21 @@ argumento ni guardarse en documentación. No existe registro público de adminis
 | Login admin | `http://localhost:3000/admin/login` |
 | API health | `http://localhost:8000/health` |
 | OpenAPI local | `http://localhost:8000/docs` |
+
+## F.1 Datos sintéticos para la demostración CRM
+
+Con API y PostgreSQL activos, carga una vez los escenarios locales:
+
+```powershell
+cd backend
+docker compose exec api python -m app.scripts.seed_admin_demo
+```
+
+El comando es idempotente y se niega a correr fuera de `ENVIRONMENT=local`. Conserva
+registros existentes, no reinicia folios y no envía correo ni WhatsApp. Crea tres clientes,
+tres citas y tres cocinas sintéticas enlazadas; también importa Mata Larga como publicada y
+crea una propiedad borrador y una archivada. Los correos usan `example.com` y los teléfonos
+sintéticos están bloqueados por el frontend para acciones externas.
 
 ## G. Detener y volver a iniciar
 
