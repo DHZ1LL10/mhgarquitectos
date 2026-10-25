@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import case, func, select
 
 from app.appointments.models import Appointment
@@ -42,6 +43,69 @@ def submission_map(db: Database, field, ids) -> dict:
         return {}
     items = db.scalars(select(KitchenSubmission).where(field.in_(ids))).all()
     return {getattr(item, field.key): SubmissionReference.model_validate(item) for item in items}
+
+
+def lead_details(db: Database, item: Lead) -> LeadDetails:
+    submission = db.scalar(select(KitchenSubmission).where(KitchenSubmission.lead_id == item.id))
+    appointment = db.get(Appointment, item.appointment_id) if item.appointment_id else None
+    configuration = (
+        db.get(KitchenConfiguration, item.kitchen_configuration_id)
+        if item.kitchen_configuration_id
+        else None
+    )
+    location = appointment or configuration
+    return LeadDetails(
+        **LeadOutput.model_validate(item).model_dump(),
+        submission=SubmissionReference.model_validate(submission) if submission else None,
+        appointment=AppointmentOutput.model_validate(appointment) if appointment else None,
+        address=location.address if location else None,
+        latitude=location.latitude if location else None,
+        longitude=location.longitude if location else None,
+    )
+
+
+def appointment_details(db: Database, item: Appointment) -> AppointmentDetails:
+    contacts = db.scalars(select(Lead).where(Lead.appointment_id == item.id)).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [lead.id for lead in contacts])
+    submission = db.scalar(
+        select(KitchenSubmission).where(KitchenSubmission.appointment_id == item.id)
+    )
+    return AppointmentDetails(
+        **AppointmentOutput.model_validate(item).model_dump(),
+        leads=[
+            LeadDetails(
+                **LeadOutput.model_validate(lead).model_dump(),
+                submission=lead_submissions.get(lead.id),
+            )
+            for lead in contacts
+        ],
+        submission=SubmissionReference.model_validate(submission) if submission else None,
+    )
+
+
+def kitchen_details(db: Database, item: KitchenConfiguration) -> KitchenDetails:
+    contacts = db.scalars(select(Lead).where(Lead.kitchen_configuration_id == item.id)).all()
+    related = db.scalars(
+        select(Appointment).where(
+            Appointment.id.in_([lead.appointment_id for lead in contacts if lead.appointment_id])
+        )
+    ).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [lead.id for lead in contacts])
+    submission = db.scalar(
+        select(KitchenSubmission).where(KitchenSubmission.configuration_id == item.id)
+    )
+    return KitchenDetails(
+        **KitchenOutput.model_validate(item).model_dump(),
+        leads=[
+            LeadDetails(
+                **LeadOutput.model_validate(lead).model_dump(),
+                submission=lead_submissions.get(lead.id),
+            )
+            for lead in contacts
+        ],
+        appointments=[AppointmentOutput.model_validate(appointment) for appointment in related],
+        submission=SubmissionReference.model_validate(submission) if submission else None,
+    )
 
 
 @router.get("/dashboard")
@@ -147,6 +211,14 @@ def leads(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Quer
     ]
 
 
+@router.get("/leads/{id}", response_model=LeadDetails)
+def lead(id: UUID, db: Database):
+    item = db.get(Lead, id)
+    if item is None:
+        raise HTTPException(404, "Lead not found")
+    return lead_details(db, item)
+
+
 @router.get("/appointments", response_model=list[AppointmentDetails])
 def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
     priority = case(
@@ -182,6 +254,14 @@ def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int
         )
         for item in items
     ]
+
+
+@router.get("/appointments/{id}", response_model=AppointmentDetails)
+def appointment(id: UUID, db: Database):
+    item = db.get(Appointment, id)
+    if item is None:
+        raise HTTPException(404, "Appointment not found")
+    return appointment_details(db, item)
 
 
 @router.get("/kitchen-configurations", response_model=list[KitchenDetails])
@@ -228,3 +308,23 @@ def kitchens(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Q
         )
         for item in items
     ]
+
+
+@router.get("/kitchen-configurations/{id}", response_model=KitchenDetails)
+def kitchen(id: UUID, db: Database):
+    item = db.get(KitchenConfiguration, id)
+    if item is None:
+        raise HTTPException(404, "Kitchen configuration not found")
+    return kitchen_details(db, item)
+
+
+@router.get(
+    "/properties/{id}",
+    response_model=PropertyOutput,
+    dependencies=[Depends(require_admin)],
+)
+def property_detail(id: UUID, db: Database):
+    item = db.get(Property, id)
+    if item is None:
+        raise HTTPException(404, "Property not found")
+    return item

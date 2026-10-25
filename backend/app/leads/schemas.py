@@ -29,3 +29,7 @@ class LeadCreate(ContactInput):
 
 class LeadOutput(LeadCreate, TimestampOutput):
     status: LeadStatus
+
+
+class LeadStatusPatch(InputModel):
+    status: LeadStatus

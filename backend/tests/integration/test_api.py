@@ -12,6 +12,7 @@ from app.kitchen_configurations.submission_models import KitchenSubmission
 from app.kitchen_configurations.submissions import notifier_dependency
 from app.leads.models import Lead
 from app.properties.models import Property
+from app.scripts.seed_admin_demo import seed_crm_scenarios, seed_properties
 from tests.payloads import appointment_payload, contact_payload, kitchen_payload, property_payload
 
 
@@ -104,6 +105,28 @@ def test_properties_crud_public_filter_slug_and_images(client):
         ).status_code
         == 409
     )
+    assert client.get(f"/api/v1/admin/properties/{items[0]['id']}").status_code == 200
+    assert client.get(f"/api/v1/admin/properties/{uuid4()}").status_code == 404
+
+
+def test_local_crm_seed_is_idempotent_and_keeps_synthetic_properties_private(connection):
+    from sqlalchemy.orm import Session
+
+    with Session(
+        bind=connection, join_transaction_mode="create_savepoint", expire_on_commit=False
+    ) as db:
+        assert seed_properties(db) == 3
+        assert seed_crm_scenarios(db) == 3
+        db.commit()
+        assert seed_properties(db) == 0
+        assert seed_crm_scenarios(db) == 0
+        db.commit()
+        assert db.scalar(select(func.count()).select_from(Lead)) == 3
+        assert db.scalar(select(func.count()).select_from(Appointment)) == 3
+        assert db.scalar(select(func.count()).select_from(KitchenConfiguration)) == 3
+        assert db.scalar(select(func.count()).select_from(KitchenSubmission)) == 3
+        published = db.scalars(select(Property.slug).where(Property.status == "published")).all()
+        assert published == ["residencia-mata-larga-fortin"]
 
 
 def test_pagination_and_validation(client):

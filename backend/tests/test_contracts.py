@@ -208,6 +208,23 @@ def test_staging_email_override_is_mandatory_and_authoritative():
         Settings(db_password="test", staging_email_override="internal@example.com")
 
 
+def test_crm_demo_seed_refuses_non_local_environment(monkeypatch):
+    from types import SimpleNamespace
+
+    from app.scripts import seed_admin_demo
+
+    monkeypatch.setattr(
+        seed_admin_demo, "get_settings", lambda: SimpleNamespace(environment="staging")
+    )
+    monkeypatch.setattr(
+        seed_admin_demo,
+        "SessionLocal",
+        lambda: (_ for _ in ()).throw(AssertionError("database must not be opened")),
+    )
+    with pytest.raises(SystemExit, match="outside ENVIRONMENT=local"):
+        seed_admin_demo.main()
+
+
 def test_admin_operations_default_deny_and_openapi():
     db = MagicMock()
     app.dependency_overrides[get_db] = lambda: db

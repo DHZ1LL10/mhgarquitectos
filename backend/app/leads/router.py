@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Request
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
 
 from app.auth.security import enforce_public_rate_limit
-from app.dependencies import Configuration, Database
+from app.dependencies import Configuration, Database, require_admin
 from app.leads.models import Lead
-from app.leads.schemas import LeadCreate, LeadOutput
+from app.leads.schemas import LeadCreate, LeadOutput, LeadStatusPatch
 from app.leads.service import validate_references
 
 router = APIRouter(prefix="/leads", tags=["Leads · public"])
@@ -15,6 +18,22 @@ def create_lead(payload: LeadCreate, request: Request, db: Database, settings: C
     validate_references(payload, db)
     item = Lead(**payload.model_dump())
     db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.patch(
+    "/{id}/status",
+    response_model=LeadOutput,
+    dependencies=[Depends(require_admin)],
+    description="Update only the commercial status of a lead.",
+)
+def update_lead_status(id: UUID, payload: LeadStatusPatch, db: Database):
+    item = db.scalar(select(Lead).where(Lead.id == id).with_for_update())
+    if item is None:
+        raise HTTPException(404, "Lead not found")
+    item.status = payload.status
     db.commit()
     db.refresh(item)
     return item

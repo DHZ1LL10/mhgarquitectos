@@ -167,6 +167,16 @@ def test_staff_permissions_and_admin_writes(anonymous_client, connection):
         assert anonymous_client.get("/api/v1/admin/" + path).status_code == 200
     assert anonymous_client.get("/api/v1/admin/properties").status_code == 403
     assert anonymous_client.post("/api/v1/properties", json=property_payload()).status_code == 403
+    lead = anonymous_client.post(
+        "/api/v1/leads",
+        json={"source": "website", "name": "Persona sintética", "phone": "0000000000"},
+    ).json()
+    assert (
+        anonymous_client.patch(
+            f"/api/v1/leads/{lead['id']}/status", json={"status": "contacted"}
+        ).status_code
+        == 403
+    )
     appointment = anonymous_client.post("/api/v1/appointments", json=appointment_payload()).json()
     assert (
         anonymous_client.patch(
@@ -176,6 +186,18 @@ def test_staff_permissions_and_admin_writes(anonymous_client, connection):
     )
     add_user(connection)
     assert login(anonymous_client).status_code == 200
+    assert (
+        anonymous_client.patch(
+            f"/api/v1/leads/{lead['id']}/status", json={"status": "contacted"}
+        ).json()["status"]
+        == "contacted"
+    )
+    assert (
+        anonymous_client.patch(
+            f"/api/v1/leads/{lead['id']}/status", json={"status": "unknown"}
+        ).status_code
+        == 422
+    )
     prop = anonymous_client.post("/api/v1/properties", json=property_payload())
     assert prop.status_code == 201
     assert (
@@ -235,6 +257,23 @@ def test_administrative_related_records_and_no_store(client):
     assert dashboard["pending_confirmation_appointments"] == 0
     assert dashboard["published_properties"] == 0
     assert client.get("/api/v1/admin/leads?limit=101").status_code == 422
+    assert (
+        client.get(f"/api/v1/admin/leads/{saved['lead_id']}").json()["submission"]["folio"]
+        == saved["folio"]
+    )
+    assert (
+        client.get(f"/api/v1/admin/appointments/{saved['appointment_id']}").json()["leads"][0]["id"]
+        == saved["lead_id"]
+    )
+    assert (
+        client.get(f"/api/v1/admin/kitchen-configurations/{saved['configuration_id']}").json()[
+            "submission"
+        ]["folio"]
+        == saved["folio"]
+    )
+    assert client.get(f"/api/v1/admin/leads/{uuid4()}").status_code == 404
+    assert client.get(f"/api/v1/admin/appointments/{uuid4()}").status_code == 404
+    assert client.get(f"/api/v1/admin/kitchen-configurations/{uuid4()}").status_code == 404
 
 
 def test_database_email_uniqueness_and_session_cascade(client, connection):
