@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { AdminApi, ApiError, resolveAdminApiBaseUrl } from "../src/features/admin/api-client.ts";
 import { initialSessionError } from "../src/features/admin/auth-state.ts";
-import { confirmedDateTime, emptyProperty, leadWhatsAppUrl, localDateTime, openStreetMapUrl, parseUser, propertyInput, transitions } from "../src/features/admin/contracts.ts";
+import { appointmentWhatsAppMessage, appointmentWhatsAppUrl, confirmedDateTime, emptyProperty, leadWhatsAppUrl, localDateTime, openStreetMapUrl, parseUser, phoneDigits, propertyInput, transitions } from "../src/features/admin/contracts.ts";
 
 test("admin HTTP client sends cookies, CSRF header and no cache", async () => {
   const client = new AdminApi("https://api.example.com/api/v1/", async (url, options) => {
@@ -116,7 +116,7 @@ test("user contract fails closed for inactive and unknown roles", () => {
 });
 
 test("admin client and UI do not persist tokens or use demo storage", () => {
-  for (const file of ["AdminPanel.tsx", "Login.tsx", "api-client.ts"]) {
+  for (const file of ["Login.tsx", "api-client.ts", "layout/AdminShell.tsx", "shared/session.tsx"]) {
     const source = readFileSync(new URL(`../src/features/admin/${file}`, import.meta.url), "utf8");
     assert.doesNotMatch(source, /localStorage|sessionStorage|document\.cookie|saveDemoProperty|createDemoProperties/);
   }
@@ -128,8 +128,30 @@ test("admin contact links use real lead phone, folio and OpenStreetMap", () => {
   assert.match(whatsapp || "", /^https:\/\/wa\.me\/522722200485\?text=/);
   assert.match(decodeURIComponent(whatsapp || ""), /MHG-ABC/);
   assert.match(decodeURIComponent(whatsapp || ""), /Fortín/);
-  assert.match(decodeURIComponent(whatsapp || ""), /12\/10\/2030/);
-  assert.match(decodeURIComponent(whatsapp || ""), /Queremos confirmar/);
+  const decoded = decodeURIComponent(whatsapp || "");
+  assert.match(decoded, /12 de octubre de 2030/);
+  assert.match(decoded, /Hora: .*10:00/);
+  assert.match(decoded, /Queremos confirmar/);
+  assert.doesNotMatch(decoded, /�/);
+  assert.match(whatsapp || "", /%F0%9F%91%8B/);
   assert.match(openStreetMapUrl(19.043, -98.198) || "", /openstreetmap\.org/);
   assert.equal(openStreetMapUrl(null, -98.198), null);
+});
+
+test("pending and confirmed WhatsApp templates preserve Unicode, date, time and URL encoding", () => {
+  const base = { name: "María", phone: "272 220 0485", submission: { folio: "COC-00003" }, appointment: { requested_datetime: "2030-10-12T16:00:00.000Z", confirmed_datetime: "2030-10-12T17:30:00.000Z", status: "confirmed", branch: "Fortín", address: "Mata Larga", latitude: 18.9, longitude: -96.97 } } as never;
+  const pending = appointmentWhatsAppMessage(base, "pending");
+  const confirmed = appointmentWhatsAppMessage(base, "confirmed");
+  assert.match(pending, /Fecha propuesta:/); assert.match(pending, /Hora:/); assert.match(pending, /¿Te funciona este horario\?/);
+  assert.match(confirmed, /quedó confirmada/); assert.match(confirmed, /Fecha:/); assert.match(confirmed, /Hora:/);
+  assert.match(pending, /👋/); assert.match(confirmed, /📋/); assert.doesNotMatch(pending + confirmed, /�/);
+  const encoded = appointmentWhatsAppUrl(base, "confirmed") || "";
+  assert.equal(decodeURIComponent(encoded.split("?text=")[1]), confirmed);
+  assert.match(encoded, /%F0%9F%91%8B/);
+});
+
+test("synthetic or malformed phone numbers never produce external actions", () => {
+  assert.equal(phoneDigits("0000000001"), null);
+  assert.equal(phoneDigits("sin teléfono"), null);
+  assert.equal(phoneDigits("272 220 0485"), "522722200485");
 });
