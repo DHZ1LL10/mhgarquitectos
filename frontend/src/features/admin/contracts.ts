@@ -1,4 +1,4 @@
-import type { AppointmentStatus, Lead, PropertyInput, User } from "./types.ts";
+import type { AppointmentStatus, Lead, LeadStatus, PropertyInput, User } from "./types.ts";
 
 export function parseUser(value: unknown): User {
   if (!value || typeof value !== "object") throw new Error("Respuesta de usuario inválida");
@@ -17,7 +17,7 @@ export const transitions: Record<AppointmentStatus, AppointmentStatus[]> = {
   requested: ["pending_confirmation", "confirmed", "cancelled"], pending_confirmation: ["confirmed", "cancelled"], confirmed: ["completed", "cancelled"], completed: [], cancelled: [],
 };
 export const appointmentLabels: Record<AppointmentStatus, string> = { requested: "Nueva solicitud", pending_confirmation: "Por confirmar", confirmed: "Confirmada", completed: "Finalizada", cancelled: "Cancelada" };
-export const leadStatusLabels: Record<string, string> = { new: "Nueva", contacted: "Contactado", qualified: "Calificado", closed: "Cerrado" };
+export const leadStatusLabels: Record<LeadStatus, string> = { new: "Nuevo", contacted: "Contactado", qualified: "En seguimiento", closed: "Cerrado" };
 export const leadSourceLabels: Record<string, string> = { kitchen_customizer: "Configurador de cocinas", kitchen: "Solicitud de cocina", property: "Catálogo de propiedades", website: "Sitio web" };
 export function localDateTime(iso: string | null): string {
   if (!iso) return "";
@@ -36,25 +36,73 @@ export function openStreetMapUrl(latitude: number | null, longitude: number | nu
   return `https://www.openstreetmap.org/?mlat=${latitude.toFixed(6)}&mlon=${longitude.toFixed(6)}#map=18/${latitude.toFixed(6)}/${longitude.toFixed(6)}`;
 }
 
-export function leadWhatsAppUrl(lead: Pick<Lead, "name" | "phone" | "submission" | "appointment">): string | null {
-  let digits = lead.phone.replace(/\D/g, "");
+export function phoneDigits(phone: string): string | null {
+  let digits = phone.replace(/\D/g, "");
+  if (/^0{6}/.test(digits)) return null;
   if (digits.length === 10) digits = "52" + digits;
   if (digits.length < 7 || digits.length > 15) return null;
+  return digits;
+}
+
+function appointmentMessageLines(
+  lead: Pick<Lead, "name" | "submission" | "appointment">,
+  mode: "pending" | "confirmed",
+): string[] {
   const appointment = lead.appointment;
   const requested = appointment ? new Date(appointment.requested_datetime) : null;
   const confirmed = appointment?.confirmed_datetime ? new Date(appointment.confirmed_datetime) : null;
-  const selected = confirmed || requested;
-  const stateText = appointment?.status === "confirmed" ? "Tu cita está confirmada. Estos son los datos:" : "Queremos confirmar contigo la visita de levantamiento. ¿Este horario te funciona?";
-  const lines = [
-    `Hola ${lead.name} 👋`, "", "Te contactamos de MHG Arquitectos por tu solicitud de cocina.", "",
+  const selected = mode === "confirmed" ? confirmed || requested : requested;
+  const detailLines = [
     ...(lead.submission?.folio ? [`📋 Folio: ${lead.submission.folio}`] : []),
-    ...(selected ? [`📅 Fecha: ${selected.toLocaleDateString("es-MX")}`, `🕐 Hora: ${selected.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}`] : []),
+    ...(selected ? [`📅 ${mode === "pending" ? "Fecha propuesta" : "Fecha"}: ${selected.toLocaleDateString("es-MX", { dateStyle: "long" })}`, `🕐 Hora: ${selected.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: true })}`] : []),
     ...(appointment?.branch ? [`📍 Sucursal: ${appointment.branch}`] : []),
     ...(appointment?.address ? [`🏠 Dirección: ${appointment.address}`] : []),
     ...(appointment ? (() => { const map = openStreetMapUrl(appointment.latitude, appointment.longitude); return map ? [`🗺️ Ubicación: ${map}`] : []; })() : []),
-    "", stateText, "", "MHG Arquitectos",
   ];
-  return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join("\n"))}`;
+  return mode === "confirmed"
+    ? [
+      `Hola, ${lead.name} 👋`, "", "Tu visita con MHG Arquitectos quedó confirmada.", "",
+      ...detailLines, "", "Nos vemos en el horario acordado.",
+      "Si necesitas hacer algún cambio, puedes responder a este mensaje.", "", "MHG Arquitectos",
+    ]
+    : [
+      `Hola, ${lead.name} 👋`, "", "Te contactamos de MHG Arquitectos por tu solicitud de cocina.", "",
+      ...detailLines, "", "Queremos confirmar contigo la visita de levantamiento.",
+      "¿Te funciona este horario?", "",
+      "Si necesitas cambiar la fecha u hora, indícanos qué horario te acomoda mejor.", "", "MHG Arquitectos",
+    ];
+}
+
+export function appointmentWhatsAppMessage(
+  lead: Pick<Lead, "name" | "submission" | "appointment">,
+  mode: "pending" | "confirmed",
+): string {
+  return appointmentMessageLines(lead, mode).join("\n");
+}
+
+export function appointmentWhatsAppUrl(
+  lead: Pick<Lead, "name" | "phone" | "submission" | "appointment">,
+  mode: "pending" | "confirmed",
+): string | null {
+  const digits = phoneDigits(lead.phone);
+  if (!digits) return null;
+  const message = appointmentWhatsAppMessage(lead, mode);
+  if (message.includes("�")) throw new Error("El mensaje contiene caracteres Unicode inválidos");
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
+export function leadWhatsAppUrl(lead: Pick<Lead, "name" | "phone" | "submission" | "appointment">): string | null {
+  const mode = lead.appointment?.status === "confirmed" || lead.appointment?.status === "completed" ? "confirmed" : "pending";
+  return appointmentWhatsAppUrl(lead, mode);
+}
+
+export function phoneUrl(phone: string): string | null {
+  const digits = phoneDigits(phone);
+  return digits ? `tel:+${digits}` : null;
+}
+
+export function emailUrl(email: string | null): string | null {
+  return email ? `mailto:${email}` : null;
 }
 
 export function humanSelection(value: unknown): string {
