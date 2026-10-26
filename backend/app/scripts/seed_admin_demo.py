@@ -181,7 +181,9 @@ def seed_crm_scenarios(db) -> int:
             "requested": _at_local_day(0, 10),
             "confirmed": None,
             "branch": "Fortín",
-            "address": "Dirección sintética local 101, Fortín, Veracruz",
+            "address": "Colonia Centro, Fortín, Veracruz",
+            "message": "Quiero renovar mi cocina y revisar opciones de distribución y acabados.",
+            "notes": "Confirmar disponibilidad para la visita y revisar medidas del espacio.",
             "situation": "remodelacion",
             "countertop": "Cuarzo",
         },
@@ -195,7 +197,9 @@ def seed_crm_scenarios(db) -> int:
             "requested": _at_local_day(2, 12, 30),
             "confirmed": _at_local_day(2, 12, 30),
             "branch": "Tuxtepec",
-            "address": "Dirección sintética local 202, Tuxtepec, Oaxaca",
+            "address": "Colonia Santa Fe, San Juan Bautista Tuxtepec, Oaxaca",
+            "message": "Busco diseñar una cocina nueva para una casa en proceso de adecuación.",
+            "notes": "Visita confirmada para revisar distribución, cubierta y almacenamiento.",
             "situation": "sin-cocina",
             "countertop": "Granito natural",
         },
@@ -209,7 +213,9 @@ def seed_crm_scenarios(db) -> int:
             "requested": _at_local_day(-3, 16),
             "confirmed": _at_local_day(-3, 16),
             "branch": "Fortín",
-            "address": "Dirección sintética local 303, Fortín, Veracruz",
+            "address": "Colonia San José, Fortín, Veracruz",
+            "message": "Necesito actualizar frentes y herrajes conservando la base existente.",
+            "notes": "Visita realizada; el proyecto queda listo para seguimiento comercial.",
             "situation": "barra-concreto",
             "countertop": "Piedra sinterizada",
         },
@@ -217,14 +223,25 @@ def seed_crm_scenarios(db) -> int:
     created = 0
     for scenario in scenarios:
         key_hash = _digest(f"{DEMO_MARKER}:{scenario['key']}")
-        if (
-            db.scalar(
-                select(KitchenSubmission.id).where(
-                    KitchenSubmission.idempotency_key_hash == key_hash
-                )
-            )
-            is not None
-        ):
+        existing = db.scalar(
+            select(KitchenSubmission).where(KitchenSubmission.idempotency_key_hash == key_hash)
+        )
+        if existing is not None:
+            configuration = db.get(KitchenConfiguration, existing.configuration_id)
+            appointment = db.get(Appointment, existing.appointment_id)
+            lead = db.get(Lead, existing.lead_id)
+            if configuration and configuration.selections.get("demo_marker") == DEMO_MARKER:
+                configuration.address = scenario["address"]
+                configuration.requested_datetime = scenario["requested"]
+                configuration.notes = scenario["notes"]
+                if appointment:
+                    appointment.requested_datetime = scenario["requested"]
+                    appointment.confirmed_datetime = scenario["confirmed"]
+                    appointment.address = scenario["address"]
+                    appointment.status = scenario["appointment_status"]
+                    appointment.notes = scenario["notes"]
+                if lead:
+                    lead.message = scenario["message"]
             continue
         configuration = KitchenConfiguration(
             current_situation=scenario["situation"],
@@ -247,7 +264,7 @@ def seed_crm_scenarios(db) -> int:
             branch=scenario["branch"],
             advisor=None,
             requested_datetime=scenario["requested"],
-            notes=f"Escenario sintético local · {DEMO_MARKER}",
+            notes=scenario["notes"],
             selection_version=1,
             selections={"demo_marker": DEMO_MARKER},
         )
@@ -259,7 +276,7 @@ def seed_crm_scenarios(db) -> int:
             latitude=None,
             longitude=None,
             status=scenario["appointment_status"],
-            notes=f"Escenario sintético local · {DEMO_MARKER}",
+            notes=scenario["notes"],
         )
         db.add_all([configuration, appointment])
         db.flush()
@@ -268,7 +285,7 @@ def seed_crm_scenarios(db) -> int:
             name=scenario["name"],
             phone=scenario["phone"],
             email=scenario["email"],
-            message="Solicitud sintética para demostración local del CRM.",
+            message=scenario["message"],
             kitchen_configuration_id=configuration.id,
             appointment_id=appointment.id,
             status=scenario["lead_status"],

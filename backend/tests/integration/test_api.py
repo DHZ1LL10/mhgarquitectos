@@ -129,6 +129,17 @@ def test_local_crm_seed_is_idempotent_and_keeps_synthetic_properties_private(con
         assert db.scalar(select(func.count()).select_from(Appointment)) == 3
         assert db.scalar(select(func.count()).select_from(KitchenConfiguration)) == 3
         assert db.scalar(select(func.count()).select_from(KitchenSubmission)) == 3
+        aurora = db.scalar(select(Lead).where(Lead.name == "Aurora Campos"))
+        assert aurora.email == "aurora.campos@example.com"
+        assert aurora.phone == "0000000001"
+        assert aurora.message == (
+            "Quiero renovar mi cocina y revisar opciones de distribución y acabados."
+        )
+        appointment = db.get(Appointment, aurora.appointment_id)
+        assert appointment.address == "Colonia Centro, Fortín, Veracruz"
+        assert appointment.notes == (
+            "Confirmar disponibilidad para la visita y revisar medidas del espacio."
+        )
         published = db.scalars(select(Property.slug).where(Property.status == "published")).all()
         assert published == ["residencia-mata-larga-fortin"]
 
