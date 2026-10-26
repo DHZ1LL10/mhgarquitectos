@@ -128,6 +128,11 @@ tres citas y tres cocinas sintéticas enlazadas; también importa Mata Larga com
 crea una propiedad borrador y una archivada. Los correos usan `example.com` y los teléfonos
 sintéticos están bloqueados por el frontend para acciones externas.
 
+Mata Larga es la única propiedad real que este seed publica. `casa-bosque-local` debe quedar
+en `draft` y `departamento-rio-local` en `archived`. Si el seed detecta una firma conocida de
+validación/demo con estado `published`, imprime una advertencia con sus metadatos, pero nunca
+la archiva ni elimina automáticamente; la revisión y corrección deben ser explícitas.
+
 ## G. Detener y volver a iniciar
 
 Detén Next con `Ctrl+C`. Para los contenedores:

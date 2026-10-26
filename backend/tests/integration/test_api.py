@@ -12,7 +12,11 @@ from app.kitchen_configurations.submission_models import KitchenSubmission
 from app.kitchen_configurations.submissions import notifier_dependency
 from app.leads.models import Lead
 from app.properties.models import Property
-from app.scripts.seed_admin_demo import seed_crm_scenarios, seed_properties
+from app.scripts.seed_admin_demo import (
+    seed_crm_scenarios,
+    seed_properties,
+    synthetic_published_properties,
+)
 from tests.payloads import appointment_payload, contact_payload, kitchen_payload, property_payload
 
 
@@ -127,6 +131,13 @@ def test_local_crm_seed_is_idempotent_and_keeps_synthetic_properties_private(con
         assert db.scalar(select(func.count()).select_from(KitchenSubmission)) == 3
         published = db.scalars(select(Property.slug).where(Property.status == "published")).all()
         assert published == ["residencia-mata-larga-fortin"]
+
+        historical = db.scalar(select(Property).where(Property.slug == "casa-bosque-local"))
+        historical.status = "published"
+        db.flush()
+        warnings = synthetic_published_properties(db)
+        assert [item.slug for item in warnings] == ["casa-bosque-local"]
+        assert historical.status == "published"  # Warning only: the seed never changes prior data.
 
 
 def test_pagination_and_validation(client):

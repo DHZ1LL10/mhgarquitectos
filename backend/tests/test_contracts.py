@@ -225,6 +225,37 @@ def test_crm_demo_seed_refuses_non_local_environment(monkeypatch):
         seed_admin_demo.main()
 
 
+def test_crm_demo_seed_warns_only_for_known_synthetic_property_signatures():
+    from types import SimpleNamespace
+
+    from app.scripts.seed_admin_demo import is_clearly_synthetic_property
+
+    phase3 = SimpleNamespace(
+        slug="phase3-validation-1dc0165f2d71",
+        title="Phase 3 persistence validation",
+        description="Propiedad de prueba automatizada.",
+    )
+    local_validation = SimpleNamespace(
+        slug="validacion-3619a9f1e875",
+        title="Casa de prueba local",
+        description="Registro exclusivamente para validar la API local.",
+    )
+    ambiguous = SimpleNamespace(
+        slug="casa-centro-puebla",
+        title="Casa en Centro",
+        description="Propiedad pendiente de revisión.",
+    )
+    real = SimpleNamespace(
+        slug="residencia-mata-larga-fortin",
+        title="Residencia en venta en Mata Larga, Fortín",
+        description="Residencia real.",
+    )
+    assert is_clearly_synthetic_property(phase3)
+    assert is_clearly_synthetic_property(local_validation)
+    assert not is_clearly_synthetic_property(ambiguous)
+    assert not is_clearly_synthetic_property(real)
+
+
 def test_admin_operations_default_deny_and_openapi():
     db = MagicMock()
     app.dependency_overrides[get_db] = lambda: db

@@ -20,6 +20,11 @@ from app.properties.models import Operation, Property, PropertyImage, PropertySt
 
 DEMO_MARKER = "mhg-local-crm-demo-v1"
 MEXICO_CITY = ZoneInfo("America/Mexico_City")
+REAL_PUBLISHED_PROPERTY_SLUG = "residencia-mata-larga-fortin"
+DEMO_PROPERTY_STATUSES = {
+    "casa-bosque-local": PropertyStatus.draft,
+    "departamento-rio-local": PropertyStatus.archived,
+}
 
 
 def _digest(value: str) -> str:
@@ -35,6 +40,35 @@ def _images(paths: list[tuple[str, str]]) -> list[PropertyImage]:
     return [
         PropertyImage(url=path, alt=alt, width=1080, height=1350, position=position)
         for position, (path, alt) in enumerate(paths)
+    ]
+
+
+def is_clearly_synthetic_property(item: Property) -> bool:
+    """Identify only known local validation/demo records; never guess about user data."""
+    if item.slug == REAL_PUBLISHED_PROPERTY_SLUG:
+        return False
+    if item.slug in DEMO_PROPERTY_STATUSES:
+        return True
+    if item.slug.startswith("phase3-validation-"):
+        return (
+            item.title == "Phase 3 persistence validation"
+            and item.description == "Propiedad de prueba automatizada."
+        )
+    if item.slug.startswith("validacion-"):
+        return (
+            item.title == "Casa de prueba local"
+            and item.description == "Registro exclusivamente para validar la API local."
+        )
+    return False
+
+
+def synthetic_published_properties(db) -> list[Property]:
+    return [
+        item
+        for item in db.scalars(
+            select(Property).where(Property.status == PropertyStatus.published)
+        ).all()
+        if is_clearly_synthetic_property(item)
     ]
 
 
@@ -266,11 +300,17 @@ def main() -> None:
         try:
             properties = seed_properties(db)
             scenarios = seed_crm_scenarios(db)
+            unexpected_publications = synthetic_published_properties(db)
             db.commit()
         except Exception:
             db.rollback()
             raise
     print(f"Local CRM demo ready: {properties} properties and {scenarios} scenarios created")
+    for item in unexpected_publications:
+        print(
+            "WARNING: clearly synthetic property remains published; archive it after review: "
+            f"id={item.id} slug={item.slug} title={item.title!r}"
+        )
 
 
 if __name__ == "__main__":

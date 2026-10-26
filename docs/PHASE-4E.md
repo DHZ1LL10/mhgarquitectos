@@ -109,6 +109,10 @@ correos `example.com` y teléfonos bloqueados para contacto. También crea/impor
 - `casa-bosque-local` — sintética y borrador;
 - `departamento-rio-local` — sintética y archivada.
 
+Mata Larga es la única propiedad real publicada por el seed. Una comprobación conservadora
+advierte si firmas inequívocas de validaciones históricas o propiedades demo 4E aparecen
+publicadas. La advertencia no cambia ni borra registros automáticamente.
+
 ## Pruebas automáticas
 
 - Backend: contratos, autorización staff/admin, detalles CRM, publicación pública y seed.
