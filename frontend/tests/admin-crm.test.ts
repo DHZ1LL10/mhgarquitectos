@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { existsSync, readFileSync } from "node:fs";
+import { buildActivityEvents } from "../src/features/admin/dashboard/activity.ts";
 
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -28,6 +29,22 @@ test("dashboard KPIs link to actionable filters and uses one lightweight chart",
   assert.match(dashboard, /citas\?periodo=upcoming/);
   assert.match(dashboard, /styles\.chartBar/);
   assert.match(dashboard, /Actividad reciente/);
+});
+
+test("dashboard activity keys remain unique for equal labels and timestamps", () => {
+  const timestamp = "2026-10-25T22:44:48.739798Z";
+  const events = buildActivityEvents([
+    { id: "lead-a", name: "Cliente A", created_at: timestamp },
+    { id: "lead-b", name: "Cliente B", created_at: timestamp },
+  ], []);
+  assert.equal(events[0].label, events[1].label);
+  assert.equal(events[0].at, events[1].at);
+  assert.notEqual(events[0].entityId, events[1].entityId);
+  assert.equal(new Set(events.map(event => event.key)).size, events.length);
+  assert.deepEqual(events.map(event => event.key).sort(), [
+    `lead-created:lead-a:${timestamp}`,
+    `lead-created:lead-b:${timestamp}`,
+  ]);
 });
 
 test("client CRM has table, filters, record page, contact actions and admin-only status update", () => {
