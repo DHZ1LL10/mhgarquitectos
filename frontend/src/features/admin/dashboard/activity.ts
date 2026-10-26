@@ -10,6 +10,13 @@ export type ActivityEvent = {
   href: string;
 };
 
+export type ClientActivityEvent = {
+  key: string;
+  type: "lead-created" | "appointment-requested" | "appointment-confirmed" | "lead-updated";
+  label: string;
+  at: string;
+};
+
 function activityEvent(
   type: ActivityEvent["type"],
   entityId: string,
@@ -52,4 +59,14 @@ export function buildActivityEvents(
     return [requested];
   });
   return [...leadEvents, ...appointmentEvents].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+}
+
+export function buildClientActivity(lead: Pick<Lead, "id" | "created_at" | "updated_at" | "appointment">): ClientActivityEvent[] {
+  const events: ClientActivityEvent[] = [{ key: `lead-created:${lead.id}:${lead.created_at}`, type: "lead-created", label: "Solicitud recibida", at: lead.created_at }];
+  if (lead.appointment) {
+    events.push({ key: `appointment-requested:${lead.appointment.id}:${lead.appointment.created_at}`, type: "appointment-requested", label: "Cita solicitada", at: lead.appointment.created_at });
+    if (lead.appointment.confirmed_datetime) events.push({ key: `appointment-confirmed:${lead.appointment.id}:${lead.appointment.confirmed_datetime}`, type: "appointment-confirmed", label: "Cita confirmada", at: lead.appointment.confirmed_datetime });
+  }
+  if (lead.updated_at !== lead.created_at) events.push({ key: `lead-updated:${lead.id}:${lead.updated_at}`, type: "lead-updated", label: "Última actualización", at: lead.updated_at });
+  return events.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 }

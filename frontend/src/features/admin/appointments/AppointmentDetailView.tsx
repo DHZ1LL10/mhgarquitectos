@@ -7,10 +7,11 @@ import { appointmentWhatsAppUrl, confirmedDateTime, localDateTime, openStreetMap
 import type { Appointment, AppointmentStatus } from "../types";
 import { useAdminSession } from "../shared/session";
 import { useAdminQuery } from "../shared/use-admin-query";
-import { AppointmentBadge, ErrorState, LoadingState, TechnicalInfo } from "../shared/ui";
+import { AppointmentBadge, ErrorState, Identifier, LoadingState, TechnicalInfo, TemporalBadge } from "../shared/ui";
 import { formatDateTime } from "../shared/format";
 import Icon from "../shared/Icon";
 import styles from "../admin.module.css";
+import { classifyAppointmentTemporal, contextualAppointmentAction } from "../shared/operations";
 
 export default function AppointmentDetailView({ id }: { id: string }) {
   const { user, handleError } = useAdminSession();
@@ -28,6 +29,8 @@ export default function AppointmentDetailView({ id }: { id: string }) {
   const allowed = transitions[item.status];
   const whatsappMode = item.status === "confirmed" || item.status === "completed" ? "confirmed" : "pending";
   const whatsapp = lead ? appointmentWhatsAppUrl(lead, whatsappMode) : null;
+  const temporal = classifyAppointmentTemporal(item);
+  const primaryAction = contextualAppointmentAction(item.status, temporal);
 
   const patch = async (payload: Record<string, unknown>, message: string) => {
     setSaving(true); setError(""); setNotice("");
@@ -46,7 +49,8 @@ export default function AppointmentDetailView({ id }: { id: string }) {
 
   return <>
     <Link className={styles.textLink} href="/admin/citas">← Volver a citas</Link>
-    <header className={styles.detailHeader}><div><div className={styles.recordTitle}><h1>{lead?.name || "Cita sin cliente"}</h1><AppointmentBadge status={item.status}/></div><div className={styles.recordMeta}><span>{item.submission?.folio || "Sin folio"}</span><span>{formatDateTime(item.confirmed_datetime || item.requested_datetime)}</span><span>{item.branch}</span></div></div>{whatsapp && <a className={styles.primaryButton} href={whatsapp} target="_blank" rel="noopener noreferrer"><Icon name="message" size={16}/>{whatsappMode === "confirmed" ? "Enviar confirmación por WhatsApp" : "Confirmar horario por WhatsApp"}</a>}</header>
+    <header className={styles.detailHeader}><div><div className={styles.recordTitle}><h1>{lead?.name || "Cita sin cliente"}</h1><AppointmentBadge status={item.status}/><TemporalBadge state={temporal}/></div><div className={styles.recordMeta}><span><Identifier value={item.submission?.folio}/></span><span>{formatDateTime(item.confirmed_datetime || item.requested_datetime)}</span><span>{item.branch}</span></div></div><div className={styles.contactActions}>{temporal === "overdue" && user.role === "admin" ? <a className={styles.primaryButton} href="#ajustar-cita">Reprogramar cita</a> : primaryAction && user.role === "admin" ? <button disabled={saving} className={styles.primaryButton} onClick={() => transition(primaryAction.status)}>{primaryAction.label}</button> : null}{whatsapp && <a className={styles.secondaryButton} href={whatsapp} target="_blank" rel="noopener noreferrer"><Icon name="message" size={16}/>{whatsappMode === "confirmed" ? "Enviar confirmación por WhatsApp" : "Confirmar horario por WhatsApp"}</a>}</div></header>
+    {temporal === "overdue" && <p className={styles.overdueNotice}><strong>Cita vencida.</strong> El horario ya pasó; ajusta la fecha y confirma el siguiente paso con el cliente.</p>}
     {notice && <p className={styles.successNotice} role="status">{notice}</p>}{error && <p className={styles.errorNotice} role="alert">{error}</p>}
     <div className={styles.appointmentFlow}>{(["requested", "pending_confirmation", "confirmed", "completed"] as AppointmentStatus[]).map(status => <span className={`${styles.flowStep} ${item.status === status ? styles.flowActive : ""}`} key={status}>{status === "requested" ? "Solicitud" : status === "pending_confirmation" ? "Por confirmar" : status === "confirmed" ? "Confirmada" : "Finalizada"}</span>)}</div>
     <div className={styles.sectionGrid}><div>
@@ -55,7 +59,7 @@ export default function AppointmentDetailView({ id }: { id: string }) {
       <section className={styles.panel}><header className={styles.panelHeader}><div><h2>Observaciones</h2></div></header><p>{item.notes || "Sin observaciones"}</p></section>
     </div><aside>
       {user.role === "admin" && <section className={styles.panel}><header className={styles.panelHeader}><div><h2>Acciones</h2><p>Avanza la cita respetando el flujo operativo.</p></div></header><div className={styles.splitActions}>{allowed.includes("pending_confirmation") && <button disabled={saving} className={styles.secondaryButton} onClick={() => transition("pending_confirmation")}>Marcar por confirmar</button>}{allowed.includes("confirmed") && <button disabled={saving} className={styles.primaryButton} onClick={() => transition("confirmed")}>Confirmar cita</button>}{allowed.includes("completed") && <button disabled={saving} className={styles.primaryButton} onClick={() => transition("completed")}>Marcar finalizada</button>}{allowed.includes("cancelled") && <button disabled={saving} className={styles.dangerButton} onClick={() => transition("cancelled")}>Cancelar cita</button>}</div></section>}
-      {user.role === "admin" && <section className={styles.panel}><header className={styles.panelHeader}><div><h2>Ajustar detalles</h2><p>La fecha se interpreta en tu zona horaria local.</p></div></header><div className={styles.form}><label className={styles.field}>Fecha confirmada<input type="datetime-local" value={date || localDateTime(item.confirmed_datetime || item.requested_datetime)} onChange={event => setDate(event.target.value)}/></label><label className={styles.field}>Notas<textarea value={notes ?? item.notes ?? ""} onChange={event => setNotes(event.target.value)}/></label><button disabled={saving} className={styles.secondaryButton} onClick={saveDetails}>Guardar cambios</button></div></section>}
+      {user.role === "admin" && <section className={styles.panel} id="ajustar-cita"><header className={styles.panelHeader}><div><h2>Ajustar detalles</h2><p>La fecha se interpreta en tu zona horaria local.</p></div></header><div className={styles.form}><label className={styles.field}>Fecha confirmada<input type="datetime-local" value={date || localDateTime(item.confirmed_datetime || item.requested_datetime)} onChange={event => setDate(event.target.value)}/></label><label className={styles.field}>Notas<textarea value={notes ?? item.notes ?? ""} onChange={event => setNotes(event.target.value)}/></label><button disabled={saving} className={styles.secondaryButton} onClick={saveDetails}>Guardar cambios</button></div></section>}
       <section className={styles.panel}><TechnicalInfo values={[["ID de cita", item.id], ["ID de envío", item.submission?.id], ["ID de configuración", item.submission?.configuration_id]]}/></section>
     </aside></div>
   </>;

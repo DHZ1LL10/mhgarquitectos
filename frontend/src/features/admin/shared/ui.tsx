@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AppointmentStatus, LeadStatus } from "../types";
 import { appointmentLabels, leadStatusLabels } from "../contracts";
+import { compactIdentifier, temporalLabels, type TemporalState } from "./operations";
 import styles from "../admin.module.css";
 
 export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: React.ReactNode }) {
@@ -13,6 +14,15 @@ export function AppointmentBadge({ status }: { status: AppointmentStatus }) {
 
 export function LeadBadge({ status }: { status: LeadStatus }) {
   return <span className={`${styles.badge} ${styles[`lead_${status}`]}`}>{leadStatusLabels[status]}</span>;
+}
+
+export function TemporalBadge({ state }: { state: TemporalState }) {
+  return <span className={`${styles.badge} ${styles[`temporal_${state}`]}`}>{temporalLabels[state]}</span>;
+}
+
+export function Identifier({ value, maxLength = 18 }: { value: string | null | undefined; maxLength?: number }) {
+  const identifier = compactIdentifier(value, maxLength);
+  return <span className={identifier.truncated ? styles.truncatedIdentifier : undefined} title={identifier.truncated ? identifier.full : undefined} aria-label={identifier.full || undefined}>{identifier.display}</span>;
 }
 
 export function LoadingState({ rows = 5 }: { rows?: number }) {
