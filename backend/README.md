@@ -23,7 +23,7 @@ docker compose up --build -d
 docker compose ps
 docker compose exec api alembic current
 docker compose exec api alembic check
-docker compose exec api python -m app.scripts.create_admin
+docker compose exec api python -m app.scripts.create_owner
 Invoke-RestMethod http://localhost:8000/health
 Invoke-RestMethod http://localhost:8000/api/v1/properties
 ```
@@ -46,9 +46,10 @@ docker compose down
 down conserva el volumen postgres-data. No usar down -v con datos que deban conservarse.
 Cambiar DB_PASSWORD después de inicializar el volumen no cambia automáticamente la
 contraseña del rol existente en PostgreSQL. Gestionar ese cambio explícitamente.
-El comando create_admin solicita email, nombre y contraseña mediante una terminal
-interactiva; la contraseña no se pasa como argumento ni queda guardada en Git. Para
-crear personal de consulta, agregar `--role staff`. No existe registro público.
+El comando `create_owner` solicita nombre, email y contraseña mediante una terminal
+interactiva; la contraseña no se pasa como argumento ni queda guardada en Git. Impide
+crear un segundo owner. Las cuentas staff se crean después desde `/admin/usuarios` con
+permisos explícitos y cambio obligatorio de contraseña. No existe registro público.
 
 ## Tests reproducibles con PostgreSQL aislado
 
@@ -153,8 +154,11 @@ backend/
   .env.example
 ```
 
-- admin_users: UUID, email único normalizado, hash Argon2id, nombre, rol admin/staff,
-  actividad, último acceso y timestamps. No almacena contraseñas en texto plano.
+- admin_users: UUID, email único normalizado, hash Argon2id, nombre, rol owner/staff,
+  permisos JSONB validados, cambio obligatorio, actividad, último acceso y timestamps.
+  No almacena contraseñas en texto plano.
+- admin_audit_events: actor, acción, entidad, metadata limitada y timestamp para cambios
+  administrativos críticos; nunca guarda passwords, cookies ni tokens.
 - admin_sessions: guarda únicamente SHA-256 del token opaco aleatorio; la cookie real es
   HttpOnly, expira y se revoca al cerrar sesión. auth_login_limits mantiene presupuestos
   compartidos de intentos por email e IP.

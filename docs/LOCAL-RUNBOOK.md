@@ -90,17 +90,18 @@ npm run dev
 `npm run dev` valida primero los assets legacy. Turbopack usa `unsafe-eval` únicamente en
 desarrollo; los builds de staging y producción no lo incluyen.
 
-## E. Crear un administrador
+## E. Crear el owner local
 
 Con la API y la base activas:
 
 ```powershell
 cd backend
-docker compose exec api python -m app.scripts.create_admin
+docker compose exec api python -m app.scripts.create_owner
 ```
 
-Introduce email, nombre y contraseña en los prompts. La contraseña no debe pasarse como
-argumento ni guardarse en documentación. No existe registro público de administradores.
+Introduce nombre, email y contraseña en los prompts. La contraseña no debe pasarse como
+argumento ni guardarse en documentación. El comando falla si ya existe owner; las cuentas
+staff se crean desde Usuarios y no existe registro público.
 
 ## F. URLs locales
 
@@ -229,3 +230,18 @@ npm run verify:routes
 ```
 
 El perfil `test` usa `mhg_test` sobre tmpfs y no modifica la base local principal.
+
+# Acceso de Fase 4G
+
+Fase 4G usa un solo `owner` y cuentas `staff` con permisos explícitos. En una base migrada, el admin activo más antiguo se conserva temporalmente como owner local. En una base nueva, crea el owner desde una terminal interactiva:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.scripts.create_owner
+```
+
+No pases la contraseña por CLI, no uses cuentas reales para QA y no guardes la temporal. Las cuentas staff se crean desde `/admin/usuarios`; en el primer login deben completar `/admin/cambiar-contrasena`.
+
+**Max owner account is NOT created yet. Create it during production provisioning with the owner bootstrap.**
+
+El catálogo “Atendido por” es independiente de las cuentas: seleccionar un asesor nunca crea acceso al CRM. Consulta `docs/PHASE-4G.md` para permisos, migración y QA.

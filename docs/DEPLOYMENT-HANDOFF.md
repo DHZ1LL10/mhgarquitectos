@@ -40,8 +40,9 @@ de contratar, sin reutilizar estimaciones históricas.
 10. **Ejecutar migraciones.** Revisar logs del pre-deploy; no activar el release si
     `upgrade`, `current` o `check` falla. Obtener un backup/PITR antes de futuras migraciones
     sobre datos de producción.
-11. **Crear primer administrador.** En una shell interactiva de Render ejecutar
-    `python -m app.scripts.create_admin`; guardar la credencial en el gestor de contraseñas.
+11. **Crear owner.** En una shell interactiva de Render ejecutar
+    `python -m app.scripts.create_owner`; confirmar el correo real antes de hacerlo y
+    guardar la credencial temporal en el gestor de contraseñas.
 12. **Configurar dominios.** Tras autorización separada de DNS, usar frontend y API bajo el
     mismo site registrable, por ejemplo `staging.mhgarquitectos.com` y
     `api-staging.mhgarquitectos.com`. No tocar los registros productivos no relacionados.
@@ -99,3 +100,11 @@ Git. Las variables `NEXT_PUBLIC_*` son públicas por definición.
 Staging sólo estará listo cuando el flujo público y el administrativo funcionen por HTTPS
 en dominios reales, SMTP esté confinado al buzón de staging, migraciones y restore hayan
 pasado, monitorización/backup estén comprobados y producción continúe intacta.
+
+# Fase 4G — handoff de identidad
+
+**Max owner account is NOT created yet. Create it during production provisioning with the owner bootstrap.**
+
+Antes del primer acceso productivo, aplica `0006_access_management`, confirma que no exista otro owner y ejecuta `python -m app.scripts.create_owner` en una terminal segura. No copies una cuenta local, no inventes el correo y no coloques la contraseña en variables, comandos, tickets o logs. Después del login inicial, completa el cambio obligatorio y prueba una cuenta staff con permisos mínimos.
+
+El catálogo Advisor no representa identidades autenticadas y no debe sincronizarse automáticamente con AdminUser.
