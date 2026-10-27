@@ -28,7 +28,7 @@ def kitchen_payload(**overrides):
         "latitude": 19.043,
         "longitude": -98.198,
         "branch": "Sucursal de prueba",
-        "advisor": "Asesor de prueba",
+        "advisor": "Cotización en línea",
         "requested_datetime": "2030-10-12T10:00:00-06:00",
         "selection_version": 1,
         "selections": {"catalog_version": "test", "selected_ids": ["led"]},

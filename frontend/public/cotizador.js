@@ -2362,7 +2362,7 @@ function applyStateToCustomizerUI() {
   setDraftField('c-email', state.cliente.email);
   setDraftField('c-fecha', state.cliente.fecha);
   setDraftField('c-hora', state.cliente.hora || '10:00');
-  setDraftField('c-asesor', state.cliente.asesor === 'En línea' ? '' : state.cliente.asesor);
+  setDraftField('c-asesor', state.cliente.asesor);
   setDraftField('c-dir', state.cliente.dir);
   setDraftField('c-obs', state.cliente.obs);
   var branch = document.getElementById('c-sucursal');
@@ -2506,7 +2506,7 @@ function stepIsComplete(step) {
   if (step === 1) return !!state.interior;
   if (step === 2) return Object.keys(state.frentes).some(function(key){ return state.frentes[key] && state.frentes[key].length; });
   if (step === 3) return herrajesCompletos();
-  if (step === 6) return !!(state.cliente.nombre && state.cliente.tel && state.cliente.dir && state.cliente.fecha && state.cliente.hora && state.cliente.sucursal);
+  if (step === 6) return !!(state.cliente.nombre && state.cliente.tel && state.cliente.dir && state.cliente.fecha && state.cliente.hora && state.cliente.sucursal && window.MHGAdvisorCatalog && window.MHGAdvisorCatalog.isValid(state.cliente.asesor));
   return step < _currentStep;
 }
 
@@ -2535,6 +2535,8 @@ function validateStep(step) {
     var d  = (document.getElementById('c-dir')    || {}).value || '';
     var f  = (document.getElementById('c-fecha')  || {}).value || '';
     var h  = (document.getElementById('c-hora')   || {}).value || '';
+    var advisorEl = document.getElementById('c-asesor');
+    var advisor = advisorEl ? advisorEl.value : '';
     var sEl = document.getElementById('c-sucursal');
     var s  = sEl ? sEl.value : '';
     var emailField = document.getElementById('c-email');
@@ -2548,6 +2550,9 @@ function validateStep(step) {
       ];
       showValidation('Completa nombre, teléfono, dirección, fecha, hora y sucursal.', requiredFields.find(function(field) { return field && !field.value; }));
       ok = false;
+    } else if (!window.MHGAdvisorCatalog || !window.MHGAdvisorCatalog.isValid(advisor)) {
+      showValidation('Selecciona quién te atendió.', advisorEl);
+      ok = false;
     } else {
       state.cliente = {
         nombre:   n.trim(),
@@ -2557,7 +2562,7 @@ function validateStep(step) {
         fecha:    f,
         hora:     h,
         sucursal: sEl.options[sEl.selectedIndex].text,
-        asesor:   (document.getElementById('c-asesor') || {}).value || 'En línea',
+        asesor:   advisor,
         obs:      ((document.getElementById('c-obs') || {}).value || '').trim(),
         lat:      state.cliente.lat,
         lng:      state.cliente.lng,

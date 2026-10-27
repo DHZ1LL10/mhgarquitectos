@@ -18,6 +18,7 @@ class KitchenEmailData:
     email: str | None
     requested_datetime: str
     branch: str
+    advisor: str
     address: str
     latitude: float | None
     longitude: float | None
@@ -146,6 +147,7 @@ def build_kitchen_email(data: KitchenEmailData, sender: str, recipient: str) -> 
         ("Fecha", requested_date),
         ("Hora", requested_time),
         ("Sucursal", data.branch),
+        ("Atendido por", data.advisor),
     ]
     configuration_rows = _configuration_rows(data)
     plain_sections = [

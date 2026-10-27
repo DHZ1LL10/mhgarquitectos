@@ -114,7 +114,7 @@ test("customizer navigation follows the new order and preserves step validation 
   const validation = { textContent: "", hidden: true, focus() {} };
   const context = vm.createContext({
     document: { addEventListener() {}, getElementById(id: string) { return id === "stepValidation" ? validation : fields[id] || null; }, querySelectorAll() { return []; } },
-    window: { scrollTo() {}, open() {}, matchMedia() { return { matches: true }; } }, alert() { throw new Error("browser alert must not be used for step validation"); },
+    window: { scrollTo() {}, open() {}, matchMedia() { return { matches: true }; }, MHGAdvisorCatalog: { isValid(value: string) { return ["Cotización en línea", "Arq. Max Herrera", "Arq. Marco Rodriguez", "Arq. Daniel Aguilar", "Arq. Monse Galicia", "Arq. Itzel Suarez", "Lic. Alma Altamirano"].includes(value); } } }, alert() { throw new Error("browser alert must not be used for step validation"); },
   });
   vm.runInContext(read("frontend/public/cotizador.js"), context);
   vm.runInContext("renderStep(0); navigateToStep(7)", context);
@@ -129,6 +129,7 @@ test("customizer navigation follows the new order and preserves step validation 
   Object.assign(fields["c-nombre"], { value: "Persona" }); Object.assign(fields["c-tel"], { value: "2710000000" });
   Object.assign(fields["c-dir"], { value: "Calle de prueba" }); Object.assign(fields["c-fecha"], { value: "2026-11-01" });
   Object.assign(fields["c-hora"], { value: "10:00" }); Object.assign(fields["c-sucursal"], { value: "Fortin" });
+  Object.assign(fields["c-asesor"], { value: "Cotización en línea" });
   vm.runInContext("navigateToStep(7)", context);
   assert.equal(vm.runInContext("_currentStep", context), 7);
   vm.runInContext("state.cliente.lat=18.9; state.cliente.lng=-96.97; renderStep(2); renderStep(6); nextStep()", context);

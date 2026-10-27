@@ -1,6 +1,7 @@
-from pydantic import AwareDatetime, Field, JsonValue, model_validator
+from pydantic import AwareDatetime, Field, JsonValue, field_validator, model_validator
 
 from app.common import Coordinates, TimestampOutput
+from app.kitchen_configurations.advisors import ADVISOR_SET
 
 
 class KitchenCreate(Coordinates):
@@ -13,11 +14,18 @@ class KitchenCreate(Coordinates):
     extras: list[dict[str, JsonValue]] = Field(default_factory=list, max_length=100)
     address: str = Field(min_length=1, max_length=1000)
     branch: str = Field(min_length=1, max_length=160)
-    advisor: str | None = Field(default=None, max_length=160)
+    advisor: str = Field(max_length=160)
     requested_datetime: AwareDatetime | None = None
     notes: str | None = Field(default=None, max_length=10000)
     selection_version: int = Field(default=1, ge=1, le=10000)
     selections: dict[str, JsonValue] = Field(default_factory=dict)
+
+    @field_validator("advisor")
+    @classmethod
+    def known_advisor(cls, value: str) -> str:
+        if value not in ADVISOR_SET:
+            raise ValueError("Select a valid advisor")
+        return value
 
     @model_validator(mode="after")
     def bounded_snapshot(self):
@@ -39,4 +47,5 @@ class KitchenCreate(Coordinates):
 
 
 class KitchenOutput(KitchenCreate, TimestampOutput):
-    pass
+    # Historical records created before Phase 4G may not contain an advisor.
+    advisor: str | None

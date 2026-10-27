@@ -118,6 +118,7 @@ def _email_data(
         email=str(payload.contact.email) if payload.contact.email else None,
         requested_datetime=payload.appointment.requested_datetime.isoformat(),
         branch=payload.appointment.branch,
+        advisor=configuration.advisor,
         address=payload.appointment.address,
         latitude=payload.appointment.latitude,
         longitude=payload.appointment.longitude,

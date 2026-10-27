@@ -312,6 +312,7 @@
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-label { font-size: .72rem; font-weight: 600; color: var(--dark); letter-spacing: .02em; }
     .form-label span { color: var(--muted); font-weight: 400; }
+    .form-help { margin: 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
     .form-input, .form-select, .form-textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: #fff; font-family: var(--font-sans); font-size: .83rem; color: var(--dark); transition: border-color var(--tr), box-shadow var(--tr); outline: none; }
     .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,79,46,.1); }
     .form-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2378847e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
@@ -736,13 +737,18 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="c-asesor">Atendido por <span>(opcional)</span></label>
-            <select id="c-asesor" class="form-select">
-              <option value="">Cotización en línea</option>
-              <option value="Asesor 1">Asesor 1</option>
-              <option value="Asesor 2">Asesor 2</option>
-              <option value="Asesor 3">Asesor 3</option>
+            <label class="form-label" for="c-asesor">Atendido por</label>
+            <select id="c-asesor" class="form-select" aria-describedby="advisorHelp" required>
+              <option value="">Selecciona quién te atendió</option>
+              <option value="Cotización en línea">Cotización en línea</option>
+              <option value="Arq. Max Herrera">Arq. Max Herrera</option>
+              <option value="Arq. Marco Rodriguez">Arq. Marco Rodriguez</option>
+              <option value="Arq. Daniel Aguilar">Arq. Daniel Aguilar</option>
+              <option value="Arq. Monse Galicia">Arq. Monse Galicia</option>
+              <option value="Arq. Itzel Suarez">Arq. Itzel Suarez</option>
+              <option value="Lic. Alma Altamirano">Lic. Alma Altamirano</option>
             </select>
+            <p class="form-help" id="advisorHelp">Si realizaste la configuración directamente en el sitio, selecciona Cotización en línea.</p>
           </div>
           <div class="form-group">
             <label class="form-label" for="c-dir">Dirección de instalación</label>
@@ -1036,6 +1042,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha256-XJrs/DDkVkUZ29zdzFOkGCJ9zHVo5hnpdi3c7HYJ7Uc=" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="/customizer-runtime-config.js"></script>
+<script src="advisor-catalog.js"></script>
 <script src="kitchen-submission.js"></script>
 <script src="cotizador.js"></script>
 <script src="galeria-configurador.js"></script>

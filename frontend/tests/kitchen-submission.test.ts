@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const source = readFileSync(new URL("../public/kitchen-submission.js", import.meta.url), "utf8");
-const context: Record<string, unknown> = { URL, Uint8Array };
+const advisors = ["Cotización en línea", "Arq. Max Herrera", "Arq. Marco Rodriguez", "Arq. Daniel Aguilar", "Arq. Monse Galicia", "Arq. Itzel Suarez", "Lic. Alma Altamirano"];
+const context: Record<string, unknown> = { URL, Uint8Array, MHGAdvisorCatalog: { advisors, isValid: (value: string) => advisors.includes(value) } };
 vm.runInNewContext(source, context);
 type BuiltPayload = {
   contact: { source: string; email: string | null };
@@ -21,7 +22,7 @@ const contract = context.MHGKitchenSubmission as {
 
 function state() {
   return {
-    cliente: { nombre: "María", tel: "+52 272 220 0485", email: "maria@example.com", fecha: "2030-10-12", hora: "10:00", sucursal: "Fortín", asesor: "En línea", dir: "Centro", obs: "Visita", lat: 19.043, lng: -98.198 },
+    cliente: { nombre: "María", tel: "+52 272 220 0485", email: "maria@example.com", fecha: "2030-10-12", hora: "10:00", sucursal: "Fortín", asesor: "Cotización en línea", dir: "Centro", obs: "Visita", lat: 19.043, lng: -98.198 },
     situacion: "remodelacion", interior: "blanco-frosty", frentes: { arauco: ["Arena"] },
     bisagra: "Bisagra cierre suave", corredera: "Corredera cierre suave", cajones: ["Cajón"], basurero: null, especias: null, modulos: [],
     cubierta: "Superficie sólida Corian", cubPrecio: "$", cubiertaCategoria: "superficie-solida", cubiertaVariante: { id: "blanco", nombre: "Blanco" }, extras: ["Iluminación LED"],
@@ -42,6 +43,12 @@ test("customizer builds the domain payload without UI step indexes", () => {
   assert.equal((payload.configuration as { latitude?: number }).latitude, 19.043);
   assert.equal((payload.configuration as { longitude?: number }).longitude, -98.198);
   assert.equal(JSON.stringify(payload).includes("step"), false);
+});
+
+test("advisor placeholder is invalid and every catalog advisor is preserved in payload", () => {
+  const invalid = state(); invalid.cliente.asesor = "";
+  assert.throws(() => contract.buildPayload(invalid), /Selecciona quién te atendió/);
+  for (const advisor of advisors) { const selected = state(); selected.cliente.asesor = advisor; assert.equal((contract.buildPayload(selected).configuration as { advisor?: string }).advisor, advisor); }
 });
 
 test("idempotency identity persists for the same payload and rotates after an edit", () => {

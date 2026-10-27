@@ -38,6 +38,9 @@
   }
 
   function buildPayload(state) {
+    if (!root.MHGAdvisorCatalog || !root.MHGAdvisorCatalog.isValid(state.cliente.asesor)) {
+      throw new Error('Selecciona quién te atendió.');
+    }
     var requested = localDateTimeToIso(state.cliente.fecha, state.cliente.hora);
     var hardware = hardwareSnapshot(state);
     var countertop = {
@@ -68,7 +71,7 @@
       latitude: state.cliente.lat == null ? null : Number(state.cliente.lat),
       longitude: state.cliente.lng == null ? null : Number(state.cliente.lng),
       branch: state.cliente.sucursal,
-      advisor: state.cliente.asesor || null,
+      advisor: state.cliente.asesor,
       requested_datetime: requested,
       notes: state.cliente.obs || null,
       selection_version: 1,
