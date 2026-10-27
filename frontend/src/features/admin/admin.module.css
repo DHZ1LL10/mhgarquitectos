@@ -74,3 +74,11 @@
   background: #f4f1eb;
 }
 
+.permissionGroup { display: grid; gap: 8px; margin-top: 12px !important; padding: 15px !important; border: 1px solid #dce3de !important; border-radius: 8px; }
+.permissionGroup legend { padding: 0 5px; color: #173f29; font-weight: 750; }
+.permissionGroup p { margin: 0 0 4px; color: #68756d; font-size: 12px; }
+.permissionGroup label { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.permissionGroup input { width: 17px; height: 17px; }
+.successNotice { padding: 12px; border-radius: 7px; background: #e9f5ed; color: #176337; }
+.errorNotice { padding: 12px; border-radius: 7px; background: #fff0ed; color: #8c2a18; }
+

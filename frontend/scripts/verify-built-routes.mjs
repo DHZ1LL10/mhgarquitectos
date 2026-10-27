@@ -34,7 +34,7 @@ try {
   }
   assert.ok(ready, `Server did not start: ${logs}`);
 
-  for (const route of ["/", "/index.html", "/propiedades", "/propiedades/residencia-mata-larga-fortin", "/admin", "/admin/clientes", "/admin/clientes/00000000-0000-0000-0000-000000000001", "/admin/citas", "/admin/citas/00000000-0000-0000-0000-000000000001", "/admin/cocinas", "/admin/cocinas/00000000-0000-0000-0000-000000000001", "/admin/propiedades", "/admin/propiedades/nueva", "/admin/propiedades/00000000-0000-0000-0000-000000000001", "/admin/login"]) {
+  for (const route of ["/", "/index.html", "/propiedades", "/propiedades/residencia-mata-larga-fortin", "/admin", "/admin/clientes", "/admin/clientes/00000000-0000-0000-0000-000000000001", "/admin/citas", "/admin/citas/00000000-0000-0000-0000-000000000001", "/admin/cocinas", "/admin/cocinas/00000000-0000-0000-0000-000000000001", "/admin/propiedades", "/admin/propiedades/nueva", "/admin/propiedades/00000000-0000-0000-0000-000000000001", "/admin/usuarios", "/admin/usuarios/nuevo", "/admin/usuarios/00000000-0000-0000-0000-000000000001", "/admin/cambiar-contrasena", "/admin/login"]) {
     const response = await get(route);
     assert.equal(response.status, 200, route);
     assert.match(response.headers.get("x-robots-tag") || "", /noindex/, route);
@@ -68,7 +68,7 @@ try {
       assert.match(html, /Precio de lista/); assert.match(html, /Bono especial/);
       assert.match(html, /Agendar visita por WhatsApp/);
     }
-    if (route.startsWith("/admin") && route !== "/admin/login") {
+    if (route.startsWith("/admin") && !["/admin/login", "/admin/cambiar-contrasena"].includes(route)) {
       assert.match(html, /Administración MHG/);
       assert.doesNotMatch(html, /Modo demostración|Guardar en memoria/);
       assert.doesNotMatch(html, /type="(?:password|file)"/);
@@ -85,7 +85,7 @@ try {
     assert.equal((await get(route)).status, 404, route);
     results.push(`404: ${route}`);
   }
-  for (const name of ["cocina-customizer.html", "style.css", "cotizador.js", "kitchen-submission.js", "galeria-configurador.js", "configurador-galeria.css", "img/logo.jpg", "img/construccion/nosotros-led.jpg"]) {
+  for (const name of ["cocina-customizer.html", "style.css", "cotizador.js", "advisor-catalog.js", "kitchen-submission.js", "galeria-configurador.js", "configurador-galeria.css", "img/logo.jpg", "img/construccion/nosotros-led.jpg"]) {
     const response = await get("/" + name); assert.equal(response.status, 200, name);
     const bytes = Buffer.from(await response.arrayBuffer()); assert.equal(sha256(bytes), expectedPublicHash(name), `HTTP bytes: ${name}`);
     assert.match(response.headers.get("x-robots-tag") || "", /noindex/);

@@ -12,13 +12,13 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     let mounted = true;
-    Promise.resolve().then(() => adminApi().request("/auth/me")).then(value => { parseUser(value); if (mounted) router.replace("/admin"); }).catch(error => { if (mounted) setError(initialSessionError(error)); });
+    Promise.resolve().then(() => adminApi().request("/auth/me")).then(value => { const user = parseUser(value); if (mounted) router.replace(user.must_change_password ? "/admin/cambiar-contrasena" : "/admin"); }).catch(error => { if (mounted) setError(initialSessionError(error)); });
     return () => { mounted = false; };
   }, [router]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError("");
     const data = new FormData(event.currentTarget);
-    try { parseUser(await adminApi().request("/auth/login", "POST", { email: data.get("email"), password: data.get("password") })); router.replace("/admin"); }
+    try { const user = parseUser(await adminApi().request("/auth/login", "POST", { email: data.get("email"), password: data.get("password") })); router.replace(user.must_change_password ? "/admin/cambiar-contrasena" : "/admin"); }
     catch (error) { setError(error instanceof Error ? error.message : "No se pudo iniciar sesión."); }
     finally { setBusy(false); }
   }

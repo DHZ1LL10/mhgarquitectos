@@ -109,10 +109,11 @@ test("appointment form preserves timezone and exposes only supported transitions
 });
 
 test("user contract fails closed for inactive and unknown roles", () => {
-  const user = { id: "id", full_name: "Admin", email: "a@example.com", role: "admin", is_active: true, last_login_at: null };
-  assert.equal(parseUser(user).role, "admin");
+  const user = { id: "id", full_name: "Owner", email: "a@example.com", role: "owner", is_active: true, permissions: [], must_change_password: false, last_login_at: null };
+  assert.equal(parseUser(user).role, "owner");
   assert.throws(() => parseUser({ ...user, role: "unknown" }));
   assert.throws(() => parseUser({ ...user, is_active: false }));
+  assert.throws(() => parseUser({ ...user, permissions: ["unknown.permission"] }));
 });
 
 test("admin client and UI do not persist tokens or use demo storage", () => {

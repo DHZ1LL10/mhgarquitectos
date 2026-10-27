@@ -1,8 +1,9 @@
-type IconName = "home" | "clients" | "calendar" | "kitchen" | "building" | "menu" | "logout" | "arrow" | "search" | "phone" | "mail" | "message" | "map" | "edit" | "clock";
+type IconName = "home" | "clients" | "users" | "calendar" | "kitchen" | "building" | "menu" | "logout" | "arrow" | "search" | "phone" | "mail" | "message" | "map" | "edit" | "clock";
 
 const paths: Record<IconName, React.ReactNode> = {
   home: <><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10M9 20v-6h6v6"/></>,
   clients: <><circle cx="9" cy="8" r="3"/><path d="M3.5 20c.5-4 2.3-6 5.5-6s5 2 5.5 6M16 5.5a3 3 0 0 1 0 5.8M16.5 14c2.4.4 3.7 2.4 4 5"/></>,
+  users: <><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20c.5-4 2.3-6 5.5-6s5 2 5.5 6M14 15c3.5-.5 6 1.3 6.5 5"/></>,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></>,
   kitchen: <><path d="M4 4h16v16H4zM4 11h16M10 4v16"/><path d="M6.5 7.5h1M12.5 7.5h1M12.5 14.5h1"/></>,
   building: <><path d="M4 21V5l8-3v19M12 8h8v13M2 21h20"/><path d="M7 7h2M7 11h2M7 15h2M15 12h2M15 16h2"/></>,

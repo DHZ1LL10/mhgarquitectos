@@ -24,11 +24,12 @@ test("admin uses real routes and a shared CRM shell instead of a monolithic view
   assert.match(source("src/app/(management)/admin/(crm)/layout.tsx"), /AdminShell/);
 });
 
-test("sidebar exposes business navigation and hides properties from staff", () => {
+test("sidebar exposes only permitted navigation and reserves users for owner", () => {
   const shell = source("src/features/admin/layout/AdminShell.tsx");
   for (const route of ["/admin/clientes", "/admin/citas", "/admin/cocinas", "/admin/propiedades"]) assert.match(shell, new RegExp(route));
-  assert.match(shell, /adminOnly: true/);
-  assert.match(shell, /user\.role === "admin"/);
+  assert.match(shell, /properties\.view/);
+  assert.match(shell, /ownerOnly: true/);
+  assert.match(shell, /user\.role === "owner"/);
   assert.match(shell, /aria-current/);
   assert.match(shell, /aria-expanded/);
 });
@@ -135,12 +136,12 @@ test("property helpers support automatic slugs, image ordering and publication c
   assert.match(form, /<img/); assert.match(form, /onError=/); assert.match(form, /Portada/);
 });
 
-test("client CRM has table, filters, record page, contact actions and admin-only status update", () => {
+test("client CRM has table, filters, record page, contact actions and permission-guarded status update", () => {
   const list = source("src/features/admin/clients/ClientsView.tsx");
   const detail = source("src/features/admin/clients/ClientDetailView.tsx");
   assert.match(list, /<table/); assert.match(list, /Buscar nombre/); assert.match(list, /Filtrar por estado/); assert.match(list, /Próxima cita/);
   assert.match(detail, /Datos del cliente/); assert.match(detail, /Actividad/); assert.match(detail, /Cita asociada/); assert.match(detail, /Proyecto de cocina/);
-  assert.match(detail, /user\.role === "admin"/); assert.match(detail, /\/leads\/\$\{lead\.id\}\/status/);
+  assert.match(detail, /can\(user, "clients\.manage"\)/); assert.match(detail, /\/leads\/\$\{lead\.id\}\/status/);
 });
 
 test("appointments provide list, weekly agenda, filters and guarded workflow actions", () => {

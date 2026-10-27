@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { adminApi, ApiError } from "../api-client";
 import { parseUser } from "../contracts";
 import type { User } from "../types";
@@ -17,6 +17,7 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function AdminSessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,11 +34,11 @@ export function AdminSessionProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     let active = true;
     adminApi().request("/auth/me")
-      .then(value => { if (active) setUser(parseUser(value)); })
+      .then(value => { if (active) { const parsed = parseUser(value); setUser(parsed); if (parsed.must_change_password && pathname !== "/admin/cambiar-contrasena") router.replace("/admin/cambiar-contrasena"); } })
       .catch(reason => { if (active) setError(handleError(reason)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [handleError]);
+  }, [handleError, pathname, router]);
 
   const logout = useCallback(async () => {
     await adminApi().request("/auth/logout", "POST");

@@ -1,9 +1,11 @@
-import type { AppointmentStatus, Lead, LeadStatus, PropertyInput, User } from "./types.ts";
+import type { AppointmentStatus, Lead, LeadStatus, Permission, PropertyInput, User } from "./types.ts";
+
+const permissions: Permission[] = ["dashboard.view", "clients.view", "clients.manage", "appointments.view", "appointments.manage", "kitchens.view", "properties.view", "properties.manage", "properties.publish"];
 
 export function parseUser(value: unknown): User {
   if (!value || typeof value !== "object") throw new Error("Respuesta de usuario inválida");
   const user = value as User;
-  if (typeof user.id !== "string" || typeof user.email !== "string" || typeof user.full_name !== "string" || !["admin", "staff"].includes(user.role) || user.is_active !== true) throw new Error("Usuario administrativo inválido");
+  if (typeof user.id !== "string" || typeof user.email !== "string" || typeof user.full_name !== "string" || !["owner", "staff"].includes(user.role) || user.is_active !== true || !Array.isArray(user.permissions) || user.permissions.some(item => !permissions.includes(item)) || typeof user.must_change_password !== "boolean") throw new Error("Usuario administrativo inválido");
   return user;
 }
 export function emptyProperty(): PropertyInput {
