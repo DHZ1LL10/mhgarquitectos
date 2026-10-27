@@ -3,7 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 
-from app.dependencies import Database, require_admin
+from app.auth.audit import record_audit
+from app.auth.permissions import has_permission
+from app.dependencies import AuthenticatedUser, Database, require_permission
 from app.properties.models import Property, PropertyImage, PropertyStatus
 from app.properties.schemas import PropertyCreate, PropertyOutput, PropertyPatch
 
@@ -11,7 +13,7 @@ public_router = APIRouter(prefix="/properties", tags=["Properties · public"])
 admin_router = APIRouter(
     prefix="/properties",
     tags=["Properties · future admin"],
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_permission("properties.view"))],
 )
 
 
@@ -38,21 +40,43 @@ def get_property(slug: str, db: Database):
     return item
 
 
-@admin_router.post("", response_model=PropertyOutput, status_code=201)
-def create_property(payload: PropertyCreate, db: Database):
+@admin_router.post(
+    "",
+    response_model=PropertyOutput,
+    status_code=201,
+    dependencies=[Depends(require_permission("properties.manage"))],
+)
+def create_property(payload: PropertyCreate, db: Database, actor: AuthenticatedUser):
+    if payload.status == PropertyStatus.published and not has_permission(
+        actor.role, actor.permissions, "properties.publish"
+    ):
+        raise HTTPException(403, "Missing permission: properties.publish")
     values = payload.model_dump(mode="python", exclude={"images"})
     item = Property(**values)
     item.images = [
         PropertyImage(**image.model_dump(), position=i) for i, image in enumerate(payload.images)
     ]
     db.add(item)
+    db.flush()
+    record_audit(
+        db,
+        actor,
+        "PROPERTY_PUBLISHED" if item.status == PropertyStatus.published else "PROPERTY_CREATED",
+        "property",
+        item.id,
+        {"status": item.status},
+    )
     db.commit()
     db.refresh(item)
     return item
 
 
-@admin_router.patch("/{id}", response_model=PropertyOutput)
-def update_property(id: UUID, payload: PropertyPatch, db: Database):
+@admin_router.patch(
+    "/{id}",
+    response_model=PropertyOutput,
+    dependencies=[Depends(require_permission("properties.manage"))],
+)
+def update_property(id: UUID, payload: PropertyPatch, db: Database, actor: AuthenticatedUser):
     item = db.scalar(select(Property).where(Property.id == id).with_for_update())
     if item is None:
         raise HTTPException(404, "Property not found")
@@ -64,6 +88,11 @@ def update_property(id: UUID, payload: PropertyPatch, db: Database):
         for image in item.images
     ]
     merged = PropertyCreate.model_validate({**existing, **payload.model_dump(exclude_unset=True)})
+    if (
+        item.status == PropertyStatus.published or merged.status == PropertyStatus.published
+    ) and not has_permission(actor.role, actor.permissions, "properties.publish"):
+        raise HTTPException(403, "Missing permission: properties.publish")
+    previous_status = item.status
     for name, value in merged.model_dump(exclude={"images"}).items():
         setattr(item, name, value)
     if "images" in payload.model_fields_set:
@@ -73,6 +102,12 @@ def update_property(id: UUID, payload: PropertyPatch, db: Database):
         item.images = [
             PropertyImage(**image.model_dump(), position=i) for i, image in enumerate(merged.images)
         ]
+    action = "PROPERTY_UPDATED"
+    if merged.status == PropertyStatus.published and previous_status != PropertyStatus.published:
+        action = "PROPERTY_PUBLISHED"
+    elif merged.status == PropertyStatus.archived and previous_status != PropertyStatus.archived:
+        action = "PROPERTY_ARCHIVED"
+    record_audit(db, actor, action, "property", item.id, {"status": merged.status})
     db.commit()
     db.refresh(item)
     return item

@@ -14,9 +14,12 @@ from sqlalchemy.exc import OperationalError
 from app.appointments.models import AppointmentStatus
 from app.appointments.schemas import AppointmentCreate, AppointmentData
 from app.appointments.service import TRANSITIONS, validate_transition
+from app.auth.audit import record_audit
+from app.auth.permissions import FULL_PERMISSIONS, has_permission, normalize_permissions
 from app.auth.security import client_ip
 from app.config import Settings, get_settings
 from app.db import engine_options, get_db
+from app.kitchen_configurations.advisors import ADVISORS
 from app.kitchen_configurations.schemas import KitchenCreate
 from app.kitchen_configurations.submissions import Submission
 from app.leads.schemas import LeadCreate
@@ -406,6 +409,7 @@ def test_kitchen_email_has_plaintext_html_and_openstreetmap_link():
         email="maria@example.com",
         requested_datetime="2030-10-12T16:00:00+00:00",
         branch="Fortín",
+        advisor="Arq. Max Herrera",
         address="Dirección de prueba",
         latitude=19.043,
         longitude=-98.198,
@@ -433,6 +437,7 @@ def test_kitchen_email_has_plaintext_html_and_openstreetmap_link():
     plain = message.get_body(preferencelist=("plain",)).get_content()
     assert "DATOS DEL CLIENTE" in plain
     assert "CONFIGURACIÓN" in plain
+    assert "Atendido por: Arq. Max Herrera" in plain
     assert "Medidas <pendientes> & confirmar" in plain
     without_pin = build_kitchen_email(
         KitchenEmailData(**{**data.__dict__, "latitude": None, "longitude": None}),
@@ -460,8 +465,36 @@ def test_initial_migration_renders_postgresql_ddl():
         "CREATE TABLE public_rate_limits",
         "CREATE TABLE service_folio_counters",
         "uq_kitchen_submissions_idempotency_key_hash",
+        "CREATE TABLE admin_audit_events",
+        "uq_admin_single_owner",
+        "must_change_password",
     ):
         assert required in sql
+
+
+@pytest.mark.parametrize("advisor", ADVISORS)
+def test_kitchen_accepts_only_the_advisor_catalog(advisor):
+    assert KitchenCreate.model_validate(kitchen_payload(advisor=advisor)).advisor == advisor
+    with pytest.raises(ValidationError):
+        KitchenCreate.model_validate(kitchen_payload(advisor="Unknown advisor"))
+
+
+def test_permission_allowlist_dependencies_and_owner_bypass():
+    assert normalize_permissions(["clients.view", "clients.manage"]) == [
+        "clients.view",
+        "clients.manage",
+    ]
+    with pytest.raises(ValueError):
+        normalize_permissions(["clients.manage"])
+    with pytest.raises(ValueError):
+        normalize_permissions(["unknown"])
+    assert has_permission("owner", [], "properties.publish")
+    assert len(FULL_PERMISSIONS) == 9
+
+
+def test_audit_rejects_nested_sensitive_metadata():
+    with pytest.raises(ValueError):
+        record_audit(MagicMock(), MagicMock(), "TEST", "test", metadata={"nested": {"token": "x"}})
 
 
 @pytest.mark.parametrize(

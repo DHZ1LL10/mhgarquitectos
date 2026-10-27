@@ -6,7 +6,8 @@ from sqlalchemy import case, func, select
 
 from app.appointments.models import Appointment
 from app.appointments.schemas import AppointmentOutput
-from app.dependencies import AuthenticatedUser, Database, current_user, require_admin
+from app.auth.permissions import has_permission
+from app.dependencies import AuthenticatedUser, Database, require_permission
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.schemas import KitchenOutput
 from app.kitchen_configurations.submission_models import KitchenSubmission
@@ -16,7 +17,7 @@ from app.leads.schemas import LeadOutput
 from app.properties.models import Property, PropertyStatus
 from app.properties.schemas import PropertyOutput
 
-router = APIRouter(prefix="/admin", tags=["Administration"], dependencies=[Depends(current_user)])
+router = APIRouter(prefix="/admin", tags=["Administration"])
 
 
 class LeadDetails(LeadOutput):
@@ -25,6 +26,7 @@ class LeadDetails(LeadOutput):
     address: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    advisor: str | None = None
 
 
 class AppointmentDetails(AppointmentOutput):
@@ -61,6 +63,7 @@ def lead_details(db: Database, item: Lead) -> LeadDetails:
         address=location.address if location else None,
         latitude=location.latitude if location else None,
         longitude=location.longitude if location else None,
+        advisor=configuration.advisor if configuration else None,
     )
 
 
@@ -76,6 +79,12 @@ def appointment_details(db: Database, item: Appointment) -> AppointmentDetails:
             LeadDetails(
                 **LeadOutput.model_validate(lead).model_dump(),
                 submission=lead_submissions.get(lead.id),
+                advisor=(
+                    db.get(KitchenConfiguration, lead.kitchen_configuration_id).advisor
+                    if lead.kitchen_configuration_id
+                    and db.get(KitchenConfiguration, lead.kitchen_configuration_id)
+                    else None
+                ),
             )
             for lead in contacts
         ],
@@ -108,28 +117,42 @@ def kitchen_details(db: Database, item: KitchenConfiguration) -> KitchenDetails:
     )
 
 
-@router.get("/dashboard")
+@router.get("/dashboard", dependencies=[Depends(require_permission("dashboard.view"))])
 def dashboard(db: Database, user: AuthenticatedUser):
     now = datetime.now(UTC)
-    appointment_counts = db.execute(
-        select(
-            func.count().filter(Appointment.status == "requested"),
-            func.count().filter(Appointment.status == "pending_confirmation"),
-            func.count().filter(Appointment.status == "confirmed"),
-            func.count().filter(
-                Appointment.status == "confirmed", Appointment.confirmed_datetime >= now
-            ),
-            func.count().filter(Appointment.status == "completed"),
-        )
-    ).one()
+    can_appointments = has_permission(user.role, user.permissions, "appointments.view")
+    can_clients = has_permission(user.role, user.permissions, "clients.view")
+    can_kitchens = has_permission(user.role, user.permissions, "kitchens.view")
+    can_properties = has_permission(user.role, user.permissions, "properties.view")
+    appointment_counts = (
+        db.execute(
+            select(
+                func.count().filter(Appointment.status == "requested"),
+                func.count().filter(Appointment.status == "pending_confirmation"),
+                func.count().filter(Appointment.status == "confirmed"),
+                func.count().filter(
+                    Appointment.status == "confirmed", Appointment.confirmed_datetime >= now
+                ),
+                func.count().filter(Appointment.status == "completed"),
+            )
+        ).one()
+        if can_appointments
+        else (None, None, None, None, None)
+    )
     return {
         "properties": db.scalar(select(func.count()).select_from(Property))
-        if user.role == "admin"
+        if can_properties
         else None,
-        "leads": db.scalar(select(func.count()).select_from(Lead)),
-        "appointments": db.scalar(select(func.count()).select_from(Appointment)),
-        "kitchen_configurations": db.scalar(select(func.count()).select_from(KitchenConfiguration)),
-        "new_leads": db.scalar(select(func.count()).select_from(Lead).where(Lead.status == "new")),
+        "leads": db.scalar(select(func.count()).select_from(Lead)) if can_clients else None,
+        "appointments": db.scalar(select(func.count()).select_from(Appointment))
+        if can_appointments
+        else None,
+        "kitchen_configurations": db.scalar(select(func.count()).select_from(KitchenConfiguration))
+        if can_kitchens
+        else None,
+        "new_leads": db.scalar(select(func.count()).select_from(Lead).where(Lead.status == "new"))
+        if can_clients
+        else None,
         "requested_appointments": appointment_counts[0],
         "pending_confirmation_appointments": appointment_counts[1],
         "confirmed_appointments": appointment_counts[2],
@@ -138,13 +161,15 @@ def dashboard(db: Database, user: AuthenticatedUser):
         "published_properties": db.scalar(
             select(func.count()).select_from(Property).where(Property.status == "published")
         )
-        if user.role == "admin"
+        if can_properties
         else None,
     }
 
 
 @router.get(
-    "/properties", response_model=list[PropertyOutput], dependencies=[Depends(require_admin)]
+    "/properties",
+    response_model=list[PropertyOutput],
+    dependencies=[Depends(require_permission("properties.view"))],
 )
 def properties(
     db: Database,
@@ -160,7 +185,11 @@ def properties(
     ).all()
 
 
-@router.get("/leads", response_model=list[LeadDetails])
+@router.get(
+    "/leads",
+    response_model=list[LeadDetails],
+    dependencies=[Depends(require_permission("clients.view"))],
+)
 def leads(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
     items = db.scalars(
         select(Lead).order_by(Lead.created_at.desc(), Lead.id).limit(limit).offset(offset)
@@ -206,12 +235,21 @@ def leads(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Quer
             address=location(item).address if location(item) else None,
             latitude=location(item).latitude if location(item) else None,
             longitude=location(item).longitude if location(item) else None,
+            advisor=(
+                configurations.get(item.kitchen_configuration_id).advisor
+                if item.kitchen_configuration_id in configurations
+                else None
+            ),
         )
         for item in items
     ]
 
 
-@router.get("/leads/{id}", response_model=LeadDetails)
+@router.get(
+    "/leads/{id}",
+    response_model=LeadDetails,
+    dependencies=[Depends(require_permission("clients.view"))],
+)
 def lead(id: UUID, db: Database):
     item = db.get(Lead, id)
     if item is None:
@@ -219,7 +257,11 @@ def lead(id: UUID, db: Database):
     return lead_details(db, item)
 
 
-@router.get("/appointments", response_model=list[AppointmentDetails])
+@router.get(
+    "/appointments",
+    response_model=list[AppointmentDetails],
+    dependencies=[Depends(require_permission("appointments.view"))],
+)
 def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
     priority = case(
         (Appointment.status == "pending_confirmation", 0),
@@ -246,6 +288,12 @@ def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int
                 LeadDetails(
                     **LeadOutput.model_validate(lead).model_dump(),
                     submission=lead_submissions.get(lead.id),
+                    advisor=(
+                        db.get(KitchenConfiguration, lead.kitchen_configuration_id).advisor
+                        if lead.kitchen_configuration_id
+                        and db.get(KitchenConfiguration, lead.kitchen_configuration_id)
+                        else None
+                    ),
                 )
                 for lead in contacts
                 if lead.appointment_id == item.id
@@ -256,7 +304,11 @@ def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int
     ]
 
 
-@router.get("/appointments/{id}", response_model=AppointmentDetails)
+@router.get(
+    "/appointments/{id}",
+    response_model=AppointmentDetails,
+    dependencies=[Depends(require_permission("appointments.view"))],
+)
 def appointment(id: UUID, db: Database):
     item = db.get(Appointment, id)
     if item is None:
@@ -264,7 +316,11 @@ def appointment(id: UUID, db: Database):
     return appointment_details(db, item)
 
 
-@router.get("/kitchen-configurations", response_model=list[KitchenDetails])
+@router.get(
+    "/kitchen-configurations",
+    response_model=list[KitchenDetails],
+    dependencies=[Depends(require_permission("kitchens.view"))],
+)
 def kitchens(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
     items = db.scalars(
         select(KitchenConfiguration)
@@ -310,7 +366,11 @@ def kitchens(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Q
     ]
 
 
-@router.get("/kitchen-configurations/{id}", response_model=KitchenDetails)
+@router.get(
+    "/kitchen-configurations/{id}",
+    response_model=KitchenDetails,
+    dependencies=[Depends(require_permission("kitchens.view"))],
+)
 def kitchen(id: UUID, db: Database):
     item = db.get(KitchenConfiguration, id)
     if item is None:
@@ -321,7 +381,7 @@ def kitchen(id: UUID, db: Database):
 @router.get(
     "/properties/{id}",
     response_model=PropertyOutput,
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_permission("properties.view"))],
 )
 def property_detail(id: UUID, db: Database):
     item = db.get(Property, id)

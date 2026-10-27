@@ -10,6 +10,7 @@ from app import models  # noqa: F401 - register all mappings
 from app.admin.router import router as management_router
 from app.appointments.router import router as appointments_router
 from app.auth.router import router as auth_router
+from app.auth.users_router import router as users_router
 from app.config import Settings, get_settings
 from app.dependencies import Database
 from app.errors import install_error_handlers
@@ -76,6 +77,7 @@ def create_app(configuration: Settings | None = None) -> FastAPI:
 
     for router in (
         auth_router,
+        users_router,
         management_router,
         public_router,
         admin_router,

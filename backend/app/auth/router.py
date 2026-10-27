@@ -4,14 +4,16 @@ from datetime import UTC, datetime, timedelta
 from fastapi import APIRouter, HTTPException, Request, Response
 from sqlalchemy import delete, select
 
+from app.auth.audit import record_audit
 from app.auth.models import AdminSession, AdminUser
-from app.auth.schemas import LoginInput, UserOutput
+from app.auth.schemas import ChangePasswordInput, LoginInput, UserOutput
 from app.auth.security import (
     consume_login_budget,
     csrf_guard,
     dummy_hash,
     hasher,
     revoke_session,
+    revoke_user_sessions,
     token_digest,
     verify_password,
 )
@@ -66,6 +68,28 @@ def login(
 
 @router.get("/me", response_model=UserOutput)
 def me(user: AuthenticatedUser):
+    return user
+
+
+@router.post("/change-password", response_model=UserOutput)
+def change_password(
+    payload: ChangePasswordInput,
+    request: Request,
+    db: Database,
+    settings: Configuration,
+    user: AuthenticatedUser,
+):
+    if not verify_password(user.password_hash, payload.current_password.get_secret_value()):
+        raise HTTPException(400, "Current password is incorrect")
+    if verify_password(user.password_hash, payload.new_password.get_secret_value()):
+        raise HTTPException(400, "New password must be different")
+    user.password_hash = hasher.hash(payload.new_password.get_secret_value())
+    user.must_change_password = False
+    raw = request.cookies.get(settings.cookie_name)
+    revoke_user_sessions(db, user.id, token_digest(raw) if raw else None)
+    record_audit(db, user, "USER_PASSWORD_CHANGED", "admin_user", user.id)
+    db.commit()
+    db.refresh(user)
     return user
 
 

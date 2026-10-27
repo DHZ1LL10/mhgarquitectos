@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.auth.models import AdminSession, AdminUser
+from app.auth.permissions import Permission, has_permission
 from app.auth.security import csrf_guard, token_digest
 from app.config import Settings, get_settings
 from app.db import get_db
@@ -21,6 +22,13 @@ def current_user(request: Request, db: Database, settings: Configuration) -> Adm
     user = db.get(AdminUser, session.user_id)
     if user is None or not user.is_active:
         raise HTTPException(401, "Authentication required")
+    password_routes = {
+        "/api/v1/auth/me",
+        "/api/v1/auth/logout",
+        "/api/v1/auth/change-password",
+    }
+    if user.must_change_password and request.url.path not in password_routes:
+        raise HTTPException(403, "Password change required")
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         csrf_guard(request, settings)
     return user
@@ -29,7 +37,20 @@ def current_user(request: Request, db: Database, settings: Configuration) -> Adm
 AuthenticatedUser = Annotated[AdminUser, Depends(current_user)]
 
 
-def require_admin(user: AuthenticatedUser) -> AdminUser:
-    if user.role != "admin":
-        raise HTTPException(403, "Administrator permission required")
+def require_owner(user: AuthenticatedUser) -> AdminUser:
+    if user.role != "owner":
+        raise HTTPException(403, "Owner permission required")
     return user
+
+
+def require_permission(permission: Permission):
+    def dependency(user: AuthenticatedUser) -> AdminUser:
+        if not has_permission(user.role, user.permissions, permission):
+            raise HTTPException(403, f"Missing permission: {permission}")
+        return user
+
+    return dependency
+
+
+# Compatibility alias for older imports while endpoints migrate to explicit permissions.
+require_admin = require_owner

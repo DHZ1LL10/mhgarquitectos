@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.auth.security import enforce_public_rate_limit
-from app.dependencies import Configuration, Database, current_user
+from app.dependencies import Configuration, Database, require_permission
 from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.schemas import KitchenCreate, KitchenOutput
 
@@ -36,7 +36,7 @@ def create_configuration(
 @router.get(
     "/{id}",
     response_model=KitchenOutput,
-    dependencies=[Depends(current_user)],
+    dependencies=[Depends(require_permission("kitchens.view"))],
     description="Authenticated administrative reader; contains personal data.",
 )
 def get_configuration(id: UUID, db: Database):

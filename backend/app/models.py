@@ -16,6 +16,6 @@ __all__ = [
 ]
 __all__ += ["KitchenSubmission"]
 
-from app.auth.models import AdminSession, AdminUser, LoginLimit, PublicRateLimit
+from app.auth.models import AdminAuditEvent, AdminSession, AdminUser, LoginLimit, PublicRateLimit
 
-__all__ += ["AdminSession", "AdminUser", "LoginLimit", "PublicRateLimit"]
+__all__ += ["AdminAuditEvent", "AdminSession", "AdminUser", "LoginLimit", "PublicRateLimit"]

@@ -11,6 +11,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.auth.models import AdminSession, AdminUser, LoginLimit, PublicRateLimit
+from app.auth.permissions import FULL_PERMISSIONS, normalize_permissions
 from app.auth.schemas import CreateAdminInput
 from app.config import Settings
 
@@ -120,22 +121,43 @@ def verify_password(encoded: str, password: str) -> bool:
         return False
 
 
-def create_user(db: Session, payload: CreateAdminInput) -> AdminUser:
+def create_user(db: Session, payload: CreateAdminInput, *, commit: bool = True) -> AdminUser:
     if db.scalar(select(AdminUser.id).where(AdminUser.email == str(payload.email))) is not None:
         raise ValueError("Email already exists")
+    if (
+        payload.role == "owner"
+        and db.scalar(select(AdminUser.id).where(AdminUser.role == "owner")) is not None
+    ):
+        raise ValueError("An owner already exists")
     user = AdminUser(
         email=str(payload.email),
         full_name=payload.full_name,
         role=payload.role,
         password_hash=hasher.hash(payload.password.get_secret_value()),
         is_active=True,
+        permissions=(
+            list(FULL_PERMISSIONS)
+            if payload.role == "owner"
+            else normalize_permissions(payload.permissions)
+        ),
+        must_change_password=payload.must_change_password,
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    if commit:
+        db.commit()
+        db.refresh(user)
+    else:
+        db.flush()
     return user
 
 
 def revoke_session(db: Session, raw: str | None) -> None:
     if raw:
         db.execute(delete(AdminSession).where(AdminSession.token_hash == token_digest(raw)))
+
+
+def revoke_user_sessions(db: Session, user_id, keep_token_hash: str | None = None) -> None:
+    statement = delete(AdminSession).where(AdminSession.user_id == user_id)
+    if keep_token_hash:
+        statement = statement.where(AdminSession.token_hash != keep_token_hash)
+    db.execute(statement)
