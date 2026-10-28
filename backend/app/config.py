@@ -75,6 +75,13 @@ class Settings(BaseSettings):
             raise ValueError("DB_PASSWORD is required when DATABASE_URL is not configured")
         if self.environment in ("staging", "production") and not self.cookie_secure:
             raise ValueError("Staging and production require COOKIE_SECURE=true")
+        expected_cookie_names = {
+            "staging": "mhg_staging_session",
+            "production": "mhg_production_session",
+        }
+        expected_cookie_name = expected_cookie_names.get(self.environment)
+        if expected_cookie_name and self.cookie_name != expected_cookie_name:
+            raise ValueError(f"{self.environment} requires COOKIE_NAME={expected_cookie_name}")
         for origin in self.cors_origins:
             url = urlsplit(origin)
             if (
@@ -87,6 +94,8 @@ class Settings(BaseSettings):
                 or "*" in origin
             ):
                 raise ValueError("CORS origins must be explicit HTTP(S) origins without paths")
+            if self.environment in ("staging", "production") and url.scheme != "https":
+                raise ValueError("Staging and production CORS origins must use HTTPS")
         if (self.smtp_user is None) != (self.smtp_password is None):
             raise ValueError("SMTP_USER and SMTP_PASSWORD must be configured together")
         for address in (self.smtp_from, self.notification_email, self.staging_email_override):

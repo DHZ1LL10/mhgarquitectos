@@ -192,6 +192,8 @@ def test_staging_email_override_is_mandatory_and_authoritative():
             db_password="test",
             environment="staging",
             cookie_secure=True,
+            cookie_name="mhg_staging_session",
+            cors_origins=["https://staging.example.com"],
             smtp_host="smtp.example.com",
             smtp_from="sender@example.com",
             notification_email="customer@example.com",
@@ -200,6 +202,8 @@ def test_staging_email_override_is_mandatory_and_authoritative():
         db_password="test",
         environment="staging",
         cookie_secure=True,
+        cookie_name="mhg_staging_session",
+        cors_origins=["https://staging.example.com"],
         smtp_host="smtp.example.com",
         smtp_from="sender@example.com",
         notification_email="customer@example.com",
@@ -211,13 +215,14 @@ def test_staging_email_override_is_mandatory_and_authoritative():
         Settings(db_password="test", staging_email_override="internal@example.com")
 
 
-def test_crm_demo_seed_refuses_non_local_environment(monkeypatch):
+@pytest.mark.parametrize("environment", ["staging", "production"])
+def test_crm_demo_seed_refuses_non_local_environment(monkeypatch, environment):
     from types import SimpleNamespace
 
     from app.scripts import seed_admin_demo
 
     monkeypatch.setattr(
-        seed_admin_demo, "get_settings", lambda: SimpleNamespace(environment="staging")
+        seed_admin_demo, "get_settings", lambda: SimpleNamespace(environment=environment)
     )
     monkeypatch.setattr(
         seed_admin_demo,
@@ -226,6 +231,47 @@ def test_crm_demo_seed_refuses_non_local_environment(monkeypatch):
     )
     with pytest.raises(SystemExit, match="outside ENVIRONMENT=local"):
         seed_admin_demo.main()
+
+
+@pytest.mark.parametrize(
+    ("environment", "cookie_name", "origin"),
+    [
+        ("staging", "mhg_staging_session", "https://staging.mhgarquitectos.com"),
+        ("production", "mhg_production_session", "https://mhgarquitectos.com"),
+    ],
+)
+def test_managed_environments_require_https_and_exclusive_cookie_names(
+    environment, cookie_name, origin
+):
+    configured = Settings(
+        _env_file=None,
+        db_password="test",
+        environment=environment,
+        cookie_secure=True,
+        cookie_samesite="lax",
+        cookie_name=cookie_name,
+        cors_origins=[origin],
+    )
+    assert configured.cookie_secure is True and configured.cookie_samesite == "lax"
+
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            db_password="test",
+            environment=environment,
+            cookie_secure=True,
+            cookie_name=cookie_name,
+            cors_origins=[origin.replace("https://", "http://")],
+        )
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            db_password="test",
+            environment=environment,
+            cookie_secure=True,
+            cookie_name="mhg_session",
+            cors_origins=[origin],
+        )
 
 
 def test_crm_demo_seed_warns_only_for_known_synthetic_property_signatures():

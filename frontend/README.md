@@ -18,7 +18,7 @@ npm.cmd run dev
 
 Usar `npm` en shells donde no exista la restricción de scripts de PowerShell. El `npm.cmd` evita ejecutar `npm.ps1` y no cambia la política del equipo.
 
-Opcional: copiar `.env.example` a `.env.local` para definir el origen local de las URLs canónicas. Sin `SITE_URL`, se utiliza `https://mhgarquitectos.com` como referencia; no se realiza ninguna llamada a ese dominio. Todo el entorno está bloqueado para indexación.
+Opcional: copiar `.env.example` a `.env.local` para definir el origen local de las URLs canónicas. Desarrollo usa `DEPLOYMENT_ENV=local` y permanece bloqueado para indexación. Los builds staging/production exigen un entorno explícito, modo API y URLs HTTPS completas; staging queda `noindex` y sólo producción habilita indexación pública.
 
 ## Rutas
 
@@ -28,15 +28,14 @@ Opcional: copiar `.env.example` a `.env.local` para definir el origen local de l
 | `/index.html` | Rewrite interno hacia `/` |
 | `/cocina-customizer.html` | HTML original sin React ni iframe |
 | `/propiedades` | Solo propiedades `published` |
-| `/propiedades/casa-demo-fortin` | Ficha de demostración con galería |
-| `/propiedades/departamento-demo-tuxtepec` | Ficha de demostración con una imagen |
+| `/propiedades/[slug]` | Ficha de una propiedad publicada obtenida desde la API |
 | `/admin/login` | Inicio de sesión administrativo real |
 | `/admin` | Panel autenticado conectado a la API |
 | `/customizer-runtime-config.js` | Configuración pública del customizador generada en runtime |
-| `/robots.txt` | Bloqueo de indexación del entorno ficticio |
+| `/robots.txt` | Bloquea local/staging; permite rutas públicas en producción y excluye admin |
 | `/sitemap.xml` | Portada, catálogo y fichas publicadas; sin administrador |
 
-Borradores, archivados y slugs inexistentes devuelven 404. Las fichas públicas todavía se prerenderizan desde el repositorio local durante el build. El panel administrativo persiste propiedades, citas, leads y configuraciones en la API; activar el catálogo público contra esa API sigue siendo una decisión posterior.
+Borradores, archivados y slugs inexistentes devuelven 404. Staging y producción requieren `PROPERTY_REPOSITORY=api`; los fixtures locales quedan reservados a pruebas explícitas. El panel administrativo persiste propiedades, citas, leads y configuraciones en la misma API real.
 
 ## Arquitectura
 

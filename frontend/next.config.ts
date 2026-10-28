@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { resolveDeploymentConfig, type DeploymentEnvironment } from "./src/config/deployment.ts";
 
 function apiOrigin(): string | null {
   const value = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -34,15 +35,23 @@ export function buildContentSecurityPolicy(
   ].join("; ");
 }
 
-const contentSecurityPolicy = buildContentSecurityPolicy();
+export function buildSecurityHeaders(
+  environment: DeploymentEnvironment,
+  nodeEnvironment: string | undefined = process.env.NODE_ENV,
+) {
+  return [
+    { key: "X-Content-Type-Options", value: "nosniff" },
+    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
+    { key: "Content-Security-Policy", value: buildContentSecurityPolicy(nodeEnvironment) },
+    ...(environment === "production"
+      ? []
+      : [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]),
+  ];
+}
 
-const securityHeaders = [
-  { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
-  { key: "Content-Security-Policy", value: contentSecurityPolicy },
-  { key: "X-Robots-Tag", value: "noindex, nofollow" },
-];
+const deployment = resolveDeploymentConfig();
+const securityHeaders = buildSecurityHeaders(deployment.environment);
 
 const config: NextConfig = {
   reactStrictMode: true,

@@ -9,7 +9,7 @@ services:
     name: mhg-api-staging
     region: oregon
     plan: 0.5c-512mb
-    branch: phase-4a-staging-hardening
+    branch: phase-4g-users-permissions
     autoDeployTrigger: checksPass
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend

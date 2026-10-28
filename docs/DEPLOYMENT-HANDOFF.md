@@ -11,6 +11,128 @@ La autorización futura debe cubrir explícitamente el gasto recurrente y cualqu
 de DNS. Los precios y límites de los proveedores cambian: hay que revisarlos el mismo día
 de contratar, sin reutilizar estimaciones históricas.
 
+## PRE-CUTOVER 4G
+
+El repositorio distingue frontend `local`, `staging` y `production` mediante
+`DEPLOYMENT_ENV`. Un build con `NODE_ENV=production` se detiene si esa variable falta.
+Staging y producción exigen `PROPERTY_REPOSITORY=api`, las tres URLs de API idénticas,
+HTTPS y `SITE_URL` sin path. Esto evita publicar por accidente fixtures locales o un build
+con modo SEO indeterminado.
+
+### Render staging
+
+Configuración no secreta:
+
+| Variable | Valor exacto |
+| --- | --- |
+| `ENVIRONMENT` | `staging` |
+| `DB_SSLMODE` | `require` |
+| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | `5` / `5` |
+| `DB_POOL_TIMEOUT_SECONDS` / `DB_POOL_RECYCLE_SECONDS` | `10` / `1800` |
+| `COOKIE_SECURE` / `COOKIE_SAMESITE` | `true` / `lax` |
+| `COOKIE_NAME` | `mhg_staging_session` |
+| `SESSION_HOURS` | `8` |
+| `CORS_ORIGINS` | `["https://staging.mhgarquitectos.com"]` |
+| `OPENAPI_ENABLED` | `false` |
+| `MAX_REQUEST_BODY_BYTES` | `1048576` |
+| `TRUST_PROXY` / `TRUSTED_PROXY_CIDRS` | `false` / `[]` |
+| `PUBLIC_RATE_LIMIT_ENABLED` | `true` |
+| `PUBLIC_RATE_LIMIT_WINDOW_SECONDS` | `900` |
+| `PUBLIC_RATE_LIMIT_KITCHEN_SUBMISSIONS` | `10` |
+| `PUBLIC_RATE_LIMIT_LEADS` | `20` |
+| `PUBLIC_RATE_LIMIT_APPOINTMENTS` | `10` |
+| `PUBLIC_RATE_LIMIT_KITCHEN_CONFIGURATIONS` | `10` |
+| `LOG_LEVEL` | `INFO` |
+| `SMTP_PORT` / `SMTP_USE_TLS` | `587` / `true` |
+
+Secretos o configuración interna en Render: `DATABASE_URL` generado por
+`mhg-postgres-staging`, `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` y
+`STAGING_EMAIL_OVERRIDE`. El override debe ser un buzón interno y `NOTIFICATION_EMAIL`
+no se usa como destinatario efectivo en staging.
+
+### Netlify staging
+
+El sitio debe ser nuevo y separado del sitio productivo actual. Todas estas variables son
+configuración pública; Netlify no recibe secretos de backend:
+
+| Variable | Valor exacto |
+| --- | --- |
+| `DEPLOYMENT_ENV` | `staging` |
+| `SITE_URL` | `https://staging.mhgarquitectos.com` |
+| `PROPERTY_REPOSITORY` | `api` |
+| `PROPERTY_API_BASE_URL` | `https://api-staging.mhgarquitectos.com/api/v1` |
+| `NEXT_PUBLIC_API_BASE_URL` | `https://api-staging.mhgarquitectos.com/api/v1` |
+| `CUSTOMIZER_API_BASE_URL` | `https://api-staging.mhgarquitectos.com/api/v1` |
+| `NEXT_TELEMETRY_DISABLED` | `1` |
+
+`next.config.ts`, metadata raíz y `robots.ts` producen `noindex, nofollow`, bloqueo
+completo en robots y `X-Robots-Tag` para staging. `netlify.toml` ya no fija ese header de
+forma global: así producción no puede heredarlo por reutilizar el archivo.
+
+### Render production
+
+No existe todavía un recurso productivo en este repositorio. Cuando se autorice, usar la
+misma imagen y comandos de migración/health de staging con esta configuración no secreta:
+
+| Variable | Valor exacto |
+| --- | --- |
+| `ENVIRONMENT` | `production` |
+| `DB_SSLMODE` | `require` |
+| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | `5` / `5` inicialmente |
+| `DB_POOL_TIMEOUT_SECONDS` / `DB_POOL_RECYCLE_SECONDS` | `10` / `1800` |
+| `COOKIE_SECURE` / `COOKIE_SAMESITE` | `true` / `lax` |
+| `COOKIE_NAME` | `mhg_production_session` |
+| `SESSION_HOURS` | `8` |
+| `CORS_ORIGINS` | `["https://mhgarquitectos.com"]` |
+| `OPENAPI_ENABLED` | `false` |
+| `MAX_REQUEST_BODY_BYTES` | `1048576` |
+| `TRUST_PROXY` / `TRUSTED_PROXY_CIDRS` | `false` / `[]` |
+| `PUBLIC_RATE_LIMIT_ENABLED` | `true` |
+| Límites públicos | los mismos valores iniciales de staging |
+| `LOG_LEVEL` | `INFO` |
+| `SMTP_PORT` / `SMTP_USE_TLS` | `587` / `true` |
+
+Secretos o configuración interna: `DATABASE_URL` productiva exclusiva,
+`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` y `NOTIFICATION_EMAIL` operativo.
+`STAGING_EMAIL_OVERRIDE` debe estar ausente; la configuración backend rechaza su presencia
+fuera de staging.
+
+### Netlify production
+
+Estas variables son públicas y deben cargarse sólo cuando el nuevo frontend vaya a
+reemplazar el deploy productivo mediante un cutover autorizado:
+
+| Variable | Valor exacto |
+| --- | --- |
+| `DEPLOYMENT_ENV` | `production` |
+| `SITE_URL` | `https://mhgarquitectos.com` |
+| `PROPERTY_REPOSITORY` | `api` |
+| `PROPERTY_API_BASE_URL` | `https://api.mhgarquitectos.com/api/v1` |
+| `NEXT_PUBLIC_API_BASE_URL` | `https://api.mhgarquitectos.com/api/v1` |
+| `CUSTOMIZER_API_BASE_URL` | `https://api.mhgarquitectos.com/api/v1` |
+| `NEXT_TELEMETRY_DISABLED` | `1` |
+
+En production las rutas públicas generan metadata indexable, robots permite contenido
+público y enlaza el sitemap del `SITE_URL`; `/admin` continúa con metadata `noindex`.
+No se emite `X-Robots-Tag: noindex`. Sitemap y canonical se derivan de variables, no de
+un dominio fijado en el código de despliegue.
+
+### Controles de identidad, demo y correo
+
+- El backend exige HTTPS en CORS, cookies Secure/lax y un nombre de cookie distinto en
+  staging y producción. Frontend y API deben permanecer bajo el mismo dominio registrable
+  (`*.mhgarquitectos.com`) para que la cookie host-only y SameSite funcione por HTTPS.
+- `seed_admin_demo.py` se detiene antes de abrir la base cuando `ENVIRONMENT` no es
+  `local`; nunca forma parte de `dockerCommand`, pre-deploy ni comandos productivos.
+- Producción frontend no compila con `PROPERTY_REPOSITORY=local`. Antes de migrar datos se
+  deben buscar los marcadores sintéticos documentados; nunca se deben importar bases
+  locales ni ejecutar seeds.
+- Producción rechaza `STAGING_EMAIL_OVERRIDE`. Staging exige el override cuando SMTP está
+  configurado.
+- No se crea una cuenta real durante build o deploy. Después de `alembic upgrade head`, y
+  sólo en la base productiva confirmada, se ejecutará interactivamente
+  `python -m app.scripts.create_owner`. No ejecutar `seed_admin_demo.py`.
+
 ## Secuencia cuando el cliente autorice
 
 1. **Revisar precio y alcance.** Confirmar precios actuales de Render Web Service, Render
