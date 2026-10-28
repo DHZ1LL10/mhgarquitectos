@@ -80,6 +80,59 @@ El comando exige una terminal interactiva, nombre, correo y contraseña inicial 
 
 **Max owner account is NOT created yet. Create it during production provisioning with the owner bootstrap.**
 
+## Final PostgreSQL QA
+
+QA ejecutado el 27 de octubre de 2026 contra PostgreSQL 17.11 en Docker, usando la
+base local persistente y `mhg_test` descartable sobre `tmpfs`. La base local pasó de
+`0005_service_folios` a `0006_access_management`; su único `admin` activo
+preexistente se convirtió en `owner`, sin crear usuarios, y la sesión existente se
+conservó. `alembic current` quedó en `0006_access_management (head)` y `alembic
+check` no reporta operaciones pendientes.
+
+En `mhg_test` se validó la selección determinística con tres cuentas sintéticas: se
+promovió el `admin` activo más antiguo ordenando por `created_at, id`; el `admin`
+activo posterior y el inactivo quedaron como `staff`. PostgreSQL rechazó físicamente
+un segundo owner y la desactivación del owner. El ciclo real
+`0006 -> 0005 -> 0006` terminó correctamente y preservó usuarios y sesiones.
+El downgrade elimina, por diseño, auditoría, `permissions` y
+`must_change_password`; además no puede reconstruir cuáles cuentas `staff` eran
+`admin` antes del primer upgrade. Por tanto, un rollback de producción requiere
+restaurar el backup previo si debe conservarse exactamente esa semántica.
+
+El QA detectó y corrigió una divergencia de metadata: el índice parcial
+`uq_admin_single_owner` existía en la migración pero no estaba declarado en el modelo
+SQLAlchemy, por lo que `alembic check` proponía eliminarlo. Modelo y migración ahora
+describen la misma protección y existe una prueba de regresión.
+
+La matriz verificada con API real fue:
+
+| Escenario staff | Resultado |
+| --- | --- |
+| Login con temporal | Permitido; `must_change_password=true` |
+| CRM antes del cambio | 403; sólo `me`, cambio y logout |
+| Password actual incorrecta o nueva menor a 12 | Rechazo |
+| Password válida | Argon2id actualizado; temporal anterior rechazada |
+| Módulo sin permiso con sesión válida | 403 |
+| Permiso modificado | Efectivo en la siguiente request |
+| Desactivación o reset | Sesiones revocadas |
+| `properties.manage` sin `properties.publish` | Draft editable; publicación 403 |
+| Owner | Acceso efectivo total; no editable/desactivable por API ordinaria |
+
+Resultados finales: 125 pruebas backend sobre PostgreSQL, 97 pruebas frontend,
+Ruff, formato, compileall, typecheck, lint, build, verificación de 415 assets,
+rutas y scanner de secretos en verde. Auditoría verificó actor, acción, entidad,
+timestamp y rechazo recursivo de metadata sensible. El advisor se probó end-to-end
+con `Cotización en línea` y `Arq. Max Herrera`: payload, PostgreSQL, vistas admin y
+transporte SMTP de prueba conservaron el valor exacto; los tests frontend cubren
+resumen, PDF, WhatsApp y persistencia del draft sin hacer envíos externos.
+
+La automatización visual de Firefox fue bloqueada por la política de URLs del runner;
+por eso la inspección manual de sidebar y redirects con una sesión staff queda como
+paso humano antes del cutover. Los guards frontend y los 403 backend sí quedaron
+cubiertos automáticamente. También permanece pendiente ejecutar backup/restauración,
+SMTP real y smoke HTTPS en la infraestructura definitiva; no forman parte de este QA
+local.
+
 ## QA local
 
 1. Aplicar migraciones sobre una base local respaldada.
