@@ -14,7 +14,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     dockerCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000 --no-proxy-headers
-    preDeployCommand: "/bin/sh -c 'alembic upgrade head && alembic current && alembic check'"
+    preDeployCommand: python -m app.scripts.render_predeploy
     healthCheckPath: /health
     buildFilter:
       paths:
