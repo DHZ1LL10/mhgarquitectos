@@ -369,7 +369,8 @@ def test_smtp_failure_preserves_submission_and_admin_relations(client, connectio
         assert items[0]["submission"]["configuration_id"] == receipt["configuration_id"]
 
 
-def test_successful_notification_is_recorded_after_persistence(client, connection):
+@pytest.mark.parametrize("advisor", ["Cotización en línea", "Arq. Max Herrera"])
+def test_successful_notification_is_recorded_after_persistence(client, connection, advisor):
     delivered = []
 
     class RecordingNotifier:
@@ -386,7 +387,7 @@ def test_successful_notification_is_recorded_after_persistence(client, connectio
             "/api/v1/kitchen-submissions",
             headers={"Idempotency-Key": str(uuid4())},
             json={
-                "configuration": kitchen_payload(),
+                "configuration": kitchen_payload(advisor=advisor),
                 "appointment": appointment_payload(),
                 "contact": contact_payload(),
             },
@@ -406,6 +407,10 @@ def test_successful_notification_is_recorded_after_persistence(client, connectio
     ).one()
     assert len(delivered) == 1
     assert delivered[0].folio == receipt["folio"]
+    assert delivered[0].advisor == advisor
+    assert connection.scalar(select(KitchenConfiguration.advisor)) == advisor
+    assert client.get("/api/v1/admin/kitchen-configurations").json()[0]["advisor"] == advisor
+    assert client.get("/api/v1/admin/leads").json()[0]["advisor"] == advisor
     assert stored.notification_status == "sent"
     assert stored.notification_attempts == 1
     assert stored.notification_error is None

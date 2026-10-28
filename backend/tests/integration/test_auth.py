@@ -80,7 +80,7 @@ def test_login_cookie_me_rotation_logout_and_revocation(anonymous_client, connec
     response = login(anonymous_client)
     assert response.status_code == 200
     assert response.json()["id"] == str(user.id) and response.json()["last_login_at"]
-    assert "password" not in response.text and "token" not in response.text
+    assert {"password", "password_hash", "token", "session_token"}.isdisjoint(response.json())
     cookie = response.headers["set-cookie"]
     assert "HttpOnly" in cookie and "SameSite=lax" in cookie and "Max-Age=28800" in cookie
     raw = anonymous_client.cookies.get("mhg_session")
@@ -390,6 +390,13 @@ def test_owner_user_management_password_gate_and_audit(client, connection):
     assert (
         client.post(
             "/api/v1/auth/change-password",
+            json={"current_password": "Temporary-pass-123!", "new_password": "too-short"},
+        ).status_code
+        == 422
+    )
+    assert (
+        client.post(
+            "/api/v1/auth/change-password",
             json={"current_password": "Temporary-pass-123!", "new_password": "Permanent-pass-456!"},
         ).status_code
         == 200
@@ -398,6 +405,18 @@ def test_owner_user_management_password_gate_and_audit(client, connection):
     assert client.get("/api/v1/admin/leads").status_code == 403
     assert client.get("/api/v1/admin/appointments").status_code == 200
     assert client.get("/api/v1/admin/users").status_code == 403
+    assert (
+        login(
+            client, role="staff", email="staff-member@example.com", password="Temporary-pass-123!"
+        ).status_code
+        == 401
+    )
+    assert (
+        login(
+            client, role="staff", email="staff-member@example.com", password="Permanent-pass-456!"
+        ).status_code
+        == 200
+    )
 
     assert login(client, email="admin@example.com").status_code == 200
     updated = client.patch(
@@ -429,7 +448,8 @@ def test_owner_user_management_password_gate_and_audit(client, connection):
         client.patch(f"/api/v1/admin/users/{staff['id']}", json={"is_active": True}).status_code
         == 200
     )
-    events = connection.scalars(select(AdminAuditEvent).order_by(AdminAuditEvent.created_at)).all()
+    with Session(bind=connection, join_transaction_mode="create_savepoint") as db:
+        events = db.scalars(select(AdminAuditEvent).order_by(AdminAuditEvent.created_at)).all()
     assert {event.action for event in events} >= {
         "USER_CREATED",
         "USER_PASSWORD_CHANGED",
