@@ -16,6 +16,12 @@ class AdminUser(IdentityTimestamps, Base):
         CheckConstraint("email = lower(email)", name="ck_admin_email_normalized"),
         CheckConstraint("role IN ('owner', 'staff')", name="ck_admin_role"),
         CheckConstraint("role != 'owner' OR is_active", name="ck_admin_owner_active"),
+        Index(
+            "uq_admin_single_owner",
+            "role",
+            unique=True,
+            postgresql_where=text("role = 'owner'"),
+        ),
     )
     email: Mapped[str] = mapped_column(String(254), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)

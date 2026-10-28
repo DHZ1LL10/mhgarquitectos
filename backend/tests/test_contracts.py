@@ -472,6 +472,17 @@ def test_initial_migration_renders_postgresql_ddl():
         assert required in sql
 
 
+def test_owner_partial_unique_index_is_declared_in_model_metadata():
+    from app.auth.models import AdminUser
+
+    owner_index = next(
+        index for index in AdminUser.__table__.indexes if index.name == "uq_admin_single_owner"
+    )
+
+    assert owner_index.unique is True
+    assert str(owner_index.dialect_options["postgresql"]["where"]) == "role = 'owner'"
+
+
 @pytest.mark.parametrize("advisor", ADVISORS)
 def test_kitchen_accepts_only_the_advisor_catalog(advisor):
     assert KitchenCreate.model_validate(kitchen_payload(advisor=advisor)).advisor == advisor
