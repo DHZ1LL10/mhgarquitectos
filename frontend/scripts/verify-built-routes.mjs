@@ -5,6 +5,7 @@ import { once } from "node:events";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { frontend, sha256, expectedPublicHash } from "./legacy-assets.mjs";
+import { portfolioCategories } from "../src/data/portfolio.ts";
 
 // HTTP requests only. This script never launches or controls a browser.
 const probe = createServer();
@@ -21,7 +22,7 @@ child.stderr.on("data", chunk => { logs += chunk; });
 let spawnError;
 child.on("error", error => { spawnError = error; });
 const base = `http://127.0.0.1:${port}`;
-const get = async route => fetch(base + route, { signal: AbortSignal.timeout(15000) });
+const get = async (route, init = {}) => fetch(base + route, { ...init, signal: AbortSignal.timeout(15000) });
 const withoutScripts = html => html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
 const results = [];
 const production = process.env.DEPLOYMENT_ENV === "production";
@@ -55,9 +56,10 @@ try {
       for (let index = 1; index < sectionIds.length; index++) assert.ok(html.indexOf(`id="${sectionIds[index - 1]}"`) < html.indexOf(`id="${sectionIds[index]}"`), `${route}: section order`);
       assert.match(html, /href="\/cocina-customizer\.html"/);
       assert.match(html, /href="\/propiedades"/);
-      assert.equal([...html.matchAll(/class="proj-item"/g)].length, 13);
-      assert.equal([...html.matchAll(/role="tab"/g)].length, 2);
-      assert.doesNotMatch(html, /tab-mobiliario|tab-interiorismo|cat-mobiliario|cat-interiorismo/);
+      assert.equal([...html.matchAll(/class="proj-item(?: [^"]+)?"/g)].length, 39);
+      assert.equal([...html.matchAll(/role="tab"/g)].length, 4);
+      assert.match(html, /Carpintería y mobiliario/);
+      assert.match(html, /Showroom Tuxtepec/);
     }
     if (route.startsWith("/propiedades")) {
       assert.match(html, /rel="canonical"/);
@@ -108,6 +110,17 @@ try {
   assert.match(runtimeConfigBody, /MHG_CUSTOMIZER_CONFIG/);
   assert.doesNotMatch(runtimeConfigBody, /password|secret|token/i);
   results.push("200 + safe runtime config: /customizer-runtime-config.js");
+  const portfolioAssets = portfolioCategories.flatMap(category => category.projects).filter(project => project.src.startsWith("/img/portfolio/"));
+  assert.equal(portfolioAssets.length, 34);
+  for (const project of portfolioAssets) {
+    const response = await get(project.src);
+    assert.equal(response.status, 200, project.src);
+    assert.match(response.headers.get("content-type") || "", /image\/webp/, project.src);
+  }
+  const optimizedPortfolioImage = await get(`/_next/image?url=${encodeURIComponent(portfolioAssets[0].src)}&w=1080&q=75`, { headers: { accept: "image/webp" } });
+  assert.equal(optimizedPortfolioImage.status, 200);
+  assert.match(optimizedPortfolioImage.headers.get("content-type") || "", /image\/webp/);
+  results.push("34 portfolio derivatives + Next/Image optimization respond successfully.");
   const sitemap = await (await get("/sitemap.xml")).text();
   assert.match(sitemap, /residencia-mata-larga-fortin/);
   assert.doesNotMatch(sitemap, /\/admin|casa-demo|departamento-demo|borrador|archivado/);

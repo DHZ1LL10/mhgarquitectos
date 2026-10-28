@@ -1,6 +1,9 @@
+import Image from "next/image";
 import PropertyCard from "@/features/properties/components/PropertyCard";
 import type { Property } from "@/features/properties/types";
 import propertyStyles from "@/features/properties/styles/properties.module.css";
+import { portfolioCategories } from "@/data/portfolio";
+import portfolioStyles from "./portfolio.module.css";
 
 export default function HomeSections({ properties }: { properties: Property[] }) {
   return (<>
@@ -61,90 +64,65 @@ export default function HomeSections({ properties }: { properties: Property[] })
       </div>
 
       {/* Tabs de categoría */}
-      <div className="proj-tabs" role="tablist" aria-label="Categorías de proyectos">
-        <button className="proj-tab active" role="tab" data-cat="construccion" id="tab-construccion" aria-selected="true">Diseño y Construcción</button>
-        <button className="proj-tab" role="tab" data-cat="cocinas" id="tab-cocinas" aria-selected="false">Cocinas</button>
+      <div className={`proj-tabs ${portfolioStyles.tabs}`} role="tablist" aria-label="Categorías de proyectos">
+        {portfolioCategories.map((category, index) => (
+          <button
+            className={`proj-tab ${portfolioStyles.tab}${index === 0 ? " active" : ""}`}
+            role="tab"
+            data-cat={category.slug}
+            id={`tab-${category.slug}`}
+            aria-controls={`cat-${category.slug}`}
+            aria-selected={index === 0}
+            tabIndex={index === 0 ? 0 : -1}
+            key={category.slug}
+          >
+            {category.label}
+          </button>
+        ))}
       </div>
 
-      {/* CONSTRUCCIÓN */}
-      <div className="proj-panel active" id="cat-construccion" role="tabpanel" aria-labelledby="tab-construccion">
-        <div className="proj-grid">
-          <div className="proj-item" id="proj-c1">
-            <img src="/img/construccion/fachada-1.jpg" alt="Fachada residencial con piedra — MHG Arquitectos" loading="lazy" />
-            <div className="proj-overlay"><span>Fachada Residencial</span></div>
+      {portfolioCategories.map((category, categoryIndex) => (
+        <div
+          className={`proj-panel${categoryIndex === 0 ? " active" : ""}`}
+          id={`cat-${category.slug}`}
+          role="tabpanel"
+          aria-labelledby={`tab-${category.slug}`}
+          hidden={categoryIndex !== 0}
+          key={category.slug}
+        >
+          <div className="proj-grid">
+            {category.projects.map((project, projectIndex) => (
+              <button
+                type="button"
+                className={`proj-item ${portfolioStyles.item}${project.height > project.width ? ` ${portfolioStyles.portrait}` : ""}`}
+                id={`proj-${category.slug}-${projectIndex + 1}`}
+                aria-label={`Ampliar ${project.title}`}
+                key={project.src}
+              >
+                <Image
+                  src={project.src}
+                  alt={project.alt}
+                  width={project.width}
+                  height={project.height}
+                  sizes="(max-width: 480px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                  loading="lazy"
+                  decoding="async"
+                  data-full-src={project.src}
+                />
+                <span className={`proj-overlay ${portfolioStyles.overlay}`}><span>{project.title}</span></span>
+              </button>
+            ))}
           </div>
-          <div className="proj-item" id="proj-c2">
-            <img src="/img/construccion/entrada.jpg" alt="Entrada de proyecto con puerta decorativa" loading="lazy" />
-            <div className="proj-overlay"><span>Entrada de Proyecto</span></div>
-          </div>
-          <div className="proj-item" id="proj-c3">
-            <img src="/img/construccion/recamara.jpg" alt="Recámara terminada con closet integrado" loading="lazy" />
-            <div className="proj-overlay"><span>Recámara con Closet</span></div>
-          </div>
-          <div className="proj-item" id="proj-c4">
-            <img src="/img/construccion/obra-proceso.jpg" alt="Obra en proceso — vista aérea" loading="lazy" />
-            <div className="proj-overlay"><span>Obra en Proceso</span></div>
-          </div>
-          <div className="proj-item" id="proj-c5">
-            <img src="/img/construccion/obra-aerea.jpg" alt="Vista aérea del proyecto" loading="lazy" />
-            <div className="proj-overlay"><span>Vista Aérea</span></div>
-          </div>
-        </div>
-        <div className="proj-sidebar">
-          <div className="proj-cta-card" id="proj-c-cta">
-            <p>¿Tienes un proyecto residencial o comercial?</p>
-            <a href="https://wa.me/5212711055612?text=Hola%2C%20me%20interesa%20construir%20o%20remodelar.%20%C2%BFPodr%C3%ADan%20darme%20informaci%C3%B3n?" className="btn btn-primary" target="_blank" rel="noopener noreferrer" id="proj-wa-construccion">
-              Platicar sobre mi obra
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* COCINAS */}
-      <div className="proj-panel" id="cat-cocinas" role="tabpanel" aria-labelledby="tab-cocinas" hidden>
-        <div className="proj-grid">
-          <div className="proj-item" id="proj-k1">
-            <img src="/img/cocinas/cocina-lambrin-1.jpg" alt="Cocina Lambrin con cubierta — MHG Arquitectos" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Lambrin · Con Cubierta</span></div>
-          </div>
-          <div className="proj-item" id="proj-k2">
-            <img src="/img/cocinas/cocina-lambrin-2.jpg" alt="Cocina Lambrin vista lateral" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Lambrin</span></div>
-          </div>
-          <div className="proj-item" id="proj-k3">
-            <img src="/img/cocinas/cocina-lambrin-3.jpg" alt="Cocina Lambrin sin cubierta" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Lambrin · Sin Cubierta</span></div>
-          </div>
-          <div className="proj-item" id="proj-k4">
-            <img src="/img/cocinas/cocina-depto-1.jpg" alt="Cocina para departamento" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Departamento</span></div>
-          </div>
-          <div className="proj-item" id="proj-k5">
-            <img src="/img/cocinas/cocina-oxford-1.jpg" alt="Cocina Oxford" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Oxford</span></div>
-          </div>
-          <div className="proj-item" id="proj-k6">
-            <img src="/img/cocinas/cocina-durango-1.jpg" alt="Cocina Durango" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Durango</span></div>
-          </div>
-          <div className="proj-item" id="proj-k7">
-            <img src="/img/cocinas/cocina-romero-1.jpg" alt="Cocina Romero" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Romero</span></div>
-          </div>
-          <div className="proj-item" id="proj-k8">
-            <img src="/img/cocinas/cocina-romero-2.jpg" alt="Cocina Romero — detalle" loading="lazy" />
-            <div className="proj-overlay"><span>Cocina Romero · Detalle</span></div>
+          <div className="proj-sidebar">
+            <div className="proj-cta-card" id={`proj-${category.slug}-cta`}>
+              <p>{category.cta.prompt}</p>
+              <a href={category.cta.href} className="btn btn-primary" target="_blank" rel="noopener noreferrer" id={`proj-wa-${category.slug}`}>
+                {category.cta.label}
+              </a>
+            </div>
           </div>
         </div>
-        <div className="proj-sidebar">
-          <div className="proj-cta-card" id="proj-k-cta">
-            <p>¿Quieres renovar tu cocina?</p>
-            <a href="https://wa.me/5212711055612?text=Hola%2C%20me%20interesa%20una%20Cocina%20Integral%20a%20medida.%20%C2%BFPueden%20cotizarme?" className="btn btn-primary" target="_blank" rel="noopener noreferrer" id="proj-wa-cocinas">
-              Cotizar mi cocina
-            </a>
-          </div>
-        </div>
-      </div>
+      ))}
 
     </div>
   </section>

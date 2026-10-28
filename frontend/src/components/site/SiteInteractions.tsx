@@ -30,10 +30,30 @@ export default function SiteInteractions() {
     });
     menu?.querySelectorAll(".nav-link").forEach(link => on(link, "click", closeMenu));
     const tabs = document.querySelectorAll<HTMLElement>(".proj-tab"), panels = document.querySelectorAll<HTMLElement>(".proj-panel");
-    tabs.forEach(tab => on(tab, "click", () => {
-      tabs.forEach(item => { item.classList.toggle("active", item === tab); item.setAttribute("aria-selected", String(item === tab)); });
+    const tabList = Array.from(tabs);
+    const activateTab = (tab: HTMLElement, moveFocus = false) => {
+      tabs.forEach(item => {
+        const active = item === tab;
+        item.classList.toggle("active", active);
+        item.setAttribute("aria-selected", String(active));
+        item.tabIndex = active ? 0 : -1;
+      });
       panels.forEach(panel => { const active = panel.id === "cat-" + tab.dataset.cat; panel.classList.toggle("active", active); panel.hidden = !active; });
-    }));
+      if (moveFocus) tab.focus();
+    };
+    tabs.forEach((tab, position) => {
+      on(tab, "click", () => activateTab(tab));
+      on(tab, "keydown", event => {
+        let nextPosition = position;
+        if (event.key === "ArrowRight") nextPosition = (position + 1) % tabList.length;
+        else if (event.key === "ArrowLeft") nextPosition = (position - 1 + tabList.length) % tabList.length;
+        else if (event.key === "Home") nextPosition = 0;
+        else if (event.key === "End") nextPosition = tabList.length - 1;
+        else return;
+        event.preventDefault();
+        activateTab(tabList[nextPosition], true);
+      });
+    });
     document.querySelectorAll<HTMLElement>(".branch-map").forEach(wrap => {
       const placeholder = wrap.querySelector<HTMLElement>(".map-placeholder"), src = placeholder?.dataset.src;
       if (!placeholder || !src) return;
@@ -69,30 +89,36 @@ export default function SiteInteractions() {
     // This overlay is entirely owned by the effect, never by React's children.
     const lightbox = document.createElement("div"); lightbox.id = "lightbox";
     lightbox.setAttribute("role", "dialog"); lightbox.setAttribute("aria-label", "Galería ampliada");
+    lightbox.setAttribute("aria-modal", "true");
     lightbox.style.cssText = "display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;cursor:zoom-out;";
     const image = document.createElement("img"); image.alt = "Proyecto MHG Arquitectos";
     image.style.cssText = "max-width:88vw;max-height:88vh;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.8);animation:lbIn .25s ease;cursor:default;";
-    const close = document.createElement("button"); close.textContent = "×"; close.setAttribute("aria-label", "Cerrar");
+    const close = document.createElement("button"); close.type = "button"; close.textContent = "×"; close.setAttribute("aria-label", "Cerrar");
     close.style.cssText = "position:absolute;top:20px;right:28px;background:none;border:none;color:#fff;font-size:2.4rem;cursor:pointer;line-height:1;opacity:.7;transition:.2s;";
-    const previous = document.createElement("button"); previous.className = "lb-nav lb-prev"; previous.textContent = "‹"; previous.setAttribute("aria-label", "Anterior");
-    const next = document.createElement("button"); next.className = "lb-nav lb-next"; next.textContent = "›"; next.setAttribute("aria-label", "Siguiente");
+    const previous = document.createElement("button"); previous.type = "button"; previous.className = "lb-nav lb-prev"; previous.textContent = "‹"; previous.setAttribute("aria-label", "Anterior");
+    const next = document.createElement("button"); next.type = "button"; next.className = "lb-nav lb-next"; next.textContent = "›"; next.setAttribute("aria-label", "Siguiente");
     lightbox.append(image, close, previous, next); document.body.append(lightbox);
     const style = document.createElement("style"); style.textContent = "@keyframes lbIn { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }"; document.head.append(style);
-    let items: HTMLElement[] = [], index = 0, overflow = "";
+    let items: HTMLElement[] = [], index = 0, overflow = "", opener: HTMLElement | null = null;
     const show = (position: number) => {
       if (!items.length) return;
       index = (position + items.length) % items.length;
       const source = items[index].querySelector("img"); if (!source) return;
-      image.src = source.src; image.alt = source.alt || "Proyecto MHG"; image.style.animation = "none";
+      image.src = source.dataset.fullSrc || source.src; image.alt = source.alt || "Proyecto MHG"; image.style.animation = "none";
       frames.push(requestAnimationFrame(() => { image.style.animation = "lbIn .25s ease"; }));
     };
-    const closeLightbox = () => { if (lightbox.style.display === "flex") { lightbox.style.display = "none"; document.body.style.overflow = overflow; } };
+    const closeLightbox = () => {
+      if (lightbox.style.display !== "flex") return;
+      lightbox.style.display = "none"; document.body.style.overflow = overflow;
+      if (opener?.isConnected) opener.focus();
+    };
     document.querySelectorAll(".proj-grid").forEach(grid => {
       const group = Array.from(grid.querySelectorAll<HTMLElement>(".proj-item"));
       group.forEach((item, position) => on(item, "click", () => {
-        items = group; show(position); overflow = document.body.style.overflow;
+        items = group; opener = item; show(position); overflow = document.body.style.overflow;
         lightbox.style.display = "flex"; document.body.style.overflow = "hidden";
         previous.style.display = next.style.display = items.length > 1 ? "flex" : "none";
+        close.focus();
       }));
     });
     on(image, "click", e => e.stopPropagation()); on(close, "mouseenter", () => { close.style.opacity = "1"; }); on(close, "mouseleave", () => { close.style.opacity = ".7"; });

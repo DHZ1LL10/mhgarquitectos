@@ -1,0 +1,38 @@
+.tab:focus-visible,
+.item:focus-visible {
+  outline: 3px solid var(--white);
+  outline-offset: 3px;
+}
+
+.item {
+  border: 0;
+  padding: 0;
+  background: #0b110e;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.portrait img {
+  object-fit: contain;
+}
+
+.overlay {
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .tabs {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    padding: 3px 3px 10px;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}

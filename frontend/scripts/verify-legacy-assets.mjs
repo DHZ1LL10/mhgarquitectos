@@ -9,8 +9,8 @@ for (const name of publicFiles) {
   assert.equal(sha256(await readFile(path.join(publicDirectory, name))), expectedPublicHash(name), `Copy differs: ${name}`);
 }
 const actual = (await walk(publicDirectory)).map(file => path.relative(publicDirectory, file).replaceAll("\\", "/")).sort();
-const propertyAssetPrefix = "img/propiedades/";
-const actualLegacyFiles = actual.filter(name => !name.startsWith(propertyAssetPrefix));
+const applicationAssetPrefixes = ["img/propiedades/", "img/portfolio/"];
+const actualLegacyFiles = actual.filter(name => !applicationAssetPrefixes.some(prefix => name.startsWith(prefix)));
 assert.deepEqual(actualLegacyFiles, [...publicFiles].sort(), "Unexpected or missing legacy files in public/");
 for (const name of ["script.js", "modals.js", "cotizador.js", "galeria-configurador.js"]) {
   new vm.Script(await readFile(path.join(repository, name), "utf8"), { filename: name });

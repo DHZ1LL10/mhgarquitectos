@@ -24,7 +24,7 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 
 - [ ] Menú móvil: abrir, elegir sección y comprobar cierre; repetir varias veces.
 - [ ] Anclas de header y footer: desplazamiento a cada sección correcto.
-- [ ] Portafolio: cambiar entre Construcción, Cocinas, Mobiliario e Interiorismo; volver a la primera.
+- [ ] Portafolio: cambiar entre Diseño y construcción, Cocinas, Carpintería y mobiliario y Showroom Tuxtepec; volver a la primera.
 - [ ] Abrir una foto de cada categoría; siguiente/anterior y flechas recorren su propia categoría.
 - [ ] Cerrar galerías por X, fondo y Escape; el scroll del documento vuelve a funcionar.
 - [ ] Sucursales: los mapas aparecen al aproximarse a la sección; probar también clic temprano en el placeholder y verificar que no se duplica el iframe.

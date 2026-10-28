@@ -6,6 +6,7 @@ import test from "node:test";
 import { serviceQuotes } from "../src/data/service-quotes.ts";
 import { buildQuoteMessage } from "../src/data/quote-message.ts";
 import { site } from "../src/config/site.ts";
+import { portfolioCategories } from "../src/data/portfolio.ts";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const read = (name: string) => readFileSync(path.join(root, name), "utf8");
@@ -26,10 +27,11 @@ test("quote messages preserve original formatting and never interpret user input
 test("corporate section IDs, content and asset paths survive the JSX transfer", () => {
   const original = read("index.html");
   const sections = read("frontend/src/components/site/HomeSections.tsx");
-  const corporate = sections + read("frontend/src/components/site/SiteHeader.tsx") + read("frontend/src/components/site/SiteFooter.tsx");
+  const portfolio = read("frontend/src/data/portfolio.ts");
+  const corporate = sections + portfolio + read("frontend/src/components/site/SiteHeader.tsx") + read("frontend/src/components/site/SiteFooter.tsx");
   for (const id of ["inicio", "proyectos", "servicios", "nosotros", "sucursales", "contacto"]) assert.ok(sections.includes(`id="${id}"`));
   for (const match of original.matchAll(/<img[^>]+src="([^"]+)"/g)) {
-    if (/img\/(mobiliario|interiorismo)\//.test(match[1])) continue;
+    if (/img\/(mobiliario|interiorismo|cocinas)\//.test(match[1])) continue;
     assert.ok(corporate.includes(match[1]), match[1]);
   }
   assert.ok(sections.includes('/img/construccion/fachada-1.jpg'));
@@ -39,12 +41,12 @@ test("corporate section IDs, content and asset paths survive the JSX transfer", 
   assert.doesNotMatch(sections, /onclick=|dangerouslySetInnerHTML/);
 });
 
-test("home follows the business order and exposes only the two approved project tabs", () => {
+test("home follows the business order and exposes the four approved project tabs", () => {
   const sections = read("frontend/src/components/site/HomeSections.tsx");
   const ids = ["inicio", "nosotros", "proyectos", "propiedades", "servicios", "sucursales", "contacto"];
   for (let index = 1; index < ids.length; index++) assert.ok(sections.indexOf(`id="${ids[index - 1]}"`) < sections.indexOf(`id="${ids[index]}"`));
-  assert.equal([...sections.matchAll(/role="tab"/g)].length, 2);
-  assert.doesNotMatch(sections, /tab-mobiliario|tab-interiorismo|cat-mobiliario|cat-interiorismo/);
+  assert.deepEqual(portfolioCategories.map(category => category.slug), ["construccion", "cocinas", "carpinteria-mobiliario", "showroom-tuxtepec"]);
+  assert.match(sections, /portfolioCategories\.map/);
   assert.match(sections, /Propiedades en venta/);
   assert.match(sections, /properties\.slice\(0, 3\)/);
   assert.match(sections, /href="\/propiedades"/);
