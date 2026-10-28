@@ -1,4 +1,5 @@
 import type { AppointmentStatus, Lead, LeadStatus, Permission, PropertyInput, User } from "./types.ts";
+import { BUSINESS_TIME_ZONE, businessDateTimeInputToIso, businessDateTimeInputValue } from "./shared/format.ts";
 
 const permissions: Permission[] = ["dashboard.view", "clients.view", "clients.manage", "appointments.view", "appointments.manage", "kitchens.view", "properties.view", "properties.manage", "properties.publish"];
 
@@ -22,15 +23,10 @@ export const appointmentLabels: Record<AppointmentStatus, string> = { requested:
 export const leadStatusLabels: Record<LeadStatus, string> = { new: "Nuevo", contacted: "Contactado", qualified: "En seguimiento", closed: "Cerrado" };
 export const leadSourceLabels: Record<string, string> = { kitchen_customizer: "Configurador de cocinas", kitchen: "Solicitud de cocina", property: "Catálogo de propiedades", website: "Sitio web" };
 export function localDateTime(iso: string | null): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  return businessDateTimeInputValue(iso);
 }
 export function confirmedDateTime(value: string): string | null {
-  if (!value) return null;
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) throw new Error("Fecha de confirmación inválida");
-  return date.toISOString();
+  return businessDateTimeInputToIso(value);
 }
 
 export function openStreetMapUrl(latitude: number | null, longitude: number | null): string | null {
@@ -56,7 +52,7 @@ function appointmentMessageLines(
   const selected = mode === "confirmed" ? confirmed || requested : requested;
   const detailLines = [
     ...(lead.submission?.folio ? [`📋 Folio: ${lead.submission.folio}`] : []),
-    ...(selected ? [`📅 ${mode === "pending" ? "Fecha propuesta" : "Fecha"}: ${selected.toLocaleDateString("es-MX", { dateStyle: "long" })}`, `🕐 Hora: ${selected.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: true })}`] : []),
+    ...(selected ? [`📅 ${mode === "pending" ? "Fecha propuesta" : "Fecha"}: ${selected.toLocaleDateString("es-MX", { dateStyle: "long", timeZone: BUSINESS_TIME_ZONE })}`, `🕐 Hora: ${selected.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: BUSINESS_TIME_ZONE })}`] : []),
     ...(appointment?.branch ? [`📍 Sucursal: ${appointment.branch}`] : []),
     ...(appointment?.address ? [`🏠 Dirección: ${appointment.address}`] : []),
     ...(appointment ? (() => { const map = openStreetMapUrl(appointment.latitude, appointment.longitude); return map ? [`🗺️ Ubicación: ${map}`] : []; })() : []),

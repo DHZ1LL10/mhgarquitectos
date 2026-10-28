@@ -3,6 +3,7 @@ import test from "node:test";
 import { existsSync, readFileSync } from "node:fs";
 import { buildActivityEvents } from "../src/features/admin/dashboard/activity.ts";
 import { buildClientActivity } from "../src/features/admin/dashboard/activity.ts";
+import { BUSINESS_TIME_ZONE, businessDateKey, formatDate, formatDateTime, formatTime, isToday, startOfWeek } from "../src/features/admin/shared/format.ts";
 import {
   buildDashboardAttention,
   classifyAppointmentTemporal,
@@ -77,6 +78,38 @@ test("temporal rules distinguish overdue, today, upcoming and terminal appointme
   assert.equal(todayAppointmentCue(appointment("close", "confirmed", "2026-10-25T10:00:00-06:00"), now), "Pendiente de cerrar");
 });
 
+test("admin dates use the Mexico business calendar across the UTC day boundary", () => {
+  const fixture = "2030-10-12T16:00:00.000Z";
+  assert.equal(BUSINESS_TIME_ZONE, "America/Mexico_City");
+  assert.match(formatDateTime(fixture), /12 oct 2030.*10:00/i);
+  assert.match(formatDate(fixture), /12 oct 2030/i);
+  assert.match(formatTime(fixture), /10:00/);
+
+  const utcSundayStillSaturdayInMexico = new Date("2030-10-13T02:00:00.000Z");
+  const mexicoSaturday = new Date("2030-10-12T18:00:00.000Z");
+  const mexicoSunday = new Date("2030-10-13T07:00:00.000Z");
+  assert.equal(businessDateKey(utcSundayStillSaturdayInMexico), "2030-10-12");
+  assert.equal(isToday(utcSundayStillSaturdayInMexico, mexicoSaturday), true);
+  assert.equal(isToday(utcSundayStillSaturdayInMexico, mexicoSunday), false);
+});
+
+test("CRM temporal states remain correct near midnight UTC", () => {
+  const now = new Date("2030-10-13T05:30:00.000Z"); // 11:30 p.m. on October 12 in Mexico City.
+  const overdue = appointment("overdue-boundary", "pending_confirmation", "2030-10-12T04:00:00.000Z");
+  const today = appointment("today-boundary", "confirmed", "2030-10-13T05:15:00.000Z");
+  const upcoming = appointment("upcoming-boundary", "requested", "2030-10-13T07:00:00.000Z");
+  assert.equal(classifyAppointmentTemporal(overdue, now), "overdue");
+  assert.equal(classifyAppointmentTemporal(today, now), "today");
+  assert.equal(classifyAppointmentTemporal(upcoming, now), "upcoming");
+  assert.equal(todayAppointmentCue(appointment("late-today", "requested", "2030-10-13T05:15:00.000Z"), now), "Horario vencido · requiere seguimiento");
+  assert.equal(deriveClientNextAction({ id: "lead", status: "new", appointment: overdue }, now).title, "Retomar cita vencida");
+  assert.deepEqual(buildDashboardAttention([], [upcoming, appointment("today-pending", "pending_confirmation", "2030-10-13T05:45:00.000Z"), overdue], now).map(item => item.key), [
+    "appointment:overdue-boundary",
+    "appointment:today-pending",
+    "appointment:upcoming-boundary",
+  ]);
+});
+
 test("dashboard attention prioritizes overdue, today, new leads and future pending", () => {
   const now = new Date("2026-10-25T12:00:00-06:00");
   const items = buildDashboardAttention(
@@ -103,6 +136,8 @@ test("week navigation uses a stable Monday query parameter", () => {
   assert.equal(weekParam(selected), "2026-10-19");
   assert.equal(weekParam(shiftWeek(selected, -1)), "2026-10-12");
   assert.equal(weekParam(shiftWeek(selected, 1)), "2026-10-26");
+  assert.equal(weekParam(startOfWeek(new Date("2030-10-13T02:00:00.000Z"))), "2030-10-07");
+  assert.equal(weekParam(parseWeekStart("2030-10-13")), "2030-10-07");
 });
 
 test("client activity preserves events sharing a timestamp with stable keys", () => {

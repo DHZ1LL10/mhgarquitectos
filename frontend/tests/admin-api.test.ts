@@ -100,6 +100,8 @@ test("property writes strip database identity and preserve decimals, images and 
 
 test("appointment form preserves timezone and exposes only supported transitions", () => {
   const iso = "2030-10-12T16:00:00.000Z";
+  assert.equal(localDateTime(iso), "2030-10-12T10:00");
+  assert.equal(confirmedDateTime("2030-10-12T10:00"), iso);
   assert.equal(confirmedDateTime(localDateTime(iso)), iso);
   assert.equal(confirmedDateTime(""), null);
   assert.throws(() => confirmedDateTime("invalid"));
@@ -145,6 +147,7 @@ test("pending and confirmed WhatsApp templates preserve Unicode, date, time and 
   const confirmed = appointmentWhatsAppMessage(base, "confirmed");
   assert.match(pending, /Fecha propuesta:/); assert.match(pending, /Hora:/); assert.match(pending, /¿Te funciona este horario\?/);
   assert.match(confirmed, /quedó confirmada/); assert.match(confirmed, /Fecha:/); assert.match(confirmed, /Hora:/);
+  assert.match(pending, /12 de octubre de 2030/); assert.match(pending, /10:00/); assert.match(confirmed, /11:30/);
   assert.match(pending, /👋/); assert.match(confirmed, /📋/); assert.doesNotMatch(pending + confirmed, /�/);
   const encoded = appointmentWhatsAppUrl(base, "confirmed") || "";
   assert.equal(decodeURIComponent(encoded.split("?text=")[1]), confirmed);

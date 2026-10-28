@@ -1,5 +1,5 @@
 import type { Appointment, AppointmentStatus, Lead } from "../types.ts";
-import { effectiveAppointmentDate, isToday, startOfWeek } from "./format.ts";
+import { addBusinessCalendarDays, businessCalendarDate, businessDateKey, effectiveAppointmentDate, isToday, startOfWeek } from "./format.ts";
 
 export type TemporalState = "overdue" | "today" | "upcoming" | "completed" | "cancelled" | "past";
 
@@ -108,21 +108,17 @@ export function compactIdentifier(value: string | null | undefined, maxLength = 
 
 export function parseWeekStart(value: string | null, fallback = new Date()): Date {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return startOfWeek(fallback);
-  const parsed = new Date(`${value}T12:00:00`);
-  return Number.isFinite(parsed.getTime()) ? startOfWeek(parsed) : startOfWeek(fallback);
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = businessCalendarDate(year, month, day);
+  return parsed ? startOfWeek(parsed) : startOfWeek(fallback);
 }
 
 export function weekParam(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return businessDateKey(date);
 }
 
 export function shiftWeek(date: Date, weeks: number): Date {
-  const shifted = startOfWeek(date);
-  shifted.setDate(shifted.getDate() + weeks * 7);
-  return shifted;
+  return addBusinessCalendarDays(startOfWeek(date), weeks * 7);
 }
 
 export function contextualAppointmentAction(status: AppointmentStatus, temporal: TemporalState): { status: AppointmentStatus; label: string } | null {
