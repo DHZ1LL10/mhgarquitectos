@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { publicSite } from "@/config/public-site";
 import { serviceQuotes, type ServiceKey } from "@/data/service-quotes";
 import { buildQuoteMessage } from "@/data/quote-message";
-import { site } from "@/config/site";
 
 const inputStyle: CSSProperties = { width: "100%", background: "#111", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "11px 13px", color: "#f0f0f0", fontFamily: "Inter,sans-serif", fontSize: ".88rem", outline: "none", transition: "border-color .2s,box-shadow .2s", boxSizing: "border-box" };
 const labelStyle: CSSProperties = { display: "block", fontSize: ".75rem", fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 };
@@ -62,7 +62,7 @@ export default function ServiceQuoteModal() {
         alert(`Por favor completa el campo: "${field.label}"`); return;
       }
     }
-    window.open(`https://wa.me/${site.quotesWhatsApp}?text=${encodeURIComponent(buildQuoteMessage(service, values))}`, "_blank");
+    window.open(`https://wa.me/${publicSite.quotesWhatsApp}?text=${encodeURIComponent(buildQuoteMessage(service, values))}`, "_blank");
     close();
   };
 

@@ -31,7 +31,7 @@ Estas pruebas NO fueron ejecutadas en navegador por el agente. No hay capturas n
 - [ ] Enlaces generales de WhatsApp: apuntan al número original `5212711055612`; no es necesario enviar.
 - [ ] Abrir Cotizar para Construcción, Mobiliario e Interiorismo; comparar campos y estilo con el original.
 - [ ] Intentar enviar vacío: mensaje de campo requerido, foco y resaltado correctos.
-- [ ] Completar datos ficticios; comprobar texto y destino temporal de WhatsApp configurado en `src/config/site.ts`, sin enviar el mensaje.
+- [ ] Completar datos ficticios; comprobar texto y destino temporal de WhatsApp configurado en `src/config/public-site.ts`, sin enviar el mensaje.
 - [ ] Cancelar y cerrar por Escape/fondo; volver a abrir y comprobar que los campos se reinician como antes.
 - [ ] Navegar portada → propiedades → ficha → portada varias veces. Confirmar un solo comportamiento por clic y que no quedan overlays o scroll bloqueado.
 

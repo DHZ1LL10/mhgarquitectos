@@ -5,7 +5,7 @@ import vm from "node:vm";
 import test from "node:test";
 import { serviceQuotes } from "../src/data/service-quotes.ts";
 import { buildQuoteMessage } from "../src/data/quote-message.ts";
-import { site } from "../src/config/site.ts";
+import { publicSite } from "../src/config/public-site.ts";
 import { portfolioCategories } from "../src/data/portfolio.ts";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -84,7 +84,7 @@ test("legacy catalogs, defaults, summary and WhatsApp retain their baseline beha
   let url = "";
   const context = vm.createContext({
     document: { addEventListener() {}, getElementById(id: string) { return nodes[id] || null; }, querySelectorAll() { return []; } },
-    window: { scrollTo() {}, open(value: string) { url = value; }, MHG_CUSTOMIZER_CONFIG: { whatsappNumber: site.quotesWhatsApp } },
+    window: { scrollTo() {}, open(value: string) { url = value; }, MHG_CUSTOMIZER_CONFIG: { whatsappNumber: publicSite.quotesWhatsApp } },
     URL, Uint8Array,
   });
   vm.runInContext(read("frontend/public/kitchen-submission.js"), context);
@@ -99,7 +99,7 @@ test("legacy catalogs, defaults, summary and WhatsApp retain their baseline beha
   assert.match(nodes.summaryGrid.innerHTML, /Cliente de prueba/);
   assert.doesNotMatch(read("frontend/public/cotizador.js"), /totalAmount|Estimado de inversión|A confirmar tras levantamiento/);
   assert.doesNotMatch(read("frontend/public/cocina-customizer.html"), /totalAmount|Estimado de inversión|Precio referencial basado/);
-  assert.equal(new URL(url).pathname, `/${site.quotesWhatsApp}`);
+  assert.equal(new URL(url).pathname, `/${publicSite.quotesWhatsApp}`);
   assert.match(new URL(url).searchParams.get("text") || "", /Cliente de prueba/);
   assert.match(new URL(url).searchParams.get("text") || "", /https:\/\/www\.openstreetmap\.org\//);
   const text = new URL(url).searchParams.get("text") || "";
