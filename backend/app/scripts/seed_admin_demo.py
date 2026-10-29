@@ -17,10 +17,11 @@ from app.kitchen_configurations.models import KitchenConfiguration
 from app.kitchen_configurations.submission_models import KitchenSubmission
 from app.leads.models import Lead, LeadStatus
 from app.properties.models import Operation, Property, PropertyImage, PropertyStatus, PropertyType
+from app.properties.real_catalog import MATA_LARGA_SLUG, mata_larga_property
 
 DEMO_MARKER = "mhg-local-crm-demo-v1"
 MEXICO_CITY = ZoneInfo("America/Mexico_City")
-REAL_PUBLISHED_PROPERTY_SLUG = "residencia-mata-larga-fortin"
+REAL_PUBLISHED_PROPERTY_SLUG = MATA_LARGA_SLUG
 DEMO_PROPERTY_STATUSES = {
     "casa-bosque-local": PropertyStatus.draft,
     "departamento-rio-local": PropertyStatus.archived,
@@ -73,65 +74,14 @@ def synthetic_published_properties(db) -> list[Property]:
 
 
 def seed_properties(db) -> int:
+    real_payload = mata_larga_property()
+    real_record = real_payload.model_dump(mode="python", exclude={"images"})
+    real_record["images"] = [
+        PropertyImage(**image.model_dump(), position=position)
+        for position, image in enumerate(real_payload.images)
+    ]
     records = [
-        {
-            "slug": "residencia-mata-larga-fortin",
-            "status": PropertyStatus.published,
-            "title": "Residencia en venta en Mata Larga, Fortín",
-            "description": (
-                "Residencia en Mata Larga, Fortín, con 202 m² de terreno, 174 m² de "
-                "construcción y jardín privado. Se encuentra en etapa final de construcción."
-            ),
-            "operation": Operation.sale,
-            "property_type": PropertyType.house,
-            "price": 2_990_000,
-            "location": {"city": "Fortín", "state": "Veracruz", "neighborhood": "Mata Larga"},
-            "features": {
-                "area_m2": 174,
-                "construction_area_m2": 174,
-                "land_area_m2": 202,
-                "garden_area_m2": 105,
-                "bedrooms": 3,
-                "bathrooms": 2,
-                "half_bathrooms": 1,
-                "parking_spaces": None,
-                "construction_progress": 85,
-                "construction_status": "Etapa final de construcción",
-                "distribution": ["Sala – comedor", "Cocina", "Área de lavado", "Cochera"],
-                "amenities": ["Jardín privado", "Acabados en mármol", "Carpintería incluida"],
-                "list_price": 3_190_000,
-                "bonus": 200_000,
-                "commercial_label": "Precio de oportunidad",
-            },
-            "images": _images(
-                [
-                    (
-                        "/img/propiedades/mata-larga/fachada-portada.jpg",
-                        "Fachada y jardín de la residencia en Mata Larga",
-                    ),
-                    (
-                        "/img/propiedades/mata-larga/fachada-principal.jpg",
-                        "Fachada principal de la residencia",
-                    ),
-                    (
-                        "/img/propiedades/mata-larga/jardin-privado.jpg",
-                        "Jardín privado de la residencia",
-                    ),
-                    (
-                        "/img/propiedades/mata-larga/sala-comedor-01.jpg",
-                        "Sala comedor con vista al jardín",
-                    ),
-                    (
-                        "/img/propiedades/mata-larga/plano-planta-baja.jpg",
-                        "Plano arquitectónico de planta baja",
-                    ),
-                    (
-                        "/img/propiedades/mata-larga/plano-planta-alta.jpg",
-                        "Plano arquitectónico de planta alta",
-                    ),
-                ]
-            ),
-        },
+        real_record,
         {
             "slug": "casa-bosque-local",
             "status": PropertyStatus.draft,
@@ -162,7 +112,7 @@ def seed_properties(db) -> int:
         if db.scalar(select(Property.id).where(Property.slug == record["slug"])) is not None:
             continue
         images = record.pop("images")
-        item = Property(currency="MXN", **record)
+        item = Property(**{"currency": "MXN", **record})
         item.images = images
         db.add(item)
         created += 1
