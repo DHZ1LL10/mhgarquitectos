@@ -1,0 +1,20 @@
+# During staging, use this only from a NEW test site with base directory frontend.
+# The same file is production-safe only after the explicit DEPLOYMENT_ENV cutover.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24.21.0"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# DEPLOYMENT_ENV and the public URL variables are intentionally configured per
+# Netlify site. A production-mode build fails when DEPLOYMENT_ENV is missing.
+# Staging receives X-Robots-Tag from next.config.ts; production does not.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self)"

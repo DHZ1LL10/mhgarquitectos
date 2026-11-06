@@ -1,0 +1,32 @@
+{
+  "slug": "casa-prueba-local",
+  "status": "published",
+  "title": "Casa de prueba local",
+  "description": "Registro exclusivamente para validar la API local.",
+  "operation": "sale",
+  "property_type": "house",
+  "price": "2500000.50",
+  "currency": "MXN",
+  "location": {
+    "city": "Puebla",
+    "state": "Puebla",
+    "neighborhood": "Centro"
+  },
+  "features": {
+    "area_m2": 180,
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "parking_spaces": 2
+  },
+  "latitude": 19.043,
+  "longitude": -98.198,
+  "images": [
+    {
+      "url": "/img/construccion/fachada-1.jpg",
+      "alt": "Fachada de ejemplo",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}
+

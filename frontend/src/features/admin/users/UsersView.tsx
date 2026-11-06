@@ -1,0 +1,9 @@
+"use client";
+import Link from "next/link";
+import { accessLabel } from "../permissions";
+import type { User } from "../types";
+import { useAdminQuery } from "../shared/use-admin-query";
+import { formatDateTime } from "../shared/format";
+import { EmptyState, ErrorState, LoadingState, PageHeader } from "../shared/ui";
+import styles from "../admin.module.css";
+export default function UsersView() { const query = useAdminQuery<User[]>("/admin/users"); return <><PageHeader eyebrow="Acceso administrativo" title="Usuarios" description="Cuentas del CRM, permisos y estado de acceso." actions={<Link className={styles.primaryButton} href="/admin/usuarios/nuevo">Nuevo usuario</Link>}/>{query.loading && !query.data ? <LoadingState/> : query.error ? <ErrorState message={query.error} retry={query.reload}/> : query.data?.length ? <div className={styles.tableWrap}><table className={styles.dataTable}><thead><tr><th>Usuario</th><th>Correo</th><th>Acceso</th><th>Estado</th><th>Último acceso</th><th/></tr></thead><tbody>{query.data.map(user => <tr key={user.id}><td data-label="Usuario" className={styles.primaryCell}><Link href={`/admin/usuarios/${user.id}`}>{user.full_name}</Link>{user.role === "owner" && <small>Propietario protegido</small>}</td><td data-label="Correo">{user.email}</td><td data-label="Acceso">{accessLabel(user)}</td><td data-label="Estado">{!user.is_active ? "Desactivado" : user.must_change_password ? "Cambio de contraseña pendiente" : "Activo"}</td><td data-label="Último acceso">{user.last_login_at ? formatDateTime(user.last_login_at) : "Nunca"}</td><td><Link className={styles.textLink} href={`/admin/usuarios/${user.id}`}>{user.role === "owner" ? "Ver" : "Editar"}</Link></td></tr>)}</tbody></table></div> : <EmptyState title="Sin usuarios" description="Crea una cuenta staff con permisos explícitos."/>}</>; }
