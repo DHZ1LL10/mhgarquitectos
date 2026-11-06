@@ -32,6 +32,7 @@ test("corporate section IDs, content and asset paths survive the JSX transfer", 
   for (const id of ["inicio", "proyectos", "servicios", "nosotros", "sucursales", "contacto"]) assert.ok(sections.includes(`id="${id}"`));
   for (const match of original.matchAll(/<img[^>]+src="([^"]+)"/g)) {
     if (/img\/(mobiliario|interiorismo|cocinas)\//.test(match[1])) continue;
+    if (/img\/construccion\/(entrada|recamara|obra-proceso|obra-aerea)\.jpg/.test(match[1])) continue;
     assert.ok(corporate.includes(match[1]), match[1]);
   }
   assert.ok(sections.includes('/img/construccion/fachada-1.jpg'));
@@ -41,12 +42,12 @@ test("corporate section IDs, content and asset paths survive the JSX transfer", 
   assert.doesNotMatch(sections, /onclick=|dangerouslySetInnerHTML/);
 });
 
-test("home follows the business order and exposes the four approved project tabs", () => {
+test("home follows the business order and exposes the two approved project tabs", () => {
   const sections = read("frontend/src/components/site/HomeSections.tsx");
   const ids = ["inicio", "nosotros", "proyectos", "propiedades", "servicios", "sucursales", "contacto"];
   for (let index = 1; index < ids.length; index++) assert.ok(sections.indexOf(`id="${ids[index - 1]}"`) < sections.indexOf(`id="${ids[index]}"`));
-  assert.deepEqual(portfolioCategories.map(category => category.slug), ["construccion", "cocinas", "carpinteria-mobiliario", "showroom-tuxtepec"]);
-  assert.match(sections, /portfolioCategories\.map/);
+  assert.deepEqual(portfolioCategories.map(category => category.slug), ["cocina-mobiliario", "diseno-construccion"]);
+  assert.match(sections, /<PortfolioProjects \/>/);
   assert.match(sections, /Propiedades en venta/);
   assert.match(sections, /properties\.slice\(0, 3\)/);
   assert.match(sections, /href="\/propiedades"/);

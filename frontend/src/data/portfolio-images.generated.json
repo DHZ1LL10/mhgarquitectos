@@ -1,0 +1,2000 @@
+{
+  "projects": {
+    "cocina-ambar": [
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/001.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/002.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/003.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/004.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/005.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/006.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/007.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/008.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/009.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/010.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/011.webp",
+        "width": 1206,
+        "height": 1188
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/012.webp",
+        "width": 1206,
+        "height": 1205
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-ambar/013.webp",
+        "width": 1206,
+        "height": 1195
+      }
+    ],
+    "cocina-departamento": [
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/001.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/002.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/003.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/004.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/005.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/006.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/007.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-departamento/008.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "cocina-durango": [
+      {
+        "src": "/img/portfolio/projects/cocina-durango/001.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-durango/002.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-durango/003.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-durango/004.webp",
+        "width": 1280,
+        "height": 1280
+      }
+    ],
+    "cocina-encinos": [
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/001.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/002.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/003.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/004.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/005.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/006.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/007.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/008.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/009.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/010.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/011.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/012.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/013.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/014.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/015.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/016.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/017.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/018.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/019.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/020.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/021.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/022.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/023.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/024.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/025.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/026.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/027.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/028.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/029.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/030.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/031.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/032.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/033.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/034.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/035.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/036.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/037.webp",
+        "width": 1800,
+        "height": 809
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/038.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/039.webp",
+        "width": 1800,
+        "height": 809
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/040.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/041.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/042.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/043.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/044.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/045.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/046.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/047.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/048.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/049.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/050.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/051.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/052.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/053.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/054.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/055.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/056.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/057.webp",
+        "width": 1800,
+        "height": 809
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/058.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/059.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/060.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/061.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/062.webp",
+        "width": 1600,
+        "height": 1200
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/063.webp",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/064.webp",
+        "width": 900,
+        "height": 1600
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/065.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/066.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/067.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/068.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/069.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/070.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/071.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-encinos/072.webp",
+        "width": 1350,
+        "height": 1800
+      }
+    ],
+    "cocina-lineal-neutra": [
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/001.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/002.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/003.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/004.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/005.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/006.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/007.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/008.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/009.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lineal-neutra/010.webp",
+        "width": 1280,
+        "height": 1280
+      }
+    ],
+    "cocina-acento-azul": [
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/001.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/002.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/003.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/004.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/005.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/006.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/007.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/008.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/009.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/010.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/011.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/012.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/013.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/014.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/015.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-acento-azul/016.webp",
+        "width": 1280,
+        "height": 1280
+      }
+    ],
+    "cocina-lambrin": [
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/001.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/002.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/003.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/004.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/005.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/006.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/007.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/008.webp",
+        "width": 1280,
+        "height": 684
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/009.webp",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/010.webp",
+        "width": 1280,
+        "height": 1054
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/011.webp",
+        "width": 1280,
+        "height": 1053
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/012.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/013.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/014.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/015.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/016.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/017.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/018.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/019.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/020.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/021.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/022.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/023.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/024.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/025.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/026.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/027.webp",
+        "width": 1280,
+        "height": 1024
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/028.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/029.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/030.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/031.webp",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/032.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/033.webp",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-lambrin/034.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "cocina-nogal-neo": [
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/001.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/002.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/003.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/004.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/005.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/006.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/007.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/008.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/009.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-nogal-neo/010.webp",
+        "width": 1800,
+        "height": 1350
+      }
+    ],
+    "cocina-orizaba": [
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/001.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/002.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/003.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/004.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/005.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/006.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/007.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/008.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/009.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/010.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/011.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/012.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/013.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/014.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/015.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/016.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/017.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/018.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/019.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/020.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/021.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/022.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/023.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/024.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/025.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/026.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/027.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/028.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/029.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/030.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/031.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/032.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/033.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/034.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/035.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/036.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/037.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/038.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/039.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/040.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/041.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/042.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/043.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/044.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/045.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/046.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/047.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/048.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/049.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/050.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/051.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/052.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/053.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/054.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/055.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/056.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/057.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/058.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/059.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/060.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/061.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/062.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/063.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/064.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/065.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/066.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/067.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/068.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/069.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/070.webp",
+        "width": 1800,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/071.webp",
+        "width": 1800,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/072.webp",
+        "width": 1800,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-orizaba/073.webp",
+        "width": 1800,
+        "height": 1800
+      }
+    ],
+    "cocina-oxford": [
+      {
+        "src": "/img/portfolio/projects/cocina-oxford/001.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-oxford/002.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-oxford/003.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-oxford/004.webp",
+        "width": 1172,
+        "height": 1280
+      }
+    ],
+    "cocina-verde-isla": [
+      {
+        "src": "/img/portfolio/projects/cocina-verde-isla/001.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-verde-isla/002.webp",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "src": "/img/portfolio/projects/cocina-verde-isla/003.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "showroom-tuxtepec": [
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/001.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/002.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/003.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/004.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/005.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/006.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/007.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/008.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/009.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/010.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/011.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/012.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/013.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/014.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/015.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/016.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/017.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/018.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/019.webp",
+        "width": 809,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/020.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/021.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/022.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/023.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/024.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/025.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/026.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/027.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/028.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/029.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/030.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/031.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/032.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/033.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/034.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/035.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/036.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/037.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/038.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/039.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/040.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/041.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/042.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/043.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/044.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/045.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/046.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/047.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/048.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/049.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/050.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/051.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/052.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/053.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/054.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/055.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/056.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/057.webp",
+        "width": 1800,
+        "height": 1350
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/058.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/059.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/060.webp",
+        "width": 1350,
+        "height": 1800
+      },
+      {
+        "src": "/img/portfolio/projects/showroom-tuxtepec/061.webp",
+        "width": 1350,
+        "height": 1800
+      }
+    ],
+    "alacena-integral-oscura": [
+      {
+        "src": "/img/portfolio/projects/alacena-integral-oscura/001.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/alacena-integral-oscura/002.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/alacena-integral-oscura/003.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/alacena-integral-oscura/004.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/alacena-integral-oscura/005.webp",
+        "width": 1280,
+        "height": 1280
+      }
+    ],
+    "closet-amplio": [
+      {
+        "src": "/img/portfolio/projects/closet-amplio/001.webp",
+        "width": 1280,
+        "height": 1262
+      },
+      {
+        "src": "/img/portfolio/projects/closet-amplio/002.webp",
+        "width": 960,
+        "height": 1280
+      }
+    ],
+    "closet-oscuro": [
+      {
+        "src": "/img/portfolio/projects/closet-oscuro/001.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/closet-oscuro/002.webp",
+        "width": 960,
+        "height": 1280
+      }
+    ],
+    "closet-compacto": [
+      {
+        "src": "/img/portfolio/projects/closet-compacto/001.webp",
+        "width": 1496,
+        "height": 1496
+      },
+      {
+        "src": "/img/portfolio/projects/closet-compacto/002.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/closet-compacto/003.webp",
+        "width": 1496,
+        "height": 1496
+      },
+      {
+        "src": "/img/portfolio/projects/closet-compacto/004.webp",
+        "width": 1280,
+        "height": 1280
+      }
+    ],
+    "closet-integral": [
+      {
+        "src": "/img/portfolio/projects/closet-integral/001.webp",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "src": "/img/portfolio/projects/closet-integral/002.webp",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "src": "/img/portfolio/projects/closet-integral/003.webp",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "src": "/img/portfolio/projects/closet-integral/004.webp",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "src": "/img/portfolio/projects/closet-integral/005.webp",
+        "width": 960,
+        "height": 1280
+      }
+    ],
+    "vestidor-contemporaneo": [
+      {
+        "src": "/img/portfolio/projects/vestidor-contemporaneo/001.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/vestidor-contemporaneo/002.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/vestidor-contemporaneo/003.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/vestidor-contemporaneo/004.webp",
+        "width": 960,
+        "height": 1280
+      }
+    ],
+    "mobiliario-residencial-terra": [
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/001.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/002.webp",
+        "width": 1280,
+        "height": 854
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/003.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/004.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/005.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/006.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/007.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/008.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/009.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/010.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/011.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/012.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/013.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/014.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/015.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/016.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/017.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/018.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/019.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/020.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/021.webp",
+        "width": 1280,
+        "height": 854
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/022.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/023.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/024.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/025.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/026.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/027.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/028.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/029.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/030.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/031.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/032.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/033.webp",
+        "width": 1280,
+        "height": 854
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/034.webp",
+        "width": 1280,
+        "height": 854
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/035.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/036.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/037.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/038.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/039.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/040.webp",
+        "width": 854,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/mobiliario-residencial-terra/041.webp",
+        "width": 854,
+        "height": 1280
+      }
+    ],
+    "puertas-carpinteria-interior": [
+      {
+        "src": "/img/portfolio/projects/puertas-carpinteria-interior/001.webp",
+        "width": 1280,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/puertas-carpinteria-interior/002.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/puertas-carpinteria-interior/003.webp",
+        "width": 1280,
+        "height": 990
+      },
+      {
+        "src": "/img/portfolio/projects/puertas-carpinteria-interior/004.webp",
+        "width": 960,
+        "height": 1280
+      },
+      {
+        "src": "/img/portfolio/projects/puertas-carpinteria-interior/005.webp",
+        "width": 1280,
+        "height": 1280
+      }
+    ],
+    "residencia-fachada-piedra": [
+      {
+        "src": "/img/portfolio/projects/residencia-fachada-piedra/001.webp",
+        "width": 1080,
+        "height": 608
+      },
+      {
+        "src": "/img/portfolio/projects/residencia-fachada-piedra/002.webp",
+        "width": 1080,
+        "height": 608
+      }
+    ],
+    "acceso-residencial": [
+      {
+        "src": "/img/portfolio/projects/acceso-residencial/001.webp",
+        "width": 1080,
+        "height": 608
+      }
+    ],
+    "interior-residencial": [
+      {
+        "src": "/img/portfolio/projects/interior-residencial/001.webp",
+        "width": 1080,
+        "height": 607
+      }
+    ],
+    "obra-residencial-proceso": [
+      {
+        "src": "/img/portfolio/projects/obra-residencial-proceso/001.webp",
+        "width": 1080,
+        "height": 1080
+      }
+    ]
+  },
+  "audit": {
+    "sourceImages": 436,
+    "sourceBytes": 463318515,
+    "usedSourceImages": 376,
+    "usedSourceBytes": 405438251,
+    "constructionImages": 5,
+    "constructionBytes": 766390,
+    "derivedImages": 381,
+    "derivedBytes": 50565492,
+    "excluded": 60,
+    "exclusionReasons": {
+      "exact_duplicate": 9,
+      "privacy": 27,
+      "brand_asset": 2,
+      "marketing_graphic": 22
+    },
+    "projectCounts": {
+      "cocina-ambar": 13,
+      "cocina-departamento": 8,
+      "cocina-durango": 4,
+      "cocina-encinos": 72,
+      "cocina-lineal-neutra": 10,
+      "cocina-acento-azul": 16,
+      "cocina-lambrin": 34,
+      "cocina-nogal-neo": 10,
+      "cocina-orizaba": 73,
+      "cocina-oxford": 4,
+      "cocina-verde-isla": 3,
+      "showroom-tuxtepec": 61,
+      "alacena-integral-oscura": 5,
+      "closet-amplio": 2,
+      "closet-oscuro": 2,
+      "closet-compacto": 4,
+      "closet-integral": 5,
+      "vestidor-contemporaneo": 4,
+      "mobiliario-residencial-terra": 41,
+      "puertas-carpinteria-interior": 5,
+      "residencia-fachada-piedra": 2,
+      "acceso-residencial": 1,
+      "interior-residencial": 1,
+      "obra-residencial-proceso": 1
+    }
+  }
+}

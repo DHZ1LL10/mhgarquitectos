@@ -1,9 +1,7 @@
-import Image from "next/image";
 import PropertyCard from "@/features/properties/components/PropertyCard";
 import type { Property } from "@/features/properties/types";
 import propertyStyles from "@/features/properties/styles/properties.module.css";
-import { portfolioCategories } from "@/data/portfolio";
-import portfolioStyles from "./portfolio.module.css";
+import PortfolioProjects from "./PortfolioProjects";
 
 export default function HomeSections({ properties }: { properties: Property[] }) {
   return (<>
@@ -60,70 +58,9 @@ export default function HomeSections({ properties }: { properties: Property[] })
       <div className="section-header">
         <span className="section-label">Nuestro trabajo</span>
         <h2 className="section-title">Proyectos Realizados</h2>
-        <p className="section-desc">Selecciona una categoría para ver nuestros trabajos.</p>
+        <p className="section-desc">Explora cada proyecto como una historia completa: proceso, detalles y resultado.</p>
       </div>
-
-      {/* Tabs de categoría */}
-      <div className={`proj-tabs ${portfolioStyles.tabs}`} role="tablist" aria-label="Categorías de proyectos">
-        {portfolioCategories.map((category, index) => (
-          <button
-            className={`proj-tab ${portfolioStyles.tab}${index === 0 ? " active" : ""}`}
-            role="tab"
-            data-cat={category.slug}
-            id={`tab-${category.slug}`}
-            aria-controls={`cat-${category.slug}`}
-            aria-selected={index === 0}
-            tabIndex={index === 0 ? 0 : -1}
-            key={category.slug}
-          >
-            {category.label}
-          </button>
-        ))}
-      </div>
-
-      {portfolioCategories.map((category, categoryIndex) => (
-        <div
-          className={`proj-panel${categoryIndex === 0 ? " active" : ""}`}
-          id={`cat-${category.slug}`}
-          role="tabpanel"
-          aria-labelledby={`tab-${category.slug}`}
-          hidden={categoryIndex !== 0}
-          key={category.slug}
-        >
-          <div className="proj-grid">
-            {category.projects.map((project, projectIndex) => (
-              <button
-                type="button"
-                className={`proj-item ${portfolioStyles.item}${project.height > project.width ? ` ${portfolioStyles.portrait}` : ""}`}
-                id={`proj-${category.slug}-${projectIndex + 1}`}
-                aria-label={`Ampliar ${project.title}`}
-                key={project.src}
-              >
-                <Image
-                  src={project.src}
-                  alt={project.alt}
-                  width={project.width}
-                  height={project.height}
-                  sizes="(max-width: 480px) 100vw, (max-width: 1024px) 50vw, 40vw"
-                  loading="lazy"
-                  decoding="async"
-                  data-full-src={project.src}
-                />
-                <span className={`proj-overlay ${portfolioStyles.overlay}`}><span>{project.title}</span></span>
-              </button>
-            ))}
-          </div>
-          <div className="proj-sidebar">
-            <div className="proj-cta-card" id={`proj-${category.slug}-cta`}>
-              <p>{category.cta.prompt}</p>
-              <a href={category.cta.href} className="btn btn-primary" target="_blank" rel="noopener noreferrer" id={`proj-wa-${category.slug}`}>
-                {category.cta.label}
-              </a>
-            </div>
-          </div>
-        </div>
-      ))}
-
+      <PortfolioProjects />
     </div>
   </section>
 

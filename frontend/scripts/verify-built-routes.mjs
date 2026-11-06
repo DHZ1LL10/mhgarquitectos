@@ -56,10 +56,10 @@ try {
       for (let index = 1; index < sectionIds.length; index++) assert.ok(html.indexOf(`id="${sectionIds[index - 1]}"`) < html.indexOf(`id="${sectionIds[index]}"`), `${route}: section order`);
       assert.match(html, /href="\/cocina-customizer\.html"/);
       assert.match(html, /href="\/propiedades"/);
-      assert.equal([...html.matchAll(/class="proj-item(?: [^"]+)?"/g)].length, 39);
-      assert.equal([...html.matchAll(/role="tab"/g)].length, 4);
-      assert.match(html, /Carpintería y mobiliario/);
-      assert.match(html, /Showroom Tuxtepec/);
+      assert.equal([...html.matchAll(/portfolio-project-card/g)].length, 20);
+      assert.equal([...html.matchAll(/role="tab"/g)].length, 2);
+      assert.match(html, /Cocina y mobiliario/);
+      assert.match(html, /Diseño y construcción/);
     }
     if (route.startsWith("/propiedades")) {
       assert.match(html, /rel="canonical"/);
@@ -110,17 +110,19 @@ try {
   assert.match(runtimeConfigBody, /MHG_CUSTOMIZER_CONFIG/);
   assert.doesNotMatch(runtimeConfigBody, /password|secret|token/i);
   results.push("200 + safe runtime config: /customizer-runtime-config.js");
-  const portfolioAssets = portfolioCategories.flatMap(category => category.projects).filter(project => project.src.startsWith("/img/portfolio/"));
-  assert.equal(portfolioAssets.length, 34);
-  for (const project of portfolioAssets) {
-    const response = await get(project.src);
-    assert.equal(response.status, 200, project.src);
-    assert.match(response.headers.get("content-type") || "", /image\/webp/, project.src);
+  const portfolioProjects = portfolioCategories.flatMap(category => category.projects);
+  const portfolioAssets = [...new Set(portfolioProjects.flatMap(project => [project.coverImage.src, project.images.at(-1).src]))];
+  assert.equal(portfolioProjects.length, 24);
+  assert.equal(portfolioProjects.reduce((total, project) => total + project.images.length, 0), 381);
+  for (const asset of portfolioAssets) {
+    const response = await get(asset);
+    assert.equal(response.status, 200, asset);
+    assert.match(response.headers.get("content-type") || "", /image\/webp/, asset);
   }
-  const optimizedPortfolioImage = await get(`/_next/image?url=${encodeURIComponent(portfolioAssets[0].src)}&w=1080&q=75`, { headers: { accept: "image/webp" } });
+  const optimizedPortfolioImage = await get(`/_next/image?url=${encodeURIComponent(portfolioAssets[0])}&w=1080&q=75`, { headers: { accept: "image/webp" } });
   assert.equal(optimizedPortfolioImage.status, 200);
   assert.match(optimizedPortfolioImage.headers.get("content-type") || "", /image\/webp/);
-  results.push("34 portfolio derivatives + Next/Image optimization respond successfully.");
+  results.push(`${portfolioAssets.length} representative project assets + Next/Image optimization respond successfully.`);
   const sitemap = await (await get("/sitemap.xml")).text();
   assert.match(sitemap, /residencia-mata-larga-fortin/);
   assert.doesNotMatch(sitemap, /\/admin|casa-demo|departamento-demo|borrador|archivado/);

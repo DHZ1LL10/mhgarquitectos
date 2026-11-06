@@ -10,7 +10,6 @@ export default function SiteInteractions() {
     const observers: IntersectionObserver[] = [];
     const timers: ReturnType<typeof setTimeout>[] = [];
     const restores: (() => void)[] = [];
-    const frames: number[] = [];
     const on = <K extends keyof GlobalEventHandlersEventMap>(el: EventTarget | null, name: K,
       handler: (e: GlobalEventHandlersEventMap[K]) => void, passive = false) => {
       el?.addEventListener(name, handler as EventListener, { signal: controller.signal, passive });
@@ -29,31 +28,6 @@ export default function SiteInteractions() {
       toggle?.setAttribute("aria-expanded", String(open)); toggle?.classList.toggle("is-open", open);
     });
     menu?.querySelectorAll(".nav-link").forEach(link => on(link, "click", closeMenu));
-    const tabs = document.querySelectorAll<HTMLElement>(".proj-tab"), panels = document.querySelectorAll<HTMLElement>(".proj-panel");
-    const tabList = Array.from(tabs);
-    const activateTab = (tab: HTMLElement, moveFocus = false) => {
-      tabs.forEach(item => {
-        const active = item === tab;
-        item.classList.toggle("active", active);
-        item.setAttribute("aria-selected", String(active));
-        item.tabIndex = active ? 0 : -1;
-      });
-      panels.forEach(panel => { const active = panel.id === "cat-" + tab.dataset.cat; panel.classList.toggle("active", active); panel.hidden = !active; });
-      if (moveFocus) tab.focus();
-    };
-    tabs.forEach((tab, position) => {
-      on(tab, "click", () => activateTab(tab));
-      on(tab, "keydown", event => {
-        let nextPosition = position;
-        if (event.key === "ArrowRight") nextPosition = (position + 1) % tabList.length;
-        else if (event.key === "ArrowLeft") nextPosition = (position - 1 + tabList.length) % tabList.length;
-        else if (event.key === "Home") nextPosition = 0;
-        else if (event.key === "End") nextPosition = tabList.length - 1;
-        else return;
-        event.preventDefault();
-        activateTab(tabList[nextPosition], true);
-      });
-    });
     document.querySelectorAll<HTMLElement>(".branch-map").forEach(wrap => {
       const placeholder = wrap.querySelector<HTMLElement>(".map-placeholder"), src = placeholder?.dataset.src;
       if (!placeholder || !src) return;
@@ -68,7 +42,7 @@ export default function SiteInteractions() {
       const observer = observe(([entry]) => { if (entry.isIntersecting) { load(); observer.disconnect(); } }, { rootMargin: "200px" });
       observer.observe(wrap); restores.push(() => { if (iframe?.parentNode === wrap) wrap.replaceChild(placeholder, iframe); });
     });
-    const reveals = document.querySelectorAll<HTMLElement>(".section-header, .service-card, .proj-item, .proj-cta-card, .contact-card, .trust-img-wrap, .trust-content, .trust-badge-card, .map-wrap, .social-row, .btn-full, .branch-card");
+    const reveals = document.querySelectorAll<HTMLElement>(".section-header, .service-card, .portfolio-project-card, .contact-card, .trust-img-wrap, .trust-content, .trust-badge-card, .map-wrap, .social-row, .btn-full, .branch-card");
     const revealObserver = observe(entries => entries.forEach(entry => {
       if (!entry.isIntersecting) return;
       const siblings = Array.from(entry.target.parentElement?.children ?? []);
@@ -85,54 +59,9 @@ export default function SiteInteractions() {
       if (entry.isIntersecting) navLinks.forEach(link => link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id));
     }), { rootMargin: "-40% 0px -40% 0px" });
     document.querySelectorAll("section[id]").forEach(section => sectionObserver.observe(section));
-
-    // This overlay is entirely owned by the effect, never by React's children.
-    const lightbox = document.createElement("div"); lightbox.id = "lightbox";
-    lightbox.setAttribute("role", "dialog"); lightbox.setAttribute("aria-label", "Galería ampliada");
-    lightbox.setAttribute("aria-modal", "true");
-    lightbox.style.cssText = "display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;cursor:zoom-out;";
-    const image = document.createElement("img"); image.alt = "Proyecto MHG Arquitectos";
-    image.style.cssText = "max-width:88vw;max-height:88vh;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.8);animation:lbIn .25s ease;cursor:default;";
-    const close = document.createElement("button"); close.type = "button"; close.textContent = "×"; close.setAttribute("aria-label", "Cerrar");
-    close.style.cssText = "position:absolute;top:20px;right:28px;background:none;border:none;color:#fff;font-size:2.4rem;cursor:pointer;line-height:1;opacity:.7;transition:.2s;";
-    const previous = document.createElement("button"); previous.type = "button"; previous.className = "lb-nav lb-prev"; previous.textContent = "‹"; previous.setAttribute("aria-label", "Anterior");
-    const next = document.createElement("button"); next.type = "button"; next.className = "lb-nav lb-next"; next.textContent = "›"; next.setAttribute("aria-label", "Siguiente");
-    lightbox.append(image, close, previous, next); document.body.append(lightbox);
-    const style = document.createElement("style"); style.textContent = "@keyframes lbIn { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }"; document.head.append(style);
-    let items: HTMLElement[] = [], index = 0, overflow = "", opener: HTMLElement | null = null;
-    const show = (position: number) => {
-      if (!items.length) return;
-      index = (position + items.length) % items.length;
-      const source = items[index].querySelector("img"); if (!source) return;
-      image.src = source.dataset.fullSrc || source.src; image.alt = source.alt || "Proyecto MHG"; image.style.animation = "none";
-      frames.push(requestAnimationFrame(() => { image.style.animation = "lbIn .25s ease"; }));
-    };
-    const closeLightbox = () => {
-      if (lightbox.style.display !== "flex") return;
-      lightbox.style.display = "none"; document.body.style.overflow = overflow;
-      if (opener?.isConnected) opener.focus();
-    };
-    document.querySelectorAll(".proj-grid").forEach(grid => {
-      const group = Array.from(grid.querySelectorAll<HTMLElement>(".proj-item"));
-      group.forEach((item, position) => on(item, "click", () => {
-        items = group; opener = item; show(position); overflow = document.body.style.overflow;
-        lightbox.style.display = "flex"; document.body.style.overflow = "hidden";
-        previous.style.display = next.style.display = items.length > 1 ? "flex" : "none";
-        close.focus();
-      }));
-    });
-    on(image, "click", e => e.stopPropagation()); on(close, "mouseenter", () => { close.style.opacity = "1"; }); on(close, "mouseleave", () => { close.style.opacity = ".7"; });
-    on(lightbox, "click", closeLightbox);
-    on(previous, "click", e => { e.stopPropagation(); show(index - 1); }); on(next, "click", e => { e.stopPropagation(); show(index + 1); });
-    on(document, "keydown", e => {
-      if (lightbox.style.display !== "flex") return;
-      if (e.key === "Escape") closeLightbox();
-      if (e.key === "ArrowLeft") show(index - 1);
-      if (e.key === "ArrowRight") show(index + 1);
-    });
     return () => {
-      controller.abort(); observers.forEach(observer => observer.disconnect()); timers.forEach(clearTimeout); frames.forEach(cancelAnimationFrame);
-      closeLightbox(); lightbox.remove(); style.remove(); restores.forEach(restore => restore()); closeMenu();
+      controller.abort(); observers.forEach(observer => observer.disconnect()); timers.forEach(clearTimeout);
+      restores.forEach(restore => restore()); closeMenu();
       reveals.forEach(el => el.classList.remove("reveal", "visible"));
     };
   }, [pathname]);
