@@ -1,11 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { portfolioCategories, type PortfolioProject, wrapPortfolioIndex } from "@/data/portfolio";
 import styles from "./portfolio.module.css";
 
-export default function PortfolioProjects() {
+type PortfolioProjectsProps = { variant?: "featured" | "catalog" };
+
+export default function PortfolioProjects({ variant = "catalog" }: PortfolioProjectsProps) {
   const [activeCategory, setActiveCategory] = useState(portfolioCategories[0].slug);
   const [activeProject, setActiveProject] = useState<PortfolioProject | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -15,6 +18,7 @@ export default function PortfolioProjects() {
   const openerRef = useRef<HTMLButtonElement | null>(null);
 
   const category = portfolioCategories.find((item) => item.slug === activeCategory) ?? portfolioCategories[0];
+  const visibleProjects = variant === "featured" ? category.featuredProjects : category.projects;
   const activeImage = activeProject?.images[activeImageIndex];
 
   const closeProject = useCallback(() => {
@@ -124,7 +128,9 @@ export default function PortfolioProjects() {
               key={item.slug}
             >
               {item.label}
-              <span aria-hidden="true">{item.projects.length.toString().padStart(2, "0")}</span>
+              <span aria-hidden="true">
+                {(variant === "featured" ? item.featuredProjects.length : item.projects.length).toString().padStart(2, "0")}
+              </span>
             </button>
           );
         })}
@@ -137,7 +143,7 @@ export default function PortfolioProjects() {
         aria-labelledby={`portfolio-tab-${category.slug}`}
       >
         <div className={styles.grid}>
-          {category.projects.map((project) => (
+          {visibleProjects.map((project) => (
             <button
               type="button"
               className={`${styles.card} portfolio-project-card`}
@@ -166,12 +172,19 @@ export default function PortfolioProjects() {
           ))}
         </div>
 
-        <div className={styles.cta}>
-          <p>{category.cta.prompt}</p>
-          <a className="btn btn-primary" href={category.cta.href} target="_blank" rel="noopener noreferrer">
-            {category.cta.label}
-          </a>
-        </div>
+        {variant === "featured" ? (
+          <div className={`${styles.cta} ${styles.catalogCta}`}>
+            <p>Explora el catálogo completo de proyectos de MHG Arquitectos.</p>
+            <Link className="btn btn-primary" href="/proyectos">Ver todos los proyectos</Link>
+          </div>
+        ) : (
+          <div className={styles.cta}>
+            <p>{category.cta.prompt}</p>
+            <a className="btn btn-primary" href={category.cta.href} target="_blank" rel="noopener noreferrer">
+              {category.cta.label}
+            </a>
+          </div>
+        )}
       </div>
 
       {activeProject && activeImage ? (

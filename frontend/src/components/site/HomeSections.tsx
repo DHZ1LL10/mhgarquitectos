@@ -60,7 +60,7 @@ export default function HomeSections({ properties }: { properties: Property[] })
         <h2 className="section-title">Proyectos Realizados</h2>
         <p className="section-desc">Explora cada proyecto como una historia completa: proceso, detalles y resultado.</p>
       </div>
-      <PortfolioProjects />
+      <PortfolioProjects variant="featured" />
     </div>
   </section>
 
