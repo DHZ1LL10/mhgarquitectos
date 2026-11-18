@@ -12,8 +12,6 @@ export type PortfolioProject = {
   shortDescription: string;
   description: string;
   tag: string;
-  featured: boolean;
-  featuredOrder: number | null;
   coverImage: PortfolioImage;
   images: readonly PortfolioImage[];
 };
@@ -26,10 +24,7 @@ export type PortfolioCategory = {
 };
 
 type GeneratedImage = { src: string; width: number; height: number };
-type ProjectDefinition = Omit<PortfolioProject, "id" | "featured" | "featuredOrder" | "coverImage" | "images"> & {
-  cover?: number;
-  featuredOrder?: number;
-};
+type ProjectDefinition = Omit<PortfolioProject, "id" | "coverImage" | "images"> & { cover?: number };
 
 const imageManifest = generatedPortfolio.projects as Record<string, readonly GeneratedImage[]>;
 
@@ -41,7 +36,6 @@ export function wrapPortfolioIndex(index: number, length: number) {
 const definitions: readonly ProjectDefinition[] = [
   {
     slug: "cocina-ambar", category: "cocina-mobiliario", title: "Cocina Ámbar", tag: "Cocina integral",
-    cover: 4, featuredOrder: 6,
     shortDescription: "Cocina integral de composición cálida y almacenamiento continuo.",
     description: "Proyecto integral de cocina con una paleta cálida, superficies de trabajo amplias y soluciones de almacenamiento diseñadas para el uso cotidiano.",
   },
@@ -57,7 +51,6 @@ const definitions: readonly ProjectDefinition[] = [
   },
   {
     slug: "cocina-encinos", category: "cocina-mobiliario", title: "Cocina Encinos", tag: "Renovación de cocina",
-    cover: 0, featuredOrder: 1,
     shortDescription: "Transformación completa documentada antes, durante y después.",
     description: "Proyecto de renovación integral que reúne el estado previo, el proceso de instalación, los detalles de carpintería y el resultado terminado.",
   },
@@ -73,7 +66,6 @@ const definitions: readonly ProjectDefinition[] = [
   },
   {
     slug: "cocina-lambrin", category: "cocina-mobiliario", title: "Cocina Lambrín", tag: "Cocina y alacena",
-    cover: 10, featuredOrder: 5,
     shortDescription: "Mobiliario envolvente con cubierta e integración de alacena.",
     description: "Diseño, fabricación e instalación de cocina y alacena coordinadas, documentadas desde la carpintería inicial hasta el montaje de cubierta.",
   },
@@ -84,7 +76,6 @@ const definitions: readonly ProjectDefinition[] = [
   },
   {
     slug: "cocina-orizaba", category: "cocina-mobiliario", title: "Cocina Orizaba", tag: "Diseño y fabricación",
-    cover: 58, featuredOrder: 2,
     shortDescription: "Proyecto completo con isla, iluminación y proceso de ejecución.",
     description: "Una galería extensa del desarrollo de la cocina: fabricación, instalación, ajustes, detalles funcionales y resultado final.",
   },
@@ -95,13 +86,11 @@ const definitions: readonly ProjectDefinition[] = [
   },
   {
     slug: "cocina-verde-isla", category: "cocina-mobiliario", title: "Cocina verde con isla", tag: "Cocina con isla",
-    cover: 0, featuredOrder: 7,
     shortDescription: "Una propuesta expresiva articulada alrededor de la isla central.",
     description: "Diseño de cocina con color protagonista, isla de trabajo y una selección de acabados que aporta carácter al espacio.",
   },
   {
     slug: "showroom-tuxtepec", category: "cocina-mobiliario", title: "Showroom Tuxtepec", tag: "Showroom",
-    cover: 53, featuredOrder: 3,
     shortDescription: "Materiales, herrajes y soluciones de mobiliario en exhibición.",
     description: "Recorrido por el showroom de MHG en Tuxtepec: cocinas, acabados, sistemas de apertura, almacenamiento y detalles constructivos.",
   },
@@ -137,7 +126,6 @@ const definitions: readonly ProjectDefinition[] = [
   },
   {
     slug: "mobiliario-residencial-terra", category: "cocina-mobiliario", title: "Mobiliario residencial Terra", tag: "Mobiliario integral",
-    cover: 20, featuredOrder: 4,
     shortDescription: "Conjunto de piezas a medida para distintos espacios del departamento.",
     description: "Proyecto de mobiliario integral con soluciones para estancia, comedor y recámaras, coordinadas mediante materiales y detalles comunes.",
   },
@@ -148,7 +136,6 @@ const definitions: readonly ProjectDefinition[] = [
   },
   {
     slug: "residencia-fachada-piedra", category: "diseno-construccion", title: "Residencia con fachada de piedra", tag: "Diseño y construcción",
-    cover: 0, featuredOrder: 8,
     shortDescription: "Composición residencial contemporánea con materialidad cálida.",
     description: "Proyecto residencial documentado desde una vista general y aérea, con una fachada que integra piedra, volúmenes limpios y áreas exteriores.",
   },
@@ -159,7 +146,6 @@ const definitions: readonly ProjectDefinition[] = [
   },
   {
     slug: "interior-residencial", category: "diseno-construccion", title: "Interior residencial", tag: "Interiorismo",
-    cover: 0, featuredOrder: 9,
     shortDescription: "Recámara terminada con carpintería integrada.",
     description: "Espacio interior resuelto como un conjunto, coordinando arquitectura, acabados y mobiliario para mantener una lectura unitaria.",
   },
@@ -180,8 +166,6 @@ function buildProject(definition: ProjectDefinition): PortfolioProject {
   return {
     ...definition,
     id: `portfolio:${definition.slug}`,
-    featured: definition.featuredOrder !== undefined,
-    featuredOrder: definition.featuredOrder ?? null,
     coverImage: images[definition.cover ?? 0],
     images,
   };
@@ -189,19 +173,10 @@ function buildProject(definition: ProjectDefinition): PortfolioProject {
 
 export const portfolioProjects: readonly PortfolioProject[] = definitions.map(buildProject);
 
-export const featuredPortfolioProjects: readonly PortfolioProject[] = portfolioProjects
-  .filter((project) => project.featured)
-  .sort((left, right) => (left.featuredOrder ?? 0) - (right.featuredOrder ?? 0));
-
-export const portfolioCategoryLabels: Readonly<Record<PortfolioCategorySlug, string>> = {
-  "cocina-mobiliario": "Cocina y mobiliario",
-  "diseno-construccion": "Diseño y construcción",
-};
-
 export const portfolioCategories: readonly PortfolioCategory[] = [
   {
     slug: "cocina-mobiliario",
-    label: portfolioCategoryLabels["cocina-mobiliario"],
+    label: "Cocina y mobiliario",
     projects: portfolioProjects.filter((project) => project.category === "cocina-mobiliario"),
     cta: {
       prompt: "¿Quieres transformar tu cocina o crear mobiliario a medida?",
@@ -211,7 +186,7 @@ export const portfolioCategories: readonly PortfolioCategory[] = [
   },
   {
     slug: "diseno-construccion",
-    label: portfolioCategoryLabels["diseno-construccion"],
+    label: "Diseño y construcción",
     projects: portfolioProjects.filter((project) => project.category === "diseno-construccion"),
     cta: {
       prompt: "¿Tienes un proyecto residencial o comercial?",

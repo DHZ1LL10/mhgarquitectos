@@ -5,7 +5,7 @@ import { once } from "node:events";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { frontend, sha256, expectedPublicHash } from "./legacy-assets.mjs";
-import { featuredPortfolioProjects, portfolioCategories } from "../src/data/portfolio.ts";
+import { portfolioCategories } from "../src/data/portfolio.ts";
 
 // HTTP requests only. This script never launches or controls a browser.
 const probe = createServer();
@@ -36,7 +36,7 @@ try {
   }
   assert.ok(ready, `Server did not start: ${logs}`);
 
-  for (const route of ["/", "/index.html", "/proyectos", "/propiedades", "/propiedades/residencia-mata-larga-fortin", "/admin", "/admin/clientes", "/admin/clientes/00000000-0000-0000-0000-000000000001", "/admin/citas", "/admin/citas/00000000-0000-0000-0000-000000000001", "/admin/cocinas", "/admin/cocinas/00000000-0000-0000-0000-000000000001", "/admin/propiedades", "/admin/propiedades/nueva", "/admin/propiedades/00000000-0000-0000-0000-000000000001", "/admin/usuarios", "/admin/usuarios/nuevo", "/admin/usuarios/00000000-0000-0000-0000-000000000001", "/admin/cambiar-contrasena", "/admin/login"]) {
+  for (const route of ["/", "/index.html", "/propiedades", "/propiedades/residencia-mata-larga-fortin", "/admin", "/admin/clientes", "/admin/clientes/00000000-0000-0000-0000-000000000001", "/admin/citas", "/admin/citas/00000000-0000-0000-0000-000000000001", "/admin/cocinas", "/admin/cocinas/00000000-0000-0000-0000-000000000001", "/admin/propiedades", "/admin/propiedades/nueva", "/admin/propiedades/00000000-0000-0000-0000-000000000001", "/admin/usuarios", "/admin/usuarios/nuevo", "/admin/usuarios/00000000-0000-0000-0000-000000000001", "/admin/cambiar-contrasena", "/admin/login"]) {
     const response = await get(route);
     assert.equal(response.status, 200, route);
     const html = withoutScripts(await response.text());
@@ -56,20 +56,10 @@ try {
       for (let index = 1; index < sectionIds.length; index++) assert.ok(html.indexOf(`id="${sectionIds[index - 1]}"`) < html.indexOf(`id="${sectionIds[index]}"`), `${route}: section order`);
       assert.match(html, /href="\/cocina-customizer\.html"/);
       assert.match(html, /href="\/propiedades"/);
-      assert.equal([...html.matchAll(/portfolio-project-card/g)].length, 9);
-      assert.equal([...html.matchAll(/role="tab"/g)].length, 0);
-      assert.match(html, /Cocina y mobiliario/);
-      assert.match(html, /Diseño y construcción/);
-      assert.match(html, /href="\/proyectos"/);
-      assert.match(html, /Ver todos los proyectos/);
-      for (const project of featuredPortfolioProjects) assert.match(html, new RegExp(project.title));
-    }
-    if (route === "/proyectos") {
       assert.equal([...html.matchAll(/portfolio-project-card/g)].length, 20);
       assert.equal([...html.matchAll(/role="tab"/g)].length, 2);
       assert.match(html, /Cocina y mobiliario/);
       assert.match(html, /Diseño y construcción/);
-      assert.match(html, /rel="canonical" href="[^"]*\/proyectos"/);
     }
     if (route.startsWith("/propiedades")) {
       assert.match(html, /rel="canonical"/);
@@ -134,7 +124,6 @@ try {
   assert.match(optimizedPortfolioImage.headers.get("content-type") || "", /image\/webp/);
   results.push(`${portfolioAssets.length} representative project assets + Next/Image optimization respond successfully.`);
   const sitemap = await (await get("/sitemap.xml")).text();
-  assert.match(sitemap, /<loc>[^<]*\/proyectos<\/loc>/);
   assert.match(sitemap, /residencia-mata-larga-fortin/);
   assert.doesNotMatch(sitemap, /\/admin|casa-demo|departamento-demo|borrador|archivado/);
   const robots = await (await get("/robots.txt")).text();
