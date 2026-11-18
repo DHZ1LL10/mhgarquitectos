@@ -1,11 +1,20 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { portfolioCategories, type PortfolioProject, wrapPortfolioIndex } from "@/data/portfolio";
+import {
+  featuredPortfolioProjects,
+  portfolioCategories,
+  portfolioCategoryLabels,
+  type PortfolioProject,
+  wrapPortfolioIndex,
+} from "@/data/portfolio";
 import styles from "./portfolio.module.css";
 
-export default function PortfolioProjects() {
+type PortfolioProjectsProps = { variant?: "featured" | "catalog" };
+
+export default function PortfolioProjects({ variant = "catalog" }: PortfolioProjectsProps) {
   const [activeCategory, setActiveCategory] = useState(portfolioCategories[0].slug);
   const [activeProject, setActiveProject] = useState<PortfolioProject | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -15,6 +24,8 @@ export default function PortfolioProjects() {
   const openerRef = useRef<HTMLButtonElement | null>(null);
 
   const category = portfolioCategories.find((item) => item.slug === activeCategory) ?? portfolioCategories[0];
+  const isFeatured = variant === "featured";
+  const visibleProjects = isFeatured ? featuredPortfolioProjects : category.projects;
   const activeImage = activeProject?.images[activeImageIndex];
 
   const closeProject = useCallback(() => {
@@ -97,7 +108,7 @@ export default function PortfolioProjects() {
 
   return (
     <>
-      <div className={styles.tabs} role="tablist" aria-label="Categorías de proyectos">
+      {!isFeatured ? <div className={styles.tabs} role="tablist" aria-label="Categorías de proyectos">
         {portfolioCategories.map((item, index) => {
           const active = item.slug === activeCategory;
           return (
@@ -128,16 +139,16 @@ export default function PortfolioProjects() {
             </button>
           );
         })}
-      </div>
+      </div> : null}
 
       <div
         className={styles.panel}
-        id={`portfolio-panel-${category.slug}`}
-        role="tabpanel"
-        aria-labelledby={`portfolio-tab-${category.slug}`}
+        id={isFeatured ? undefined : `portfolio-panel-${category.slug}`}
+        role={isFeatured ? undefined : "tabpanel"}
+        aria-labelledby={isFeatured ? undefined : `portfolio-tab-${category.slug}`}
       >
         <div className={styles.grid}>
-          {category.projects.map((project) => (
+          {visibleProjects.map((project) => (
             <button
               type="button"
               className={`${styles.card} portfolio-project-card`}
@@ -157,7 +168,9 @@ export default function PortfolioProjects() {
                 <span className={styles.cardCount}>{project.images.length} fotos</span>
               </span>
               <span className={styles.cardBody}>
-                <span className={styles.cardTag}>{project.tag}</span>
+                <span className={styles.cardTag}>
+                  {isFeatured ? portfolioCategoryLabels[project.category] : project.tag}
+                </span>
                 <strong>{project.title}</strong>
                 <span className={styles.cardDescription}>{project.shortDescription}</span>
                 <span className={styles.cardAction}>Ver proyecto <span aria-hidden="true">↗</span></span>
@@ -166,12 +179,19 @@ export default function PortfolioProjects() {
           ))}
         </div>
 
-        <div className={styles.cta}>
-          <p>{category.cta.prompt}</p>
-          <a className="btn btn-primary" href={category.cta.href} target="_blank" rel="noopener noreferrer">
-            {category.cta.label}
-          </a>
-        </div>
+        {isFeatured ? (
+          <div className={`${styles.cta} ${styles.catalogCta}`}>
+            <p>Explora el catálogo completo de proyectos de MHG Arquitectos.</p>
+            <Link className="btn btn-primary" href="/proyectos">Ver todos los proyectos</Link>
+          </div>
+        ) : (
+          <div className={styles.cta}>
+            <p>{category.cta.prompt}</p>
+            <a className="btn btn-primary" href={category.cta.href} target="_blank" rel="noopener noreferrer">
+              {category.cta.label}
+            </a>
+          </div>
+        )}
       </div>
 
       {activeProject && activeImage ? (

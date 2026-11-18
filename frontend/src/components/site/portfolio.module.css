@@ -192,6 +192,53 @@
   font-size: clamp(1rem, 2vw, 1.25rem);
 }
 
+.catalogCta {
+  justify-content: center;
+  text-align: center;
+}
+
+.catalogPage {
+  min-height: 100vh;
+  padding: clamp(8rem, 14vw, 11rem) clamp(1rem, 4vw, 4rem) clamp(5rem, 9vw, 8rem);
+  background: #07100b;
+  color: #fff;
+}
+
+.catalogHeader,
+.catalogProjects {
+  width: min(100%, 1380px);
+  margin-inline: auto;
+}
+
+.catalogHeader {
+  max-width: 760px;
+  margin-bottom: clamp(3rem, 7vw, 5rem);
+  text-align: center;
+}
+
+.catalogEyebrow {
+  color: #bda575;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.catalogHeader h1 {
+  margin: 0.8rem 0 1rem;
+  font-family: var(--font-heading, Georgia, serif);
+  font-size: clamp(2.8rem, 7vw, 5.8rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.catalogHeader p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.7;
+}
+
 .modalBackdrop {
   position: fixed;
   z-index: 10000;
