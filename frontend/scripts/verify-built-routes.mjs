@@ -36,10 +36,18 @@ try {
   }
   assert.ok(ready, `Server did not start: ${logs}`);
 
-  for (const route of ["/", "/index.html", "/proyectos", "/propiedades", "/propiedades/residencia-mata-larga-fortin", "/admin", "/admin/clientes", "/admin/clientes/00000000-0000-0000-0000-000000000001", "/admin/citas", "/admin/citas/00000000-0000-0000-0000-000000000001", "/admin/cocinas", "/admin/cocinas/00000000-0000-0000-0000-000000000001", "/admin/propiedades", "/admin/propiedades/nueva", "/admin/propiedades/00000000-0000-0000-0000-000000000001", "/admin/usuarios", "/admin/usuarios/nuevo", "/admin/usuarios/00000000-0000-0000-0000-000000000001", "/admin/cambiar-contrasena", "/admin/login"]) {
+  for (const route of ["/", "/index.html", "/proyectos", "/propiedades", "/propiedades/residencia-mata-larga-fortin", "/admin", "/admin/clientes", "/admin/clientes/00000000-0000-0000-0000-000000000001", "/admin/citas", "/admin/citas/00000000-0000-0000-0000-000000000001", "/admin/cocinas", "/admin/cocinas/00000000-0000-0000-0000-000000000001", "/admin/propiedades", "/admin/propiedades/nueva", "/admin/propiedades/00000000-0000-0000-0000-000000000001", "/admin/usuarios", "/admin/usuarios/nuevo", "/admin/usuarios/00000000-0000-0000-0000-000000000001", "/admin/cambiar-contrasena", "/admin/login", "/admin/proyectos", "/admin/proyectos/nuevo", "/admin/proyectos/00000000-0000-0000-0000-000000000001"]) {
     const response = await get(route);
     assert.equal(response.status, 200, route);
-    const html = withoutScripts(await response.text());
+    const fullHtml = await response.text();
+    const html = withoutScripts(fullHtml);
+    if (["/", "/index.html", "/proyectos"].includes(route)) {
+      for (const project of portfolioCategories.flatMap(category => category.projects)) {
+        for (const image of project.images.filter(image => image.src !== project.coverImage.src)) {
+          assert.ok(!fullHtml.includes(image.src), `${route}: detail gallery leaked into HTML/RSC`);
+        }
+      }
+    }
     assert.match(html, /<h1\b/, `${route}: server-rendered heading`);
     const publicIndexableRoute = production && !route.startsWith("/admin");
     if (publicIndexableRoute) {

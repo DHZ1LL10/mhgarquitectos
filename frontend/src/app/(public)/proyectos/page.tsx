@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { projectSummaries } from "@/features/projects/server";
+export const dynamic = "force-dynamic";
 import PortfolioProjects from "@/components/site/PortfolioProjects";
 import styles from "@/components/site/portfolio.module.css";
 
@@ -15,7 +17,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const projects = await projectSummaries(false);
   return (
     <main className={styles.catalogPage}>
       <header className={styles.catalogHeader}>
@@ -24,7 +27,7 @@ export default function ProjectsPage() {
         <p>Explora nuestro catálogo de cocinas, mobiliario, arquitectura e interiorismo.</p>
       </header>
       <section className={styles.catalogProjects} aria-label="Catálogo de proyectos">
-        <PortfolioProjects variant="catalog" />
+        <PortfolioProjects variant="catalog" projects={projects} />
       </section>
     </main>
   );

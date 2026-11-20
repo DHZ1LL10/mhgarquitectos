@@ -25,12 +25,13 @@ export class AdminApi {
     if (!path.startsWith("/") || path.startsWith("//")) throw new ApiError(0, "Ruta de API no válida.");
     let response: Response;
     try {
-      const signal = requestTimeoutSignal();
+      const multipart = body instanceof FormData;
+      const signal = multipart ? AbortSignal.timeout(60000) : requestTimeoutSignal();
       response = await this.fetcher(this.base + path, {
         method, credentials: "include", cache: "no-store",
         ...(signal ? { signal } : {}),
-        headers: { Accept: "application/json", "X-MHG-Admin": "1", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        headers: { Accept: "application/json", "X-MHG-Admin": "1", ...(body === undefined || multipart ? {} : { "Content-Type": "application/json" }) },
+        body: multipart ? body : body === undefined ? undefined : JSON.stringify(body),
       });
     } catch { throw new ApiError(0, "No se pudo conectar con la API. Si estabas guardando, recarga la lista antes de volver a enviar."); }
     if (!response.ok) {

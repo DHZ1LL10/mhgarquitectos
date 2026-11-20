@@ -168,7 +168,9 @@ test("property helpers support automatic slugs, image ordering and publication c
   assert.match(publicationCopy("draft"), /No visible públicamente/);
   assert.deepEqual(publicationIssues({ slug: "casa", title: "Casa", description: "Lista", status: "published", operation: "sale", property_type: "house", price: "0", currency: "MXN", location: { city: "Fortín", state: "Veracruz", neighborhood: "Centro" }, features: { area_m2: 0, bedrooms: 0, bathrooms: 0, parking_spaces: null }, latitude: null, longitude: null, images: [] }), ["superficie", "precio", "fotografías"]);
   const form = source("src/features/admin/PropertyForm.tsx");
-  assert.match(form, /<img/); assert.match(form, /onError=/); assert.match(form, /Portada/);
+  const media = readFileSync(new URL("../src/features/admin/shared/MediaEditor.tsx", import.meta.url), "utf8");
+  assert.match(media, /<img/); assert.match(media, /loading="lazy"/); assert.match(media, /Portada/);
+  assert.doesNotMatch(form, />Slug</);
 });
 
 test("client CRM has table, filters, record page, contact actions and permission-guarded status update", () => {

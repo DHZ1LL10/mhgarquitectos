@@ -54,6 +54,7 @@ const deployment = resolveDeploymentConfig();
 const securityHeaders = buildSecurityHeaders(deployment.environment);
 
 const config: NextConfig = {
+  images: { remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" }] },
   reactStrictMode: true,
   poweredByHeader: false,
   async rewrites() {

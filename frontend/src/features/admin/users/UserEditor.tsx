@@ -14,6 +14,7 @@ const modules: { title: string; description: string; items: { permission: Permis
   { title: "Citas", description: "Consultar agenda, confirmar horarios y actualizar visitas.", items: [{ permission: "appointments.view", label: "Puede ver Citas" }, { permission: "appointments.manage", label: "Puede gestionar citas", depends: "appointments.view" }] },
   { title: "Cocinas", description: "Consultar configuraciones y selecciones del cliente.", items: [{ permission: "kitchens.view", label: "Puede ver Cocinas" }] },
   { title: "Propiedades", description: "Separar edición y publicación del catálogo.", items: [{ permission: "properties.view", label: "Puede ver Propiedades" }, { permission: "properties.manage", label: "Puede editar propiedades", depends: "properties.view" }, { permission: "properties.publish", label: "Puede publicar propiedades", depends: "properties.manage" }] },
+  { title: "Proyectos", description: "Administrar portfolio y fotos.", items: [{ permission: "projects.manage", label: "Puede gestionar proyectos" }] },
 ];
 export default function UserEditor({ id }: { id?: string }) {
   const query = useAdminQuery<User>(id ? `/admin/users/${id}` : null);

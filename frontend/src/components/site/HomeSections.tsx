@@ -2,8 +2,9 @@ import PropertyCard from "@/features/properties/components/PropertyCard";
 import type { Property } from "@/features/properties/types";
 import propertyStyles from "@/features/properties/styles/properties.module.css";
 import PortfolioProjects from "./PortfolioProjects";
+import type { ProjectSummary } from "@/features/projects/types";
 
-export default function HomeSections({ properties }: { properties: Property[] }) {
+export default function HomeSections({ properties, projects }: { properties: Property[]; projects: ProjectSummary[] }) {
   return (<>
 
   {/* ═══════════════ HERO ═══════════════ */}
@@ -60,7 +61,7 @@ export default function HomeSections({ properties }: { properties: Property[] })
         <h2 className="section-title">Proyectos Realizados</h2>
         <p className="section-desc">Explora cada proyecto como una historia completa: proceso, detalles y resultado.</p>
       </div>
-      <PortfolioProjects variant="featured" />
+      <PortfolioProjects variant="featured" projects={projects} />
     </div>
   </section>
 

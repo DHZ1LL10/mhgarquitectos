@@ -1,8 +1,8 @@
 export type Role = "owner" | "staff";
-export type Permission = "dashboard.view" | "clients.view" | "clients.manage" | "appointments.view" | "appointments.manage" | "kitchens.view" | "properties.view" | "properties.manage" | "properties.publish";
+export type Permission = "dashboard.view" | "clients.view" | "clients.manage" | "appointments.view" | "appointments.manage" | "kitchens.view" | "properties.view" | "properties.manage" | "properties.publish" | "projects.manage";
 export type LeadStatus = "new" | "contacted" | "qualified" | "closed";
 export type User = { id: string; email: string; full_name: string; role: Role; is_active: boolean; permissions: Permission[]; must_change_password: boolean; last_login_at: string | null };
-export type ImageInput = { url: string; alt: string; width: number; height: number; object_key: string | null };
+export type ImageInput = { id?: string; url: string; alt: string; width: number; height: number; object_key: string | null };
 export type PropertyInput = {
   slug: string; title: string; description: string; status: "draft" | "published" | "archived";
   operation: "sale" | "rent"; property_type: "house" | "apartment" | "land"; price: string; currency: string;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomeSections from "@/components/site/HomeSections";
+import { projectSummaries } from "@/features/projects/server";
 import { propertyRepository } from "@/features/properties";
 
 export const dynamic = "force-dynamic";
@@ -19,5 +20,5 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const properties = await propertyRepository.listPublished();
-  return <HomeSections properties={properties.slice(0, 3)} />;
+  return <HomeSections properties={properties.slice(0, 3)} projects={await projectSummaries(true)} />;
 }

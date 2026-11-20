@@ -3,7 +3,7 @@ import type { Permission, User } from "./types";
 export const permissionOrder: Permission[] = [
   "dashboard.view", "clients.view", "clients.manage", "appointments.view",
   "appointments.manage", "kitchens.view", "properties.view", "properties.manage",
-  "properties.publish",
+  "properties.publish", "projects.manage",
 ];
 
 export const permissionPresets = {

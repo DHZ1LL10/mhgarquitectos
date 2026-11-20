@@ -230,3 +230,11 @@ pasado, monitorización/backup estén comprobados y producción continúe intact
 Antes del primer acceso productivo, aplica `0006_access_management`, confirma que no exista otro owner y ejecuta `python -m app.scripts.create_owner` en una terminal segura. No copies una cuenta local, no inventes el correo y no coloques la contraseña en variables, comandos, tickets o logs. Después del login inicial, completa el cambio obligatorio y prueba una cuenta staff con permisos mínimos.
 
 El catálogo Advisor no representa identidades autenticadas y no debe sincronizarse automáticamente con AdminUser.
+# Fase 4H.2B — dependencia de despliegue
+
+Antes de publicar el frontend CMS, desplegar backend con `0007_managed_projects`
+y ejecutar explícitamente `python -m app.scripts.seed_projects`. El catálogo nuevo
+consume PostgreSQL; no hay fallback silencioso a los datos estáticos.
+Variables, contratos, rollback y comandos completos: [PHASE-4H-2B.md](PHASE-4H-2B.md).
+Cloudinary es opcional para lectura; los uploads requieren sus tres credenciales
+exclusivamente en backend. Nunca ejecutar el seed demo para esta fase.

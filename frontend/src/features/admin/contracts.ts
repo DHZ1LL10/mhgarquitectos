@@ -1,7 +1,7 @@
 import type { AppointmentStatus, Lead, LeadStatus, Permission, PropertyInput, User } from "./types.ts";
 import { BUSINESS_TIME_ZONE, businessDateTimeInputToIso, businessDateTimeInputValue } from "./shared/format.ts";
 
-const permissions: Permission[] = ["dashboard.view", "clients.view", "clients.manage", "appointments.view", "appointments.manage", "kitchens.view", "properties.view", "properties.manage", "properties.publish"];
+const permissions: Permission[] = ["dashboard.view", "clients.view", "clients.manage", "appointments.view", "appointments.manage", "kitchens.view", "properties.view", "properties.manage", "properties.publish", "projects.manage"];
 
 export function parseUser(value: unknown): User {
   if (!value || typeof value !== "object") throw new Error("Respuesta de usuario inválida");

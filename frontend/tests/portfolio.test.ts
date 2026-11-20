@@ -107,9 +107,9 @@ test("landing and full catalog reuse the same category tabs, cards and modal", (
   const sections = readFileSync(path.join(frontend, "src/components/site/HomeSections.tsx"), "utf8");
   const catalog = readFileSync(path.join(frontend, "src/app/(public)/proyectos/page.tsx"), "utf8");
   const component = readFileSync(path.join(frontend, "src/components/site/PortfolioProjects.tsx"), "utf8");
-  assert.match(sections, /<PortfolioProjects variant="featured" \/>/);
-  assert.match(catalog, /<PortfolioProjects variant="catalog" \/>/);
-  assert.match(component, /variant === "featured" \? category\.featuredProjects : category\.projects/);
+  assert.match(sections, /<PortfolioProjects variant="featured" projects=\{projects\} \/>/);
+  assert.match(catalog, /<PortfolioProjects variant="catalog" projects=\{projects\} \/>/);
+  assert.match(component, /const visibleProjects = category\.projects/);
   assert.equal((component.match(/role="tablist"/g) ?? []).length, 1);
   assert.equal((component.match(/role="dialog"/g) ?? []).length, 1);
   assert.match(component, /href="\/proyectos">Ver todos los proyectos<\/Link>/);

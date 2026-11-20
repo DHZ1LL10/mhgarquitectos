@@ -1,14 +1,23 @@
 "use client";
 
 import Image from "next/image";
+import { cloudinaryLoader, isCloudinaryImage, previewImage } from "@/features/projects/media";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { portfolioCategories, type PortfolioProject, wrapPortfolioIndex } from "@/data/portfolio";
+import type { PortfolioProject } from "@/data/portfolio";
+import { categories, cardProject, type CardProject, type ProjectSummary, type ProjectDetail } from "@/features/projects/types";
 import styles from "./portfolio.module.css";
 
-type PortfolioProjectsProps = { variant?: "featured" | "catalog" };
+type PortfolioProjectsProps = { variant?: "featured" | "catalog"; projects: ProjectSummary[] };
+function wrapPortfolioIndex(index: number, length: number) { return length ? (index + length) % length : 0; }
 
-export default function PortfolioProjects({ variant = "catalog" }: PortfolioProjectsProps) {
+export default function PortfolioProjects({ variant = "catalog", projects }: PortfolioProjectsProps) {
+  const portfolioCategories = categories.map(category => ({ ...category,
+    projects: projects.filter(project => project.category === category.slug).map(cardProject),
+  }));
+  const [loadError, setLoadError] = useState("");
+  const [loadingProject, setLoadingProject] = useState(false);
+  const requestSequence = useRef(0);
   const [activeCategory, setActiveCategory] = useState(portfolioCategories[0].slug);
   const [activeProject, setActiveProject] = useState<PortfolioProject | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -18,26 +27,40 @@ export default function PortfolioProjects({ variant = "catalog" }: PortfolioProj
   const openerRef = useRef<HTMLButtonElement | null>(null);
 
   const category = portfolioCategories.find((item) => item.slug === activeCategory) ?? portfolioCategories[0];
-  const visibleProjects = variant === "featured" ? category.featuredProjects : category.projects;
+  const visibleProjects = category.projects;
   const activeImage = activeProject?.images[activeImageIndex];
 
   const closeProject = useCallback(() => {
+    requestSequence.current++;
     setActiveProject(null);
     setActiveImageIndex(0);
     requestAnimationFrame(() => openerRef.current?.focus());
-  }, []);
+  }, [setActiveProject, setActiveImageIndex]);
 
-  const openProject = (project: PortfolioProject, opener: HTMLButtonElement) => {
+  const openProject = async (project: CardProject, opener: HTMLButtonElement) => {
     openerRef.current = opener;
+    const sequence = ++requestSequence.current;
+    setLoadingProject(true); setLoadError("");
     setActiveImageIndex(0);
-    setActiveProject(project);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/projects/${encodeURIComponent(project.slug)}`, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+      if (!response.ok) throw new Error("No se pudo cargar la galería. Intenta nuevamente.");
+      const detail: ProjectDetail = await response.json();
+      if (sequence !== requestSequence.current) return;
+      if (!detail.images.length) throw new Error("Galería pendiente");
+      setActiveProject({ ...project, category: detail.category === "kitchen_furniture" ? "cocina-mobiliario" : "diseno-construccion",
+        featured: detail.featured, featuredOrder: detail.featured_order, description: detail.description,
+        images: detail.images.map(image => ({ src: image.secure_url, alt: image.alt_text, width: image.width, height: image.height })),
+      });
+    } catch { if (sequence === requestSequence.current) setLoadError("La galería no está disponible. Intenta nuevamente."); }
+    finally { if (sequence === requestSequence.current) setLoadingProject(false); }
   };
 
   const showRelativeImage = useCallback((offset: number) => {
     setActiveImageIndex((current) => activeProject
       ? wrapPortfolioIndex(current + offset, activeProject.images.length)
       : 0);
-  }, [activeProject]);
+  }, [activeProject, setActiveImageIndex]);
 
   useEffect(() => {
     if (!activeProject) return;
@@ -89,11 +112,14 @@ export default function PortfolioProjects({ variant = "catalog" }: PortfolioProj
     if (!activeProject) return;
     [activeImageIndex - 1, activeImageIndex + 1].forEach((index) => {
       const image = new window.Image();
-      image.src = activeProject.images[wrapPortfolioIndex(index, activeProject.images.length)].src;
+      image.src = previewImage(activeProject.images[wrapPortfolioIndex(index, activeProject.images.length)].src, 1600);
     });
   }, [activeImageIndex, activeProject]);
 
   const selectTab = (index: number, focus = false) => {
+    requestSequence.current++;
+    setLoadingProject(false);
+    setLoadError("");
     const selected = portfolioCategories[index];
     setActiveCategory(selected.slug);
     if (focus) tabRefs.current[index]?.focus();
@@ -101,6 +127,8 @@ export default function PortfolioProjects({ variant = "catalog" }: PortfolioProj
 
   return (
     <>
+      {loadingProject && <p role="status">Cargando galería…</p>}
+      {loadError && <p role="alert">{loadError}</p>}
       <div className={styles.tabs} role="tablist" aria-label="Categorías de proyectos">
         {portfolioCategories.map((item, index) => {
           const active = item.slug === activeCategory;
@@ -129,7 +157,7 @@ export default function PortfolioProjects({ variant = "catalog" }: PortfolioProj
             >
               {item.label}
               <span aria-hidden="true">
-                {(variant === "featured" ? item.featuredProjects.length : item.projects.length).toString().padStart(2, "0")}
+                {item.projects.length.toString().padStart(2, "0")}
               </span>
             </button>
           );
@@ -148,19 +176,19 @@ export default function PortfolioProjects({ variant = "catalog" }: PortfolioProj
               type="button"
               className={`${styles.card} portfolio-project-card`}
               onClick={(event) => openProject(project, event.currentTarget)}
-              aria-label={`Ver proyecto ${project.title}, ${project.images.length} fotografías`}
+              aria-label={`Ver proyecto ${project.title}, ${project.imageCount} fotografías`}
               key={project.id}
             >
               <span className={styles.cardImage}>
                 <Image
-                  src={project.coverImage.src}
+                  src={project.coverImage.src} loader={isCloudinaryImage(project.coverImage.src) ? cloudinaryLoader : undefined}
                   alt={project.coverImage.alt}
                   width={project.coverImage.width}
                   height={project.coverImage.height}
                   sizes="(max-width: 640px) 100vw, (max-width: 1050px) 50vw, 33vw"
                   loading="lazy"
                 />
-                <span className={styles.cardCount}>{project.images.length} fotos</span>
+                <span className={styles.cardCount}>{project.imageCount} fotos</span>
               </span>
               <span className={styles.cardBody}>
                 <span className={styles.cardTag}>{project.tag}</span>
@@ -208,7 +236,7 @@ export default function PortfolioProjects({ variant = "catalog" }: PortfolioProj
             <div className={styles.gallery}>
               <div className={styles.mainImage}>
                 <Image
-                  src={activeImage.src}
+                  src={activeImage.src} loader={isCloudinaryImage(activeImage.src) ? cloudinaryLoader : undefined}
                   alt={activeImage.alt}
                   width={activeImage.width}
                   height={activeImage.height}
@@ -235,7 +263,7 @@ export default function PortfolioProjects({ variant = "catalog" }: PortfolioProj
                       aria-current={index === activeImageIndex ? "true" : undefined}
                       key={image.src}
                     >
-                      <Image src={image.src} alt="" width={image.width} height={image.height} sizes="72px" loading="lazy" />
+                      <Image src={image.src} loader={isCloudinaryImage(image.src) ? cloudinaryLoader : undefined} alt="" width={image.width} height={image.height} sizes="72px" loading="lazy" />
                     </button>
                   ))}
                 </div>

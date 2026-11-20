@@ -1,3 +1,4 @@
+import { previewImage } from "@/features/projects/media";
 import Link from "next/link";
 import type { Property } from "../types";
 import { formatPrice, operationLabels, typeLabels } from "../presentation";
@@ -13,7 +14,7 @@ export default function PropertyCard({ property }: { property: Property }) {
   ].filter(Boolean);
   return <article className={styles.card}>
     <Link className={styles.cardLink} href={`/propiedades/${property.slug}`}>
-      {photo && <img className={styles.cardImage} src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" />}
+      {photo && <img className={styles.cardImage} src={previewImage(photo.src, 800)} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" />}
       <div className={styles.cardBody}>
         <span className={styles.badge}>{operationLabels[property.operation]} · {typeLabels[property.propertyType]}</span>
         <h2 className={styles.cardTitle}>{property.title}</h2>

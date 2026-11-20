@@ -47,7 +47,7 @@ test("home follows the business order and exposes the two approved project tabs"
   const ids = ["inicio", "nosotros", "proyectos", "propiedades", "servicios", "sucursales", "contacto"];
   for (let index = 1; index < ids.length; index++) assert.ok(sections.indexOf(`id="${ids[index - 1]}"`) < sections.indexOf(`id="${ids[index]}"`));
   assert.deepEqual(portfolioCategories.map(category => category.slug), ["cocina-mobiliario", "diseno-construccion"]);
-  assert.match(sections, /<PortfolioProjects variant="featured" \/>/);
+  assert.match(sections, /<PortfolioProjects variant="featured" projects=\{projects\} \/>/);
   assert.match(sections, /Propiedades en venta/);
   assert.match(sections, /properties\.slice\(0, 3\)/);
   assert.match(sections, /href="\/propiedades"/);

@@ -15,6 +15,7 @@ const navigation = [
   { href: "/admin/citas", label: "Citas", icon: "calendar" as const, permission: "appointments.view" as Permission },
   { href: "/admin/cocinas", label: "Cocinas", icon: "kitchen" as const, permission: "kitchens.view" as Permission },
   { href: "/admin/propiedades", label: "Propiedades", icon: "building" as const, permission: "properties.view" as Permission },
+  { href: "/admin/proyectos", label: "Proyectos", icon: "building" as const, permission: "projects.manage" as Permission },
   { href: "/admin/usuarios", label: "Usuarios", icon: "users" as const, ownerOnly: true },
 ];
 
