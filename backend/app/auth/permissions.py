@@ -11,6 +11,7 @@ Permission = Literal[
     "properties.view",
     "properties.manage",
     "properties.publish",
+    "projects.manage",
 ]
 
 PERMISSIONS: frozenset[str] = frozenset(get_args(Permission))

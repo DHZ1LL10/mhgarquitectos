@@ -546,7 +546,7 @@ def test_permission_allowlist_dependencies_and_owner_bypass():
     with pytest.raises(ValueError):
         normalize_permissions(["unknown"])
     assert has_permission("owner", [], "properties.publish")
-    assert len(FULL_PERMISSIONS) == 9
+    assert len(FULL_PERMISSIONS) == 10
 
 
 def test_audit_rejects_nested_sensitive_metadata():

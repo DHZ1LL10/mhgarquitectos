@@ -94,6 +94,7 @@ class PropertyPatch(InputModel):
     latitude: float | None = None
     longitude: float | None = None
     images: list[ImageInput] | None = None
+    replace_images: bool = False
 
 
 class PropertyOutput(PropertyCreate, TimestampOutput):

@@ -85,7 +85,8 @@ def test_properties_crud_public_filter_slug_and_images(client):
     duplicate = client.post("/api/v1/properties", json=property_payload(slug="casa-draft"))
     assert duplicate.status_code == 409
     response = client.patch(
-        "/api/v1/properties/" + items[0]["id"], json={"status": "published", "images": []}
+        "/api/v1/properties/" + items[0]["id"],
+        json={"status": "published", "images": [], "replace_images": True},
     )
     assert response.status_code == 200, response.text
     assert response.json()["images"] == []
@@ -99,7 +100,8 @@ def test_properties_crud_public_filter_slug_and_images(client):
         == 422
     )
     response = client.patch(
-        "/api/v1/properties/" + items[0]["id"], json={"images": property_payload()["images"]}
+        "/api/v1/properties/" + items[0]["id"],
+        json={"images": property_payload()["images"], "replace_images": True},
     )
     assert response.status_code == 200
     assert len(response.json()["images"]) == 1

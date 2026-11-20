@@ -1,3 +1,5 @@
+import re
+
 from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -6,19 +8,24 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 class RequestBodyLimitMiddleware:
     """Reject oversized request bodies before FastAPI parses JSON."""
 
-    def __init__(self, app: ASGIApp, max_bytes: int):
+    def __init__(self, app: ASGIApp, max_bytes: int, upload_bytes: int | None = None):
         self.app = app
         self.max_bytes = max_bytes
+        self.upload_bytes = upload_bytes or max_bytes
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http" or scope["method"] not in {"POST", "PUT", "PATCH"}:
             await self.app(scope, receive, send)
             return
 
+        is_upload = scope["method"] == "POST" and re.fullmatch(
+            r"/api/v1/admin/media/(projects|properties)/[0-9a-fA-F-]{36}/upload", scope["path"]
+        )
+        maximum = self.upload_bytes if is_upload else self.max_bytes
         raw_length = Headers(scope=scope).get("content-length")
         if raw_length:
             try:
-                if int(raw_length) > self.max_bytes:
+                if int(raw_length) > maximum:
                     await self._reject(scope, receive, send)
                     return
             except ValueError:
@@ -37,7 +44,7 @@ class RequestBodyLimitMiddleware:
                 await self.app(scope, self._replay(messages), send)
                 return
             total += len(message.get("body", b""))
-            if total > self.max_bytes:
+            if total > maximum:
                 await self._reject(scope, receive, send)
                 return
             if not message.get("more_body", False):

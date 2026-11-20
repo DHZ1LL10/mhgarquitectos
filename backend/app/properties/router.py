@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.auth.audit import record_audit
 from app.auth.permissions import has_permission
 from app.dependencies import AuthenticatedUser, Database, require_permission
+from app.media.models import MediaCleanup
 from app.properties.models import Property, PropertyImage, PropertyStatus
 from app.properties.schemas import PropertyCreate, PropertyOutput, PropertyPatch
 
@@ -77,6 +78,8 @@ def create_property(payload: PropertyCreate, db: Database, actor: AuthenticatedU
     dependencies=[Depends(require_permission("properties.manage"))],
 )
 def update_property(id: UUID, payload: PropertyPatch, db: Database, actor: AuthenticatedUser):
+    if "images" in payload.model_fields_set and not payload.replace_images:
+        raise HTTPException(422, "Usa las operaciones de galería o solicita reemplazo explícito.")
     item = db.scalar(select(Property).where(Property.id == id).with_for_update())
     if item is None:
         raise HTTPException(404, "Property not found")
@@ -87,7 +90,9 @@ def update_property(id: UUID, payload: PropertyPatch, db: Database, actor: Authe
         {name: getattr(image, name) for name in ("url", "object_key", "alt", "width", "height")}
         for image in item.images
     ]
-    merged = PropertyCreate.model_validate({**existing, **payload.model_dump(exclude_unset=True)})
+    merged = PropertyCreate.model_validate(
+        {**existing, **payload.model_dump(exclude_unset=True, exclude={"replace_images"})}
+    )
     if (
         item.status == PropertyStatus.published or merged.status == PropertyStatus.published
     ) and not has_permission(actor.role, actor.permissions, "properties.publish"):
@@ -96,6 +101,9 @@ def update_property(id: UUID, payload: PropertyPatch, db: Database, actor: Authe
     for name, value in merged.model_dump(exclude={"images"}).items():
         setattr(item, name, value)
     if "images" in payload.model_fields_set:
+        for image in item.images:
+            if image.provider == "cloudinary" and image.public_id:
+                db.add(MediaCleanup(public_id=image.public_id))
         # Flush deletes first to avoid conflicts on (property_id, position).
         item.images.clear()
         db.flush()

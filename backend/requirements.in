@@ -7,3 +7,6 @@ psycopg[binary]==3.3.6
 uvicorn==0.54.0
 email-validator==2.3.0
 argon2-cffi==25.1.0
+cloudinary>=1.44,<2
+Pillow>=11.3,<13
+python-multipart>=0.0.20,<1

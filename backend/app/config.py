@@ -1,3 +1,4 @@
+import re
 from functools import lru_cache
 from ipaddress import IPv4Network, IPv6Network, ip_network
 from typing import Literal
@@ -50,6 +51,13 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     notification_email: str | None = None
     staging_email_override: str | None = None
+    cloudinary_cloud_name: str | None = None
+    cloudinary_api_key: SecretStr | None = Field(default=None, repr=False)
+    cloudinary_api_secret: SecretStr | None = Field(default=None, repr=False)
+    cloudinary_folder: str = "mhg/local"
+    media_max_file_bytes: int = Field(default=8_388_608, ge=1024, le=20_971_520)
+    media_upload_limit: int = Field(default=120, ge=1, le=500)
+    media_upload_window_seconds: int = Field(default=900, ge=60, le=3600)
 
     @field_validator(
         "smtp_host",
@@ -58,6 +66,9 @@ class Settings(BaseSettings):
         "smtp_from",
         "notification_email",
         "staging_email_override",
+        "cloudinary_cloud_name",
+        "cloudinary_api_key",
+        "cloudinary_api_secret",
         mode="before",
     )
     @classmethod
@@ -71,6 +82,17 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def secure_configuration(self):
+        cloud = (self.cloudinary_cloud_name, self.cloudinary_api_key, self.cloudinary_api_secret)
+        if any(cloud) and not all(cloud):
+            raise ValueError("Configure all three Cloudinary credentials or leave all unset")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*", self.cloudinary_folder):
+            raise ValueError("Invalid CLOUDINARY_FOLDER")
+        if (
+            all(cloud)
+            and self.environment in ("staging", "production")
+            and not self.cloudinary_folder.endswith("/" + self.environment)
+        ):
+            raise ValueError("CLOUDINARY_FOLDER must end with the deployment environment")
         if self.database_url_value is None and not self.db_password:
             raise ValueError("DB_PASSWORD is required when DATABASE_URL is not configured")
         if self.environment in ("staging", "production") and not self.cookie_secure:

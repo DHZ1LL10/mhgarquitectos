@@ -17,7 +17,10 @@ from app.errors import install_error_handlers
 from app.kitchen_configurations.router import router as kitchens_router
 from app.kitchen_configurations.submissions import router as submissions_router
 from app.leads.router import router as leads_router
+from app.media.router import router as media_router
 from app.middleware import RequestBodyLimitMiddleware, SecurityHeadersMiddleware
+from app.projects.router import admin_router as projects_admin_router
+from app.projects.router import public_router as projects_public_router
 from app.properties.router import admin_router, public_router
 
 logger = logging.getLogger("mhg")
@@ -45,7 +48,9 @@ def create_app(configuration: Settings | None = None) -> FastAPI:
     )
     application.add_middleware(SecurityHeadersMiddleware)
     application.add_middleware(
-        RequestBodyLimitMiddleware, max_bytes=settings.max_request_body_bytes
+        RequestBodyLimitMiddleware,
+        max_bytes=settings.max_request_body_bytes,
+        upload_bytes=settings.media_max_file_bytes + 65536,
     )
     if configuration is not None:
         application.dependency_overrides[get_settings] = lambda: settings
@@ -79,6 +84,9 @@ def create_app(configuration: Settings | None = None) -> FastAPI:
         auth_router,
         users_router,
         management_router,
+        projects_admin_router,
+        media_router,
+        projects_public_router,
         public_router,
         admin_router,
         kitchens_router,
