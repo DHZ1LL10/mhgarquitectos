@@ -1,0 +1,390 @@
+from datetime import UTC, datetime
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import case, func, select
+
+from app.appointments.models import Appointment
+from app.appointments.schemas import AppointmentOutput
+from app.auth.permissions import has_permission
+from app.dependencies import AuthenticatedUser, Database, require_permission
+from app.kitchen_configurations.models import KitchenConfiguration
+from app.kitchen_configurations.schemas import KitchenOutput
+from app.kitchen_configurations.submission_models import KitchenSubmission
+from app.kitchen_configurations.submission_schemas import SubmissionReference
+from app.leads.models import Lead
+from app.leads.schemas import LeadOutput
+from app.properties.models import Property, PropertyStatus
+from app.properties.schemas import PropertyOutput
+
+router = APIRouter(prefix="/admin", tags=["Administration"])
+
+
+class LeadDetails(LeadOutput):
+    submission: SubmissionReference | None = None
+    appointment: AppointmentOutput | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    advisor: str | None = None
+
+
+class AppointmentDetails(AppointmentOutput):
+    leads: list[LeadDetails]
+    submission: SubmissionReference | None = None
+
+
+class KitchenDetails(KitchenOutput):
+    leads: list[LeadDetails]
+    appointments: list[AppointmentOutput]
+    submission: SubmissionReference | None = None
+
+
+def submission_map(db: Database, field, ids) -> dict:
+    if not ids:
+        return {}
+    items = db.scalars(select(KitchenSubmission).where(field.in_(ids))).all()
+    return {getattr(item, field.key): SubmissionReference.model_validate(item) for item in items}
+
+
+def lead_details(db: Database, item: Lead) -> LeadDetails:
+    submission = db.scalar(select(KitchenSubmission).where(KitchenSubmission.lead_id == item.id))
+    appointment = db.get(Appointment, item.appointment_id) if item.appointment_id else None
+    configuration = (
+        db.get(KitchenConfiguration, item.kitchen_configuration_id)
+        if item.kitchen_configuration_id
+        else None
+    )
+    location = appointment or configuration
+    return LeadDetails(
+        **LeadOutput.model_validate(item).model_dump(),
+        submission=SubmissionReference.model_validate(submission) if submission else None,
+        appointment=AppointmentOutput.model_validate(appointment) if appointment else None,
+        address=location.address if location else None,
+        latitude=location.latitude if location else None,
+        longitude=location.longitude if location else None,
+        advisor=configuration.advisor if configuration else None,
+    )
+
+
+def appointment_details(db: Database, item: Appointment) -> AppointmentDetails:
+    contacts = db.scalars(select(Lead).where(Lead.appointment_id == item.id)).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [lead.id for lead in contacts])
+    submission = db.scalar(
+        select(KitchenSubmission).where(KitchenSubmission.appointment_id == item.id)
+    )
+    return AppointmentDetails(
+        **AppointmentOutput.model_validate(item).model_dump(),
+        leads=[
+            LeadDetails(
+                **LeadOutput.model_validate(lead).model_dump(),
+                submission=lead_submissions.get(lead.id),
+                advisor=(
+                    db.get(KitchenConfiguration, lead.kitchen_configuration_id).advisor
+                    if lead.kitchen_configuration_id
+                    and db.get(KitchenConfiguration, lead.kitchen_configuration_id)
+                    else None
+                ),
+            )
+            for lead in contacts
+        ],
+        submission=SubmissionReference.model_validate(submission) if submission else None,
+    )
+
+
+def kitchen_details(db: Database, item: KitchenConfiguration) -> KitchenDetails:
+    contacts = db.scalars(select(Lead).where(Lead.kitchen_configuration_id == item.id)).all()
+    related = db.scalars(
+        select(Appointment).where(
+            Appointment.id.in_([lead.appointment_id for lead in contacts if lead.appointment_id])
+        )
+    ).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [lead.id for lead in contacts])
+    submission = db.scalar(
+        select(KitchenSubmission).where(KitchenSubmission.configuration_id == item.id)
+    )
+    return KitchenDetails(
+        **KitchenOutput.model_validate(item).model_dump(),
+        leads=[
+            LeadDetails(
+                **LeadOutput.model_validate(lead).model_dump(),
+                submission=lead_submissions.get(lead.id),
+            )
+            for lead in contacts
+        ],
+        appointments=[AppointmentOutput.model_validate(appointment) for appointment in related],
+        submission=SubmissionReference.model_validate(submission) if submission else None,
+    )
+
+
+@router.get("/dashboard", dependencies=[Depends(require_permission("dashboard.view"))])
+def dashboard(db: Database, user: AuthenticatedUser):
+    now = datetime.now(UTC)
+    can_appointments = has_permission(user.role, user.permissions, "appointments.view")
+    can_clients = has_permission(user.role, user.permissions, "clients.view")
+    can_kitchens = has_permission(user.role, user.permissions, "kitchens.view")
+    can_properties = has_permission(user.role, user.permissions, "properties.view")
+    appointment_counts = (
+        db.execute(
+            select(
+                func.count().filter(Appointment.status == "requested"),
+                func.count().filter(Appointment.status == "pending_confirmation"),
+                func.count().filter(Appointment.status == "confirmed"),
+                func.count().filter(
+                    Appointment.status == "confirmed", Appointment.confirmed_datetime >= now
+                ),
+                func.count().filter(Appointment.status == "completed"),
+            )
+        ).one()
+        if can_appointments
+        else (None, None, None, None, None)
+    )
+    return {
+        "properties": db.scalar(select(func.count()).select_from(Property))
+        if can_properties
+        else None,
+        "leads": db.scalar(select(func.count()).select_from(Lead)) if can_clients else None,
+        "appointments": db.scalar(select(func.count()).select_from(Appointment))
+        if can_appointments
+        else None,
+        "kitchen_configurations": db.scalar(select(func.count()).select_from(KitchenConfiguration))
+        if can_kitchens
+        else None,
+        "new_leads": db.scalar(select(func.count()).select_from(Lead).where(Lead.status == "new"))
+        if can_clients
+        else None,
+        "requested_appointments": appointment_counts[0],
+        "pending_confirmation_appointments": appointment_counts[1],
+        "confirmed_appointments": appointment_counts[2],
+        "upcoming_appointments": appointment_counts[3],
+        "completed_appointments": appointment_counts[4],
+        "published_properties": db.scalar(
+            select(func.count()).select_from(Property).where(Property.status == "published")
+        )
+        if can_properties
+        else None,
+    }
+
+
+@router.get(
+    "/properties",
+    response_model=list[PropertyOutput],
+    dependencies=[Depends(require_permission("properties.view"))],
+)
+def properties(
+    db: Database,
+    limit: int = Query(25, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    status: PropertyStatus | None = None,
+):
+    statement = select(Property)
+    if status is not None:
+        statement = statement.where(Property.status == status)
+    return db.scalars(
+        statement.order_by(Property.created_at.desc(), Property.id).limit(limit).offset(offset)
+    ).all()
+
+
+@router.get(
+    "/leads",
+    response_model=list[LeadDetails],
+    dependencies=[Depends(require_permission("clients.view"))],
+)
+def leads(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
+    items = db.scalars(
+        select(Lead).order_by(Lead.created_at.desc(), Lead.id).limit(limit).offset(offset)
+    ).all()
+    submissions = submission_map(db, KitchenSubmission.lead_id, [item.id for item in items])
+    appointments = {
+        item.id: item
+        for item in db.scalars(
+            select(Appointment).where(
+                Appointment.id.in_([lead.appointment_id for lead in items if lead.appointment_id])
+            )
+        ).all()
+    }
+    configurations = {
+        item.id: item
+        for item in db.scalars(
+            select(KitchenConfiguration).where(
+                KitchenConfiguration.id.in_(
+                    [
+                        lead.kitchen_configuration_id
+                        for lead in items
+                        if lead.kitchen_configuration_id
+                    ]
+                )
+            )
+        ).all()
+    }
+
+    def location(lead):
+        return appointments.get(lead.appointment_id) or configurations.get(
+            lead.kitchen_configuration_id
+        )
+
+    return [
+        LeadDetails(
+            **LeadOutput.model_validate(item).model_dump(),
+            submission=submissions.get(item.id),
+            appointment=(
+                AppointmentOutput.model_validate(appointments[item.appointment_id])
+                if item.appointment_id in appointments
+                else None
+            ),
+            address=location(item).address if location(item) else None,
+            latitude=location(item).latitude if location(item) else None,
+            longitude=location(item).longitude if location(item) else None,
+            advisor=(
+                configurations.get(item.kitchen_configuration_id).advisor
+                if item.kitchen_configuration_id in configurations
+                else None
+            ),
+        )
+        for item in items
+    ]
+
+
+@router.get(
+    "/leads/{id}",
+    response_model=LeadDetails,
+    dependencies=[Depends(require_permission("clients.view"))],
+)
+def lead(id: UUID, db: Database):
+    item = db.get(Lead, id)
+    if item is None:
+        raise HTTPException(404, "Lead not found")
+    return lead_details(db, item)
+
+
+@router.get(
+    "/appointments",
+    response_model=list[AppointmentDetails],
+    dependencies=[Depends(require_permission("appointments.view"))],
+)
+def appointments(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
+    priority = case(
+        (Appointment.status == "pending_confirmation", 0),
+        (Appointment.status == "requested", 1),
+        (Appointment.status == "confirmed", 2),
+        (Appointment.status == "completed", 3),
+        else_=4,
+    )
+    items = db.scalars(
+        select(Appointment)
+        .order_by(priority, Appointment.requested_datetime.asc(), Appointment.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    contacts = db.scalars(
+        select(Lead).where(Lead.appointment_id.in_([item.id for item in items]))
+    ).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [item.id for item in contacts])
+    submissions = submission_map(db, KitchenSubmission.appointment_id, [item.id for item in items])
+    return [
+        AppointmentDetails(
+            **AppointmentOutput.model_validate(item).model_dump(),
+            leads=[
+                LeadDetails(
+                    **LeadOutput.model_validate(lead).model_dump(),
+                    submission=lead_submissions.get(lead.id),
+                    advisor=(
+                        db.get(KitchenConfiguration, lead.kitchen_configuration_id).advisor
+                        if lead.kitchen_configuration_id
+                        and db.get(KitchenConfiguration, lead.kitchen_configuration_id)
+                        else None
+                    ),
+                )
+                for lead in contacts
+                if lead.appointment_id == item.id
+            ],
+            submission=submissions.get(item.id),
+        )
+        for item in items
+    ]
+
+
+@router.get(
+    "/appointments/{id}",
+    response_model=AppointmentDetails,
+    dependencies=[Depends(require_permission("appointments.view"))],
+)
+def appointment(id: UUID, db: Database):
+    item = db.get(Appointment, id)
+    if item is None:
+        raise HTTPException(404, "Appointment not found")
+    return appointment_details(db, item)
+
+
+@router.get(
+    "/kitchen-configurations",
+    response_model=list[KitchenDetails],
+    dependencies=[Depends(require_permission("kitchens.view"))],
+)
+def kitchens(db: Database, limit: int = Query(25, ge=1, le=100), offset: int = Query(0, ge=0)):
+    items = db.scalars(
+        select(KitchenConfiguration)
+        .order_by(KitchenConfiguration.created_at.desc(), KitchenConfiguration.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    contacts = db.scalars(
+        select(Lead).where(Lead.kitchen_configuration_id.in_([item.id for item in items]))
+    ).all()
+    related = db.scalars(
+        select(Appointment).where(
+            Appointment.id.in_([lead.appointment_id for lead in contacts if lead.appointment_id])
+        )
+    ).all()
+    lead_submissions = submission_map(db, KitchenSubmission.lead_id, [item.id for item in contacts])
+    submissions = submission_map(
+        db, KitchenSubmission.configuration_id, [item.id for item in items]
+    )
+    return [
+        KitchenDetails(
+            **KitchenOutput.model_validate(item).model_dump(),
+            leads=[
+                LeadDetails(
+                    **LeadOutput.model_validate(lead).model_dump(),
+                    submission=lead_submissions.get(lead.id),
+                )
+                for lead in contacts
+                if lead.kitchen_configuration_id == item.id
+            ],
+            submission=submissions.get(item.id),
+            appointments=[
+                AppointmentOutput.model_validate(appointment)
+                for appointment in related
+                if any(
+                    lead.kitchen_configuration_id == item.id
+                    and lead.appointment_id == appointment.id
+                    for lead in contacts
+                )
+            ],
+        )
+        for item in items
+    ]
+
+
+@router.get(
+    "/kitchen-configurations/{id}",
+    response_model=KitchenDetails,
+    dependencies=[Depends(require_permission("kitchens.view"))],
+)
+def kitchen(id: UUID, db: Database):
+    item = db.get(KitchenConfiguration, id)
+    if item is None:
+        raise HTTPException(404, "Kitchen configuration not found")
+    return kitchen_details(db, item)
+
+
+@router.get(
+    "/properties/{id}",
+    response_model=PropertyOutput,
+    dependencies=[Depends(require_permission("properties.view"))],
+)
+def property_detail(id: UUID, db: Database):
+    item = db.get(Property, id)
+    if item is None:
+        raise HTTPException(404, "Property not found")
+    return item

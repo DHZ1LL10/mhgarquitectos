@@ -1,0 +1,57 @@
+{
+  "configuration": {
+    "current_situation": "remodelacion",
+    "interior_board": {
+      "id": "ejemplo-interior",
+      "label": "Selección de ejemplo"
+    },
+    "exterior_fronts": {
+      "id": "ejemplo-frente"
+    },
+    "hardware": {
+      "id": "ejemplo-herrajes"
+    },
+    "countertop": {
+      "id": "ejemplo-cubierta",
+      "label": "Superficie sólida Corian"
+    },
+    "finish": {
+      "id": "ejemplo-acabado"
+    },
+    "extras": [
+      {
+        "id": "ejemplo-led"
+      }
+    ],
+    "address": "Dirección de prueba local",
+    "latitude": 19.043,
+    "longitude": -98.198,
+    "branch": "Sucursal de prueba",
+    "advisor": null,
+    "requested_datetime": "2030-10-12T10:00:00-06:00",
+    "notes": "Solicitud local de ejemplo.",
+    "selection_version": 1,
+    "selections": {
+      "catalog_version": "example",
+      "selected_ids": [
+        "ejemplo-led"
+      ]
+    }
+  },
+  "appointment": {
+    "requested_datetime": "2030-10-12T10:00:00-06:00",
+    "branch": "Sucursal de prueba",
+    "address": "Dirección de prueba local",
+    "latitude": 19.043,
+    "longitude": -98.198,
+    "notes": "Pendiente de confirmación por MHG."
+  },
+  "contact": {
+    "source": "kitchen",
+    "name": "Persona de prueba",
+    "phone": "+52 222 123 4567",
+    "email": "persona@example.com",
+    "message": "Ejemplo local; no notificar."
+  }
+}
+

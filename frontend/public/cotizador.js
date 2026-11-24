@@ -1,0 +1,3390 @@
+/* ═══════════════════════════════════════════════════════════
+   MHG Cocinas — Configurador v4.1
+   cotizador.js
+═══════════════════════════════════════════════════════════ */
+
+/* ─── STATE ─── */
+function initialCustomizerState() {
+  return {
+    cliente:   { nombre:'', tel:'', email:'', fecha:'', hora:'', sucursal:'', asesor:'', dir:'', obs:'', lat:null, lng:null },
+    situacion: null,
+    interior:  null,
+    frentes:   {},
+    bisagra:   'Bisagra cierre suave',
+    corredera: null,
+    cajones:   [],
+    basurero:  null,
+    especias:  null,
+    modulos:   [],
+    cubierta:  null,
+    cubPrecio: null,
+    cubiertaCategoria: null,
+    cubiertaVariante: null,
+    extras:    [],
+    herrajesAtendidos: {},
+    herrajesNoAplica: {},
+    herrajeOpenId: 'bisagras',
+    herrajeNextIndex: 0,
+    herrajeStepIndex: 0,
+  };
+}
+
+var state = initialCustomizerState();
+var _submissionIdentity = null;
+var _submissionReceipt = null;
+var _submissionStatus = 'idle';
+var _submissionRequest = null;
+var CUSTOMIZER_DRAFT_KEY = 'mhg:kitchen-customizer:draft:v1';
+var _draftSaveTimer = null;
+var _locationSelection = null;
+
+function storageAvailable() {
+  try { return !!window.sessionStorage; } catch (error) { return false; }
+}
+
+function normalizedDraftState(candidate) {
+  var clean = initialCustomizerState();
+  if (!candidate || typeof candidate !== 'object') return clean;
+  ['situacion','interior','bisagra','corredera','basurero','especias','cubierta','cubPrecio','cubiertaCategoria','cubiertaVariante','herrajeOpenId'].forEach(function(key) {
+    if (candidate[key] === null || typeof candidate[key] === 'string' || (key === 'cubiertaVariante' && typeof candidate[key] === 'object')) clean[key] = candidate[key];
+  });
+  ['cajones','modulos','extras'].forEach(function(key) { if (Array.isArray(candidate[key])) clean[key] = candidate[key].slice(); });
+  ['frentes','herrajesAtendidos','herrajesNoAplica'].forEach(function(key) {
+    if (candidate[key] && typeof candidate[key] === 'object' && !Array.isArray(candidate[key])) clean[key] = JSON.parse(JSON.stringify(candidate[key]));
+  });
+  if (candidate.cliente && typeof candidate.cliente === 'object') {
+    Object.keys(clean.cliente).forEach(function(key) {
+      var value = candidate.cliente[key];
+      if (key === 'lat' || key === 'lng') clean.cliente[key] = Number.isFinite(value) ? value : null;
+      else if (typeof value === 'string') clean.cliente[key] = value;
+    });
+  }
+  if (Number.isInteger(candidate.herrajeNextIndex)) clean.herrajeNextIndex = Math.max(0, Math.min(6, candidate.herrajeNextIndex));
+  if (Number.isInteger(candidate.herrajeStepIndex)) clean.herrajeStepIndex = Math.max(0, Math.min(5, candidate.herrajeStepIndex));
+  return clean;
+}
+
+function restoreCustomizerDraft() {
+  if (!storageAvailable()) return false;
+  try {
+    var draft = JSON.parse(window.sessionStorage.getItem(CUSTOMIZER_DRAFT_KEY) || 'null');
+    if (!draft || draft.version !== 1) return false;
+    state = normalizedDraftState(draft.state);
+    _currentStep = Number.isInteger(draft.currentStep) ? Math.max(0, Math.min(STEPS.length - 1, draft.currentStep)) : 0;
+    _submissionIdentity = draft.submissionIdentity || null;
+    _submissionReceipt = draft.submissionReceipt || null;
+    _submissionStatus = _submissionReceipt ? 'success' : 'idle';
+    var savedLocation = draft.locationSelection;
+    if (savedLocation && Number.isFinite(savedLocation.lat) && Number.isFinite(savedLocation.lng)) {
+      _locationSelection = { lat: savedLocation.lat, lng: savedLocation.lng };
+    } else if (state.cliente.lat != null && state.cliente.lng != null) {
+      _locationSelection = { lat: state.cliente.lat, lng: state.cliente.lng };
+    }
+    return true;
+  } catch (error) {
+    window.sessionStorage.removeItem(CUSTOMIZER_DRAFT_KEY);
+    return false;
+  }
+}
+
+function saveCustomizerDraft() {
+  if (!storageAvailable()) return false;
+  try {
+    window.sessionStorage.setItem(CUSTOMIZER_DRAFT_KEY, JSON.stringify({
+      version: 1,
+      state: state,
+      currentStep: _currentStep,
+      locationSelection: _locationSelection,
+      submissionIdentity: _submissionIdentity,
+      submissionReceipt: _submissionReceipt,
+    }));
+    return true;
+  } catch (error) { return false; }
+}
+
+function scheduleDraftSave() {
+  if (!storageAvailable()) return;
+  window.clearTimeout(_draftSaveTimer);
+  _draftSaveTimer = window.setTimeout(saveCustomizerDraft, 80);
+}
+
+function clearCustomizerDraft() {
+  if (storageAvailable()) window.sessionStorage.removeItem(CUSTOMIZER_DRAFT_KEY);
+}
+
+/* ─── STEPS META ─── */
+var STEPS = [
+  { label:'Situación actual',    short: function(){ var m={'sin-cocina':'Sin cocina','barra-concreto':'Base de concreto','remodelacion':'Remodelación'}; return m[state.situacion]||''; } },
+  { label:'Tableros interiores', short: function(){ return state.interior ? (state.interior==='blanco-frosty'?'Blanco Frosty':'Gris Oxford') : ''; } },
+  { label:'Frentes exteriores',  short: function(){ var k=Object.keys(state.frentes); return k.length ? k.length+' línea'+(k.length!==1?'s':'') : ''; } },
+  { label:'Herrajes',            short: function(){ return state.corredera ? state.corredera.split(' ').slice(0,2).join(' ') : ''; } },
+  { label:'Cubierta',            short: function(){ return state.cubierta || ''; } },
+  { label:'Extras',              short: function(){ return state.extras.length ? state.extras.length+' extra'+(state.extras.length!==1?'s':'') : 'Ninguno'; } },
+  { label:'Datos del cliente',   short: function(){ return state.cliente.nombre || ''; } },
+  { label:'Resumen',             short: function(){ return ''; } },
+];
+
+var STEP_HEADERS = [
+  { eyebrow:'Paso 1 de 8', title:'<em>Situación</em> actual',     sub:'Cuéntanos cómo está el espacio hoy para ajustar la propuesta.' },
+  { eyebrow:'Paso 2 de 8', title:'<em>Tableros</em> interiores',  sub:'El acabado interior de todos los muebles lleva este material.' },
+  { eyebrow:'Paso 3 de 8', title:'<em>Frentes</em> exteriores',   sub:'Los frentes son las puertas visibles de tu cocina. Puedes combinar líneas y colores por zonas.' },
+  { eyebrow:'Paso 4 de 8', title:'<em>Herrajes</em>',             sub:'Elige tus herrajes paso a paso. Puedes volver para editar cualquier selección.' },
+  { eyebrow:'Paso 5 de 8', title:'<em>Cubierta</em>',             sub:'El material de la superficie de trabajo de tu cocina.' },
+  { eyebrow:'Paso 6 de 8', title:'<em>Extras</em>',               sub:'Agrega elementos adicionales que complementen tu proyecto.' },
+  { eyebrow:'Paso 7 de 8', title:'Tus <em>datos</em>',            sub:'Llena tu información de contacto y la ubicación de instalación.' },
+  { eyebrow:'Paso 8 de 8', title:'Tu <em>resumen</em>',           sub:'Revisa la configuración y descarga o comparte tu preconfiguración.' },
+];
+
+/* ─── COLOR PALETTES per frente line ─── */
+var PALETTES = {
+  economica: [
+    {name:'Blanco',      hex:'#FFFFFF'},{name:'Crema',       hex:'#F5EDD6'},
+    {name:'Beige',       hex:'#E8D8B8'},{name:'Gris claro',  hex:'#D0D0CC'},
+    {name:'Gris medio',  hex:'#A0A09A'},{name:'Gris oscuro', hex:'#6A6A66'},
+    {name:'Negro',       hex:'#222222'},{name:'Nogal',       hex:'#7A4E2D'},
+    {name:'Cerezo',      hex:'#8B3030'},
+  ],
+  arauco: [
+    {"name":"Chardonnay",       "swatch":"img/customizer/COLORES ARAUCO/Chardonnay.jpg",        "kitchen":"img/customizer/COLORES ARAUCO/cocinaChardonnay.jpg"},
+    {"name":"Ámbar",            "swatch":"img/customizer/COLORES ARAUCO/ambar.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinaambar.jpg"},
+    {"name":"Andhuac",          "swatch":"img/customizer/COLORES ARAUCO/anahuac.jpg",            "kitchen":"img/customizer/COLORES ARAUCO/cocinaanahuac.jpg"},
+    {"name":"Blanco Absoluto",  "swatch":"img/customizer/COLORES ARAUCO/blancoabsoluto.jpg",     "kitchen":"img/customizer/COLORES ARAUCO/cocinablancoabsoluto.jpg"},
+    {"name":"Blanco Frosty",    "swatch":"img/customizer/COLORES ARAUCO/blancofrosty.jpg",       "kitchen":"img/customizer/COLORES ARAUCO/cocinablancofrosty.jpg"},
+    {"name":"Cairo",            "swatch":"img/customizer/COLORES ARAUCO/cairo.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinacairo.jpg"},
+    {"name":"Cerezo",           "swatch":"img/customizer/COLORES ARAUCO/cerezo.jpg",             "kitchen":"img/customizer/COLORES ARAUCO/cocinacerezo.jpg"},
+    {"name":"Copal",            "swatch":"img/customizer/COLORES ARAUCO/copal.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinacopal.jpg"},
+    {"name":"Durango",          "swatch":"img/customizer/COLORES ARAUCO/durango.jpg",            "kitchen":"img/customizer/COLORES ARAUCO/cocinadurango.jpg"},
+    {"name":"Ébano Indio",      "swatch":"img/customizer/COLORES ARAUCO/ebanoindi.jpg",          "kitchen":"img/customizer/COLORES ARAUCO/cocinaebanoindi.jpg"},
+    {"name":"Encino Polar",     "swatch":"img/customizer/COLORES ARAUCO/encinopolar.jpg",        "kitchen":"img/customizer/COLORES ARAUCO/cocinaencinopolar.jpg"},
+    {"name":"Filigrana",        "swatch":"img/customizer/COLORES ARAUCO/filigrana.jpg",          "kitchen":"img/customizer/COLORES ARAUCO/cocinafiligrana.jpg"},
+    {"name":"Fresno Bruma",     "swatch":"img/customizer/COLORES ARAUCO/fresnobruma.jpg",        "kitchen":"img/customizer/COLORES ARAUCO/cocinafresnobruma.jpg"},
+    {"name":"Gris",             "swatch":"img/customizer/COLORES ARAUCO/gris.jpg",               "kitchen":"img/customizer/COLORES ARAUCO/cocinagris.jpg"},
+    {"name":"Gris Claro",       "swatch":"img/customizer/COLORES ARAUCO/grisclaro.jpg",          "kitchen":"img/customizer/COLORES ARAUCO/cocinagrisclaro.jpg"},
+    {"name":"Latte",            "swatch":"img/customizer/COLORES ARAUCO/latte.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinalatte.jpg"},
+    {"name":"Malta",            "swatch":"img/customizer/COLORES ARAUCO/malta.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinamalta.jpg"},
+    {"name":"Monarca",          "swatch":"img/customizer/COLORES ARAUCO/monarca.jpg",            "kitchen":"img/customizer/COLORES ARAUCO/cocinamonarca.jpg"},
+    {"name":"Negro",            "swatch":"img/customizer/COLORES ARAUCO/negro.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinanegro.jpg"},
+    {"name":"Negro Forest",     "swatch":"img/customizer/COLORES ARAUCO/negroforest.jpg",        "kitchen":"img/customizer/COLORES ARAUCO/cocinanegroforest.jpg"},
+    {"name":"Níquel",           "swatch":"img/customizer/COLORES ARAUCO/niquel.jpg",             "kitchen":"img/customizer/COLORES ARAUCO/cocinaniquel.jpg"},
+    {"name":"Nogal Británico",  "swatch":"img/customizer/COLORES ARAUCO/nogalbritanico.jpg",     "kitchen":"img/customizer/COLORES ARAUCO/cocinanogalbritanico.jpg"},
+    {"name":"Nogal Mérida",     "swatch":"img/customizer/COLORES ARAUCO/roblemerida.jpg",        "kitchen":"img/customizer/COLORES ARAUCO/cocinanogalmerida.jpg"},
+    {"name":"Nogal Neo",        "swatch":"img/customizer/COLORES ARAUCO/nogalneo.jpg",           "kitchen":"img/customizer/COLORES ARAUCO/cocinanogalneo.jpg"},
+    {"name":"Oporto",           "swatch":"img/customizer/COLORES ARAUCO/oporto.jpg",             "kitchen":"img/customizer/COLORES ARAUCO/cocinaoporto.jpg"},
+    {"name":"Oxford",           "swatch":"img/customizer/COLORES ARAUCO/oxford.jpg",             "kitchen":"img/customizer/COLORES ARAUCO/cocinaoxford.jpg"},
+    {"name":"Precompuesto Ceniza","swatch":"img/customizer/COLORES ARAUCO/precompuestoceniza.jpg","kitchen":"img/customizer/COLORES ARAUCO/cocinaprecompuestoceniza.jpg"},
+    {"name":"Rioja",            "swatch":"img/customizer/COLORES ARAUCO/rioja.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinarioja.jpg"},
+    {"name":"Roble Santana",    "swatch":"img/customizer/COLORES ARAUCO/roblesantana.jpg",       "kitchen":"img/customizer/COLORES ARAUCO/cocinaroblesantana.jpg"},
+    {"name":"Romero",           "swatch":"img/customizer/COLORES ARAUCO/romero.jpg",             "kitchen":"img/customizer/COLORES ARAUCO/cocinaromero.jpg"},
+    {"name":"Sisal",            "swatch":"img/customizer/COLORES ARAUCO/sisal.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinasisal.jpg"},
+    {"name":"Tulum",            "swatch":"img/customizer/COLORES ARAUCO/tulum.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinatulum.jpg"},
+    {"name":"Turmalina",        "swatch":"img/customizer/COLORES ARAUCO/turmalina.jpg",          "kitchen":"img/customizer/COLORES ARAUCO/cocinaturmalina.jpg"},
+    {"name":"Visón",            "swatch":"img/customizer/COLORES ARAUCO/vison.jpg",              "kitchen":"img/customizer/COLORES ARAUCO/cocinavison.jpg"},
+    {"name":"Wengue",           "swatch":"img/customizer/COLORES ARAUCO/wengue.jpg",             "kitchen":"img/customizer/COLORES ARAUCO/cocinawengue.jpg"},
+    {"name":"Zafiro",           "swatch":"img/customizer/COLORES ARAUCO/zafiro.jpg",             "kitchen":"img/customizer/COLORES ARAUCO/cocinazafiro.jpg"}
+  ],
+  decorlux: [
+    // ── Alto Brillo (High Gloss) ──
+    {"name":"HG · Acryl Glass",       "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_white.webp",              "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Acryl_Glass_Cocina-768x623.webp"},
+    {"name":"HG · Beige",             "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_beige.webp",              "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Beige_Cocina_1-768x623.webp"},
+    {"name":"HG · Beige Metalic",     "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_beige_metalic-2.webp",   "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Beige_Metalic_Cocina-768x623.webp"},
+    {"name":"HG · Black",             "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_black.webp",             "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Black_Cocina-768x623.webp"},
+    {"name":"HG · Blanco",            "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_blanco.webp",            "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Blanco_Cocina-768x623.webp"},
+    {"name":"HG · Dark Grey",         "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_dark_grey.webp",         "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Dark_Grey_Cocina-768x623.webp"},
+    {"name":"HG · Grey",              "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_grey.webp",              "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Grey_Cocina-768x623.webp"},
+    {"name":"HG · Negro Metalizado",  "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_black_metalic-1.webp",  "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Negro_Metalizado_Cocina-768x623.webp"},
+    {"name":"HG · Rojo",              "hex":"#C0392B", "swatch":null,                                                              "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Rojo_estandar_Cocina-768x623.webp"},
+    {"name":"HG · Silver Claro",      "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_silver_metalic_claro-1.webp", "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Silver_Metallic_Claro_Cocina-768x623.webp"},
+    {"name":"HG · Silver Oscuro",     "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_silver_metalic_oscuro-1.webp","kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Silver_Metallic_Oscuro_Cocina-768x623.webp"},
+    // ── Mate ──
+    {"name":"Mate · Beige",           "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_mate_beige.webp",           "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Beige_Cocina-1024x831.webp"},
+    {"name":"Mate · Beige Metallic",  "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_mate_beige_metalic-1.webp","kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Beige_metallic_Cocina-1024x831.webp"},
+    {"name":"Mate · Black",           "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_mate_black.webp",           "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Black_Cocina-768x623.webp"},
+    {"name":"Mate · Blanco",          "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_blanco.webp",            "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Blanco_Cocina-768x623.webp"},
+    {"name":"Mate · Dark Grey",       "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_mate_dark_grey.webp",       "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Dark_Grey_Cocina-768x623.webp"},
+    {"name":"Mate · Grey",            "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_mate_grey.webp",            "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Grey_Cocina-768x623.webp"},
+    {"name":"Mate · Grey Metallic",   "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_mate_grey_metalic-1.webp", "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Grey_metallic_Cocina-768x623.webp"},
+    {"name":"Mate · Grey Sand",       "swatch":"img/customizer/COLORES DECORLUX/tablero_acrilico_1800_ar_hg_grey_sand.webp",        "kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_White_11082_Cocina-768x623.webp"},
+    {"name":"Mate · White 1982",      "swatch":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_Top_Matt_Mate_White_1982.webp","kitchen":"img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800__Acrilico_Top_Matt_Mate_Blanco_Cocina-768x623.webp"},
+    // ── Supramatte ──
+    {"name":"SM · Antracita",    "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_antracita.webp",      "kitchen":null},
+    {"name":"SM · Aqua Grey",    "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_aqua_grey.webp",      "kitchen":null},
+    {"name":"SM · Arena",        "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_arena.webp",          "kitchen":null},
+    {"name":"SM · Artic White",  "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_artic_white.webp",    "kitchen":null},
+    {"name":"SM · Congo",        "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_congo.webp",          "kitchen":null},
+    {"name":"SM · Grafito",      "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_grafito.webp",        "kitchen":null},
+    {"name":"SM · Gris Cálido",  "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_gris_calido.webp",   "kitchen":null},
+    {"name":"SM · Gris Humo",    "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_gris_humo.webp",     "kitchen":null},
+    {"name":"SM · Menta",        "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_menta.webp",         "kitchen":null},
+    {"name":"SM · Negro",        "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_negro.webp",         "kitchen":null},
+    {"name":"SM · Stone G Bay",  "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_stone_g_bay.webp",   "kitchen":null},
+    {"name":"SM · Terracota",    "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_terracota.webp",     "kitchen":null},
+    {"name":"SM · Ványla",       "swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_vanyla.webp",        "kitchen":null},
+    {"name":"SM · Verde Esmeralda","swatch":"img/customizer/COLORES DECORLUX/colores matte/tablero_supramatte_verde_esmeralda.webp","kitchen":null}
+  ],
+  transformad: [
+    {"name":"Bosco",        "swatch":"img/customizer/TMATT/BOSCO-PMT969M-scaled-600x600.jpg",       "kitchen":"img/customizer/TMATT/cocinabosco.jpg"},
+    {"name":"Legno Fumé",   "swatch":"img/customizer/TMATT/Legno-Fume-scaled.jpg",                  "kitchen":"img/customizer/TMATT/COCINALEGNO.jpg"},
+    {"name":"Mare",         "swatch":"img/customizer/TMATT/MARE-PMT5726M-scaled-600x600.jpg",       "kitchen":null},
+    {"name":"Ópalo",        "swatch":"img/customizer/TMATT/OPALO-PMT0423M-600x600.jpg",             "kitchen":null},
+    {"name":"Bianco Zen",   "swatch":"img/customizer/TMATT/PMT002M-Bianco-Zen-600x600.png",         "kitchen":"img/customizer/TMATT/cocinablancozen.jpg"},
+    {"name":"Ártico",       "swatch":"img/customizer/TMATT/PMT003M-ARTICO-1-600x600.png",           "kitchen":"img/customizer/TMATT/cocinaartico.jpg"},
+    {"name":"Nero",         "swatch":"img/customizer/TMATT/PMT1303M-Nero-1-600x600.png",            "kitchen":"img/customizer/TMATT/cocinanero.jpg"},
+    {"name":"Lignite",      "swatch":"img/customizer/TMATT/PMT2125M-LIGNITE-1-scaled-600x600.jpg",  "kitchen":"img/customizer/TMATT/cocinalignite.jpg"},
+    {"name":"Nuvola",       "swatch":"img/customizer/TMATT/PMT304M-Nuvola-600x600.png",             "kitchen":"img/customizer/TMATT/cocinanuvola.jpg"},
+    {"name":"Cotton",       "swatch":"img/customizer/TMATT/PMT3325M-Cotton-600x600.png",            "kitchen":"img/customizer/TMATT/cocinacotton.png"},
+    {"name":"Visone",       "swatch":"img/customizer/TMATT/PMT4504M-Visone-1-600x600.png",          "kitchen":"img/customizer/TMATT/cocinavisone.jpg"},
+    {"name":"Smeraldo",     "swatch":"img/customizer/TMATT/PMT5025M-SMERALDO-1-scaled-600x600.jpg", "kitchen":"img/customizer/TMATT/cocinasmeraldo.jpg"},
+    {"name":"Terracotta",   "swatch":"img/customizer/TMATT/PMT6125M-TERRACOTTA-scaled-600x600.jpg", "kitchen":"img/customizer/TMATT/cocinaterracota.jpg"},
+    {"name":"Arena",        "swatch":"img/customizer/TMATT/PMT729M-Arena-1-600x600.png",            "kitchen":"img/customizer/TMATT/cocinaarena.jpg"},
+    {"name":"Antracite",    "swatch":"img/customizer/TMATT/PMT761M-Antracite-1-600x600.png",        "kitchen":"img/customizer/TMATT/cocinaantracite.png"},
+    {"name":"Rosso",        "swatch":"img/customizer/TMATT/ROSSO-PMT4125M-scaled-600x600.jpg",      "kitchen":null},
+    {"name":"Elba",         "swatch":"img/customizer/TMATT/Tmatt-Elba-PMT5628M--600x600.jpg",       "kitchen":"img/customizer/TMATT/cocinaelba.jpg"},
+    {"name":"Toscano",      "swatch":"img/customizer/TMATT/Tmatt-Toscano-PMT5627M-600x600.jpg",     "kitchen":"img/customizer/TMATT/cocinatoscano.jpg"}
+  ]
+};
+
+
+/* ─── HERRAJE SECTIONS ─── */
+// General material guidance supplied for each category; not variant-specific.
+var CUBIERTA_INFO = {
+  "solida": {
+    "titulo": "Superficie sólida Corian",
+    "precioBase": 6500,
+    "descripcion": "Superficie homogénea y no porosa que permite diseños continuos, uniones discretas y fácil mantenimiento.",
+    "imagen": "img/customizer/superficiesolida.jpg",
+    "destacada": "Reparable y renovable",
+    "ventajas": [
+      "No porosa.",
+      "Fácil de limpiar.",
+      "Posibilidad de uniones visualmente continuas.",
+      "Los rayones y daños menores pueden repararse/restaurarse.",
+      "Permite gran flexibilidad de diseño.",
+      "Adecuada para integrar cubiertas y elementos con apariencia continua."
+    ],
+    "caracteristicas": {
+      "manchas": {
+        "titulo": "Manchas",
+        "nivel": "Buena",
+        "detalle": "Su superficie no porosa facilita retirar derrames comunes. Se recomienda limpiarlos oportunamente."
+      },
+      "calor": {
+        "titulo": "Calor",
+        "nivel": "Moderada",
+        "detalle": "Debe evitarse colocar ollas o sartenes muy calientes directamente sobre la superficie. Se recomienda usar protectores térmicos."
+      },
+      "rayaduras": {
+        "titulo": "Rayaduras",
+        "nivel": "Moderada",
+        "detalle": "Puede presentar marcas con el uso. Utilizar tabla de corte. Una ventaja es que muchos rayones superficiales pueden restaurarse."
+      },
+      "porosidad": {
+        "titulo": "Porosidad",
+        "nivel": "Prácticamente nula / no porosa"
+      },
+      "mantenimiento": {
+        "titulo": "Mantenimiento",
+        "nivel": "Fácil",
+        "detalle": "Agua jabonosa y limpieza habitual. Muchos daños superficiales pueden repararse."
+      },
+      "sellado": {
+        "titulo": "Sellado",
+        "nivel": "No requiere sellado periódico."
+      }
+    }
+  },
+  "granito": {
+    "titulo": "Granito",
+    "precioBase": 8500,
+    "descripcion": "Piedra natural de gran dureza y durabilidad. Cada placa presenta vetas y variaciones únicas.",
+    "imagen": "img/customizer/granito/granitosangabrielcocina.webp",
+    "destacada": "Piedra natural: cada placa es única",
+    "ventajas": [
+      "Material natural.",
+      "Cada pieza es única.",
+      "Alta resistencia al rayado.",
+      "Alta resistencia al calor.",
+      "Muy durable.",
+      "Adecuado para superficies de trabajo intenso."
+    ],
+    "caracteristicas": {
+      "manchas": {
+        "titulo": "Manchas",
+        "nivel": "Alta con cuidado adecuado",
+        "detalle": "La absorción suele ser baja, pero al ser piedra natural puede variar. Algunas piedras pueden beneficiarse de un sellador/impregnador."
+      },
+      "calor": {
+        "titulo": "Calor",
+        "nivel": "Alta",
+        "detalle": "Soporta temperaturas elevadas, aunque se recomienda utilizar protectores para evitar choques térmicos localizados."
+      },
+      "rayaduras": {
+        "titulo": "Rayaduras",
+        "nivel": "Alta",
+        "detalle": "Su dureza proporciona muy buena resistencia al uso cotidiano."
+      },
+      "porosidad": {
+        "titulo": "Porosidad",
+        "nivel": "Baja, pero variable",
+        "detalle": "Es piedra natural y la absorción depende de la variedad."
+      },
+      "mantenimiento": {
+        "titulo": "Mantenimiento",
+        "nivel": "Moderado",
+        "detalle": "Limpiar con productos suaves o neutros. Evitar productos agresivos no recomendados para piedra natural."
+      },
+      "sellado": {
+        "titulo": "Sellado",
+        "nivel": "Depende de la piedra",
+        "detalle": "Algunos granitos no lo requieren y otros pueden beneficiarse de un impregnador para aumentar su resistencia a manchas."
+      }
+    }
+  },
+  "cuarzo": {
+    "titulo": "Cuarzo",
+    "precioBase": 12000,
+    "descripcion": "Superficie de cuarzo de alta densidad, no porosa y de mantenimiento sencillo, disponible en una amplia variedad de diseños.",
+    "imagen": "img/customizer/cuarzo/Marquina-Black-1024x758.jpg",
+    "destacada": "Bajo mantenimiento y gran resistencia a manchas",
+    "aclaracion": "Cuarzo manufacturado/ingenierizado para cubiertas, no cuarcita natural.",
+    "ventajas": [
+      "No porosa.",
+      "Alta resistencia a manchas.",
+      "Alta resistencia al rayado.",
+      "Fácil limpieza.",
+      "No requiere sellado periódico.",
+      "Apariencia consistente.",
+      "Amplia variedad de colores y diseños."
+    ],
+    "caracteristicas": {
+      "manchas": {
+        "titulo": "Manchas",
+        "nivel": "Alta",
+        "detalle": "Su baja absorción y superficie no porosa ofrecen muy buena resistencia a derrames cotidianos."
+      },
+      "calor": {
+        "titulo": "Calor",
+        "nivel": "Buena, con precauciones",
+        "detalle": "Es resistente al calor cotidiano, pero temperaturas muy elevadas pueden dañarlo. Utilizar siempre protector o salvamanteles para ollas y sartenes calientes."
+      },
+      "rayaduras": {
+        "titulo": "Rayaduras",
+        "nivel": "Alta",
+        "detalle": "Presenta buena resistencia al desgaste cotidiano. Aun así se recomienda utilizar tabla de corte."
+      },
+      "porosidad": {
+        "titulo": "Porosidad",
+        "nivel": "No porosa"
+      },
+      "mantenimiento": {
+        "titulo": "Mantenimiento",
+        "nivel": "Muy fácil",
+        "detalle": "Normalmente basta agua, jabón y limpieza habitual."
+      },
+      "sellado": {
+        "titulo": "Sellado",
+        "nivel": "No requiere sellado periódico."
+      }
+    }
+  },
+  "sinterizado": {
+    "titulo": "Piedra sinterizada",
+    "precioBase": 17000,
+    "descripcion": "Superficie mineral de muy baja porosidad diseñada para ofrecer alta resistencia frente al uso intenso, calor y agentes cotidianos.",
+    "imagen": "img/customizer/piedrasinterizada/allure-black-cocina.webp",
+    "destacada": "Máximo desempeño técnico para uso intensivo",
+    "ventajas": [
+      "Muy baja absorción de agua.",
+      "Alta resistencia a manchas.",
+      "Alta resistencia a rayaduras.",
+      "Alta resistencia al calor.",
+      "Alta resistencia a la abrasión.",
+      "Buena resistencia química.",
+      "Resistencia a radiación UV.",
+      "Fácil mantenimiento.",
+      "No requiere sellado periódico.",
+      "Adecuada para aplicaciones interiores y, cuando el producto lo permita, exteriores."
+    ],
+    "caracteristicas": {
+      "manchas": {
+        "titulo": "Manchas",
+        "nivel": "Muy alta",
+        "detalle": "La muy baja porosidad dificulta que líquidos y manchas comunes penetren en la superficie."
+      },
+      "calor": {
+        "titulo": "Calor",
+        "nivel": "Muy alta",
+        "detalle": "El material presenta elevada estabilidad y resistencia térmica."
+      },
+      "rayaduras": {
+        "titulo": "Rayaduras",
+        "nivel": "Muy alta",
+        "detalle": "Está diseñado para soportar uso intenso y ofrece alta resistencia al rayado y abrasión."
+      },
+      "porosidad": {
+        "titulo": "Porosidad",
+        "nivel": "Muy baja / prácticamente nula"
+      },
+      "mantenimiento": {
+        "titulo": "Mantenimiento",
+        "nivel": "Muy fácil",
+        "detalle": "Generalmente puede mantenerse con agua, jabón neutro y limpieza habitual."
+      },
+      "sellado": {
+        "titulo": "Sellado",
+        "nivel": "No requiere sellado periódico."
+      },
+      "uv": {
+        "titulo": "Resistencia UV",
+        "nivel": "Alta",
+        "detalle": "La piedra sinterizada presenta buena estabilidad frente a radiación ultravioleta."
+      },
+      "quimica": {
+        "titulo": "Resistencia química",
+        "nivel": "Alta",
+        "detalle": "Presenta buena resistencia frente a productos habituales y agentes químicos compatibles."
+      }
+    }
+  }
+};
+
+var CUBIERTA_VARIANTES = {
+  "solida": [],
+  "cuarzo": [
+    {
+      "id": "cuarzo-black-mirror",
+      "nombre": "Black Mirror",
+      "imagen": "img/customizer/cuarzo/black-mirror-01-1.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/black-mirror-01-1.jpg",
+        "img/customizer/cuarzo/Black-mirror-placa-completaa-1-1536x1023.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-dubai",
+      "nombre": "Calacatta Dubai",
+      "imagen": "img/customizer/cuarzo/Calacatta Dubai.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta Dubai.jpg",
+        "img/customizer/cuarzo/Calacatta Dubai cocina.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-miel",
+      "nombre": "Calacatta Miel",
+      "imagen": "img/customizer/cuarzo/Calacatta Miel.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta Miel.jpg",
+        "img/customizer/cuarzo/Calacatta Miel cocina.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-napoli",
+      "nombre": "Calacatta Napoli",
+      "imagen": "img/customizer/cuarzo/Calacatta Napoli.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta Napoli.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-panal",
+      "nombre": "Calacatta Panal",
+      "imagen": "img/customizer/cuarzo/Calacatta Panal.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta Panal.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-sahara",
+      "nombre": "Calacatta Sahara",
+      "imagen": "img/customizer/cuarzo/CALACATTA SAHARA.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/CALACATTA SAHARA.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-volcan",
+      "nombre": "Calacatta Volcan",
+      "imagen": "img/customizer/cuarzo/Calacatta Volcan.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta Volcan.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-oro",
+      "nombre": "Calacatta Oro",
+      "imagen": "img/customizer/cuarzo/Calacatta-Oro-detalle-veta-1024x576.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta-Oro-detalle-veta-1024x576.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-statuario",
+      "nombre": "Calacatta Statuario",
+      "imagen": "img/customizer/cuarzo/Calacatta-Statuario.webp",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta-Statuario.webp",
+        "img/customizer/cuarzo/calacatta-statuario-detallee-1024x576.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-storm",
+      "nombre": "Calacatta Storm",
+      "imagen": "img/customizer/cuarzo/Calacatta-Storm-1024x1024.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta-Storm-1024x1024.jpg",
+        "img/customizer/cuarzo/Calacatta-Storm-placa-1536x864.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-calacatta-vintage",
+      "nombre": "Calacatta Vintage",
+      "imagen": "img/customizer/cuarzo/Calacatta-Vintage-1.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Calacatta-Vintage-1.jpg",
+        "img/customizer/cuarzo/calacatta-vintage-detalle-1024x576.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-carrara",
+      "nombre": "Carrara",
+      "imagen": "img/customizer/cuarzo/Carrara-1.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Carrara-1.jpg",
+        "img/customizer/cuarzo/carrara-detalle-veta-1024x682.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-cosmopolitan",
+      "nombre": "Cosmopolitan",
+      "imagen": "img/customizer/cuarzo/cosmopolitan-detalle-1024x576.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/cosmopolitan-detalle-1024x576.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-everest-white",
+      "nombre": "Everest White",
+      "imagen": "img/customizer/cuarzo/Everest-White-1-1-1-1024x684.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Everest-White-1-1-1-1024x684.jpg",
+        "img/customizer/cuarzo/everest-white-placa-2-1-1024x682.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-golden-night",
+      "nombre": "Golden Night",
+      "imagen": "img/customizer/cuarzo/golden-night-02.png",
+      "imagenes": [
+        "img/customizer/cuarzo/golden-night-02.png",
+        "img/customizer/cuarzo/golden-night-detalle-veta-1024x682.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-gris-cemento",
+      "nombre": "Gris Cemento",
+      "imagen": "img/customizer/cuarzo/gris_cemento.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/gris_cemento.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-italian-beige",
+      "nombre": "Italian Beige",
+      "imagen": "img/customizer/cuarzo/italian-beige.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/italian-beige.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-italian-gray",
+      "nombre": "Italian Gray",
+      "imagen": "img/customizer/cuarzo/italian-gray-detalle-1024x576.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/italian-gray-detalle-1024x576.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-italian-white",
+      "nombre": "Italian White",
+      "imagen": "img/customizer/cuarzo/Italian-White.jpeg",
+      "imagenes": [
+        "img/customizer/cuarzo/Italian-White.jpeg",
+        "img/customizer/cuarzo/italian-white-detalle.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-luminous-black",
+      "nombre": "Luminous Black",
+      "imagen": "img/customizer/cuarzo/luminous-black-detalle-1024x682.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/luminous-black-detalle-1024x682.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-luminous-white",
+      "nombre": "Luminous White",
+      "imagen": "img/customizer/cuarzo/Luminous-White-detalle-1024x682.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Luminous-White-detalle-1024x682.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-marquina-black",
+      "nombre": "Marquina Black",
+      "imagen": "img/customizer/cuarzo/Marquina-Black-1024x758.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Marquina-Black-1024x758.jpg",
+        "img/customizer/cuarzo/Marquina-Black-placa-completa-1536x864.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-mirage",
+      "nombre": "Mirage",
+      "imagen": "img/customizer/cuarzo/MIRAGE-PLACA-COMPLETA-1024x576.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/MIRAGE-PLACA-COMPLETA-1024x576.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-ourus-black",
+      "nombre": "Ourus Black",
+      "imagen": "img/customizer/cuarzo/ourus-black-1024x683.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/ourus-black-1024x683.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-persa",
+      "nombre": "Persa",
+      "imagen": "img/customizer/cuarzo/persa.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/persa.jpg",
+        "img/customizer/cuarzo/persacocina.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-pure-black",
+      "nombre": "Pure Black",
+      "imagen": "img/customizer/cuarzo/pure-black-1024x576.png",
+      "imagenes": [
+        "img/customizer/cuarzo/pure-black-1024x576.png",
+        "img/customizer/cuarzo/pure-black-1-1024x632.png"
+      ]
+    },
+    {
+      "id": "cuarzo-spark-white",
+      "nombre": "Spark White",
+      "imagen": "img/customizer/cuarzo/Spark White.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/Spark White.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-statuario-precioso",
+      "nombre": "Statuario Precioso",
+      "imagen": "img/customizer/cuarzo/STATUARIO-PRECIOSO-PLACA-COMPLETA-scaled.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/STATUARIO-PRECIOSO-PLACA-COMPLETA-scaled.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-super-white",
+      "nombre": "Super White",
+      "imagen": "img/customizer/cuarzo/Super-White-1-2.png",
+      "imagenes": [
+        "img/customizer/cuarzo/Super-White-1-2.png",
+        "img/customizer/cuarzo/super-white-placa-1-1536x864.jpg"
+      ]
+    },
+    {
+      "id": "cuarzo-white-mirror",
+      "nombre": "White Mirror",
+      "imagen": "img/customizer/cuarzo/white-mirror-03.jpg",
+      "imagenes": [
+        "img/customizer/cuarzo/white-mirror-03.jpg",
+        "img/customizer/cuarzo/White-mirror-placa-completa-1-1536x864.jpg"
+      ]
+    }
+  ],
+  "granito": [
+    {
+      "id": "granito-viscount-white",
+      "nombre": "Viscount White",
+      "imagen": "img/customizer/granito/Granito Viscount White.jpg",
+      "imagenes": [
+        "img/customizer/granito/Granito Viscount White.jpg",
+        "img/customizer/granito/Granito Viscount Whitecocina.webp"
+      ]
+    },
+    {
+      "id": "granito-negro-absoluto",
+      "nombre": "Negro Absoluto",
+      "imagen": "img/customizer/granito/Granito-Negro-Absolutoa-1024x572.jpg",
+      "imagenes": [
+        "img/customizer/granito/Granito-Negro-Absolutoa-1024x572.jpg",
+        "img/customizer/granito/negroabsolutococina.jpg"
+      ]
+    },
+    {
+      "id": "granito-san-gabriel",
+      "nombre": "San Gabriel",
+      "imagen": "img/customizer/granito/granito-san-gabriel.jpg",
+      "imagenes": [
+        "img/customizer/granito/granito-san-gabriel.jpg",
+        "img/customizer/granito/granitosangabrielcocina.webp"
+      ]
+    }
+  ],
+  "sinterizado": [
+    {
+      "id": "sinterizado-amazonite",
+      "nombre": "Amazonite",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/amazonite-seagreen-02.webp",
+      "muestra": "img/customizer/piedrasinterizada/AMAZONITE_-horizontal-rbzaxflm3a0vq1s2hp1yzbwwe579rpbnin77sqazik.jpg",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amazonite-seagreen-02.webp",
+        "img/customizer/piedrasinterizada/AMAZONITE_-horizontal-rbzaxflm3a0vq1s2hp1yzbwwe579rpbnin77sqazik.jpg"
+      ]
+    },
+    {
+      "id": "sinterizado-ankara",
+      "nombre": "Ankara",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/ANKARA-768x573.webp",
+      "muestra": "img/customizer/piedrasinterizada/ANKARA-768x573.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ANKARA-768x573.webp",
+        "img/customizer/piedrasinterizada/AS_ANKARA_B_3200x1600_RGB_11zon-scaled-e1788852943830-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-aura-lux-white",
+      "nombre": "Aura Lux White",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_AURA-AMB-3-SECUNDARIA_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_AURA_LUX_WHITE_A_3200X1600_RGB_ALTA_MOD_2_11zon-1-scaled-e1768988912116-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_AURA-AMB-3-SECUNDARIA_11zon.webp",
+        "img/customizer/piedrasinterizada/AS_AURA_LUX_WHITE_A_3200X1600_RGB_ALTA_MOD_2_11zon-1-scaled-e1768988912116-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-crystal-lux-white",
+      "nombre": "Crystal Lux White",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/cover-crystal-lux-white-5120-2048x1038.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-crystal-lux-white-5120-2048x1038.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cover-crystal-lux-white-5120-2048x1038.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-labradorite",
+      "nombre": "Labradorite",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/labradorite-royalblue-01.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-labradorite-royalblue-1-2048x1023.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/labradorite-royalblue-01.webp",
+        "img/customizer/piedrasinterizada/cover-labradorite-royalblue-1-2048x1023.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-mystic-silver",
+      "nombre": "Mystic Silver",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/MYSTIC-SILVER-160X320_4_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_MYSTIC_SILVER_B_3200X1600_RGB_11zon_11zon-2-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/MYSTIC-SILVER-160X320_4_11zon.webp",
+        "img/customizer/piedrasinterizada/AS_MYSTIC_SILVER_B_3200X1600_RGB_11zon_11zon-2-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-black",
+      "nombre": "Onice Black",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/amb-14-onice-black_1_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/ONICE_BLACK_A_3200X1600_RGB_PZA1-scaled-e1750938961304-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-14-onice-black_1_11zon.webp",
+        "img/customizer/piedrasinterizada/ONICE_BLACK_A_3200X1600_RGB_PZA1-scaled-e1750938961304-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-blue",
+      "nombre": "Onice Blue",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/Onice_Blue_web.webp",
+      "muestra": "img/customizer/piedrasinterizada/ONICE-BLUE-MATT-160X320-A_WEB-scaled-e1756453006285-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Onice_Blue_web.webp",
+        "img/customizer/piedrasinterizada/ONICE-BLUE-MATT-160X320-A_WEB-scaled-e1756453006285-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-lux-white",
+      "nombre": "Onice Lux White",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/11zon_amb-17-onice-lux-white.webp",
+      "muestra": "img/customizer/piedrasinterizada/11zon_amb-17-onice-lux-white.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/11zon_amb-17-onice-lux-white.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-onice-seagreen",
+      "nombre": "Onice Seagreen",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/ONICE-SEAGREEN-2-1.jpg",
+      "muestra": "img/customizer/piedrasinterizada/ONICE_SEAGREEN_A_1600X3200_RGB_ALTA_3_11zon-scaled-e1767806053996-2048x1023.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ONICE-SEAGREEN-2-1.jpg",
+        "img/customizer/piedrasinterizada/ONICE_SEAGREEN_A_1600X3200_RGB_ALTA_3_11zon-scaled-e1767806053996-2048x1023.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-patagonia",
+      "nombre": "Patagonia",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/patagonia-gold-01.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-patagonia-5120-2048x1023.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/patagonia-gold-01.webp",
+        "img/customizer/piedrasinterizada/cover-patagonia-5120-2048x1023.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-versilis",
+      "nombre": "Versilis",
+      "coleccion": "luxury",
+      "imagen": "img/customizer/piedrasinterizada/AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AS_VERSILIS_V3_A_3200X1600_RGB-scaled-e1788863852738-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-alpi-white",
+      "nombre": "Alpi White",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/alpiwhitecocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/alpiwhite.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/alpiwhitecocina.webp",
+        "img/customizer/piedrasinterizada/alpiwhite.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-appennino-gold",
+      "nombre": "Appennino Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_APPENINO-cocinawebp.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_APPENINO-cocinawebp.webp",
+        "img/customizer/piedrasinterizada/APPENNINO-GOLD-160X320_3_11zon.webp",
+        "img/customizer/piedrasinterizada/AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-2048x1024.webp",
+        "img/customizer/piedrasinterizada/AS_APPENINNO_GOLD_B_3200X1600_RGB_11zon_11zon-1-scaled-rinl51m2yrkgggukrcknypdjb0q0arye37rqib4vnw.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-belvedere",
+      "nombre": "Belvedere",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/Casa-Caujaral-Lungomare-Meson-e-isla-Gramarston®-Belvedere-Black-01-gramar.jpg",
+      "muestra": "img/customizer/piedrasinterizada/cover-belvedere-black-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Casa-Caujaral-Lungomare-Meson-e-isla-Gramarston®-Belvedere-Black-01-gramar.jpg",
+        "img/customizer/piedrasinterizada/cover-belvedere-black-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-crotone-pulpis",
+      "nombre": "Crotone Pulpis",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/amb-28-crotone-pulpis_v2_3_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/CROTONE_PULPIS_160X320_RGB_PZA3-min-scaled-e1748426594481-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-28-crotone-pulpis_v2_3_11zon.webp",
+        "img/customizer/piedrasinterizada/CROTONE_PULPIS_160X320_RGB_PZA3-min-scaled-e1748426594481-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-ducal-gold",
+      "nombre": "Ducal Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/Cocina-principal-Modula-Line-Meson-salpicadero-e-isla-Gramarston®-Ducal-Gold-01-gramar.jpg",
+      "muestra": "img/customizer/piedrasinterizada/cover-ducal-gold-5120-2048x1034.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Cocina-principal-Modula-Line-Meson-salpicadero-e-isla-Gramarston®-Ducal-Gold-01-gramar.jpg",
+        "img/customizer/piedrasinterizada/cover-ducal-gold-5120-2048x1034.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-grassi-white",
+      "nombre": "Grassi White",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/amb-25-grassi-white_v2_2_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-grassi-white-5120-1-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-25-grassi-white_v2_2_11zon.webp",
+        "img/customizer/piedrasinterizada/cover-grassi-white-5120-1-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-lasa",
+      "nombre": "Lasa",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/lasa-white-06.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-lasa-white-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/lasa-white-06.webp",
+        "img/customizer/piedrasinterizada/cover-lasa-white-1-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-laurent",
+      "nombre": "Laurent",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/laurent-black-05.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-laurent-black-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/laurent-black-05.webp",
+        "img/customizer/piedrasinterizada/cover-laurent-black-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-lucca-gold",
+      "nombre": "Lucca Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/lucca-gold-01.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-lucca-gold-5120-2048x1022.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/lucca-gold-01.webp",
+        "img/customizer/piedrasinterizada/cover-lucca-gold-5120-2048x1022.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-lumina",
+      "nombre": "Lumina",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/AMBIENTE-LUMINA-COLOR.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_LUMINA_A_1760X3525_RGB-1-scaled-e1788857200779-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AMBIENTE-LUMINA-COLOR.webp",
+        "img/customizer/piedrasinterizada/AS_LUMINA_A_1760X3525_RGB-1-scaled-e1788857200779-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-macchia-vecchia",
+      "nombre": "Macchia Vecchia",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/macchia-vecchia-gold-05.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-macchia-vecchia-2048x1022.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/macchia-vecchia-gold-05.webp",
+        "img/customizer/piedrasinterizada/cover-macchia-vecchia-2048x1022.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-marquina",
+      "nombre": "Marquina",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/26-Marquina-Ascale-01-scaled.webp",
+      "muestra": "img/customizer/piedrasinterizada/MARQUINA_BLACK_A_1600X3200_RGB_1_11zon-scaled-e1767870529832-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/26-Marquina-Ascale-01-scaled.webp",
+        "img/customizer/piedrasinterizada/MARQUINA_BLACK_A_1600X3200_RGB_1_11zon-scaled-e1767870529832-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-montblanc",
+      "nombre": "Montblanc",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/montblanc-white-04.webp",
+      "muestra": "img/customizer/piedrasinterizada/MONTBLANC_WHITE_A_3200X1600_RGB_1_11zon-1-scaled-e1767870093852-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/montblanc-white-04.webp",
+        "img/customizer/piedrasinterizada/MONTBLANC_WHITE_A_3200X1600_RGB_1_11zon-1-scaled-e1767870093852-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-new-torano",
+      "nombre": "New Torano",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/cover-new-torano-h-2048x1024.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-new-torano-h-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cover-new-torano-h-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-taj-mahal",
+      "nombre": "Taj Mahal",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_AMB-5-TAJ-MAHAL-VARIANTE.jpg",
+      "muestra": "img/customizer/piedrasinterizada/cover-taj-mahal-almond-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_AMB-5-TAJ-MAHAL-VARIANTE.jpg",
+        "img/customizer/piedrasinterizada/cover-taj-mahal-almond-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-vagli-gold",
+      "nombre": "Vagli Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp",
+      "muestra": "img/customizer/piedrasinterizada/VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/VAGLI-GOLD-B-Editada-1-scaled-e1752675434928-2048x1035.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-verso-gold",
+      "nombre": "Verso Gold",
+      "coleccion": "marmol",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COCINA-VERSO-SECUNDARIA-1_ALTA-copia.webp",
+      "muestra": "img/customizer/piedrasinterizada/VERSO_GOLD_A_RGB_PZA1_1-copia-2-2048x1025.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COCINA-VERSO-SECUNDARIA-1_ALTA-copia.webp",
+        "img/customizer/piedrasinterizada/VERSO_GOLD_A_RGB_PZA1_1-copia-2-2048x1025.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-allure-black",
+      "nombre": "Allure Black",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/allure-black-cocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-allure-black-5120-r2gymp4dl8rbxg35bumde3s4bdi0h9dlwlan9r9aka.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/allure-black-cocina.webp",
+        "img/customizer/piedrasinterizada/cover-allure-black-5120-r2gymp4dl8rbxg35bumde3s4bdi0h9dlwlan9r9aka.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-amaya-linen",
+      "nombre": "Amaya Linen",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/amayalimencocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/amayalimen.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amayalimencocina.webp",
+        "img/customizer/piedrasinterizada/amayalimen.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-antalya-sand",
+      "nombre": "Antalya Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/antalya-sand-06.webp",
+      "muestra": "img/customizer/piedrasinterizada/H-ANTALYA_SAND_3200X1600_RGB_PZA1_MASCARAS-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/antalya-sand-06.webp",
+        "img/customizer/piedrasinterizada/H-ANTALYA_SAND_3200X1600_RGB_PZA1_MASCARAS-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-arena-sand",
+      "nombre": "Arena Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_ARENA-SAND-COCINA.webp",
+      "muestra": "img/customizer/piedrasinterizada/ARENA-SAND_3200x1600-1-scaled-e1787067193492-rs3dwvk0oocwt2kmugcuqvz84ul2oud0d0bwydkhu4.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_ARENA-SAND-COCINA.webp",
+        "img/customizer/piedrasinterizada/ARENA-SAND_3200x1600-1-scaled-e1787067193492-rs3dwvk0oocwt2kmugcuqvz84ul2oud0d0bwydkhu4.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-arizona-sand",
+      "nombre": "Arizona Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/arizona-sand-cocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/arizonasand.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/arizona-sand-cocina.webp",
+        "img/customizer/piedrasinterizada/arizonasand.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-armani-silver",
+      "nombre": "Armani Silver",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_ARMANI-SILVER-SECUNDARIA_1-copia.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-armani-silver-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_ARMANI-SILVER-SECUNDARIA_1-copia.webp",
+        "img/customizer/piedrasinterizada/cover-armani-silver-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-boreal-sand",
+      "nombre": "Boreal Sand",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp",
+      "muestra": "img/customizer/piedrasinterizada/BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/BOREAL_SAND_1600X3200_PZA1_RGB_ALTA_1_11zon-1-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-boreal-umber",
+      "nombre": "Boreal Umber",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_BOREAL-UMBER-webp.webp",
+      "muestra": "img/customizer/piedrasinterizada/BOREAL_UMBER_1600X3200_PZA3_R__-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_BOREAL-UMBER-webp.webp",
+        "img/customizer/piedrasinterizada/BOREAL_UMBER_1600X3200_PZA3_R__-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-brera-bone",
+      "nombre": "Brera Bone",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COCINA-BRERA-BONE-DET_BAJA.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_BRERA_BONE_3200X1600_RGB_PZA1-copia-1-scaled-e1786521553192-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COCINA-BRERA-BONE-DET_BAJA.webp",
+        "img/customizer/piedrasinterizada/AS_BRERA_BONE_3200X1600_RGB_PZA1-copia-1-scaled-e1786521553192-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-brera-dark",
+      "nombre": "Brera Dark",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/webp-ASCALE_COCINA-BRERA-DARK_detalle.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_BRERA_DARK_3200X1600_RGB_PZA1-copia-1-scaled-e1786531464521-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/webp-ASCALE_COCINA-BRERA-DARK_detalle.webp",
+        "img/customizer/piedrasinterizada/AS_BRERA_DARK_3200X1600_RGB_PZA1-copia-1-scaled-e1786531464521-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-brera-light",
+      "nombre": "Brera Light",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_BANO-BRERA-LIGHT_BAJA_3.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_BRERA_LIGHT_3200X1600_RGB_PZA1-copia-1-scaled-e1786526164382-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_BANO-BRERA-LIGHT_BAJA_3.webp",
+        "img/customizer/piedrasinterizada/AS_BRERA_LIGHT_3200X1600_RGB_PZA1-copia-1-scaled-e1786526164382-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-ceppo-di-gre",
+      "nombre": "Ceppo di Gre",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/CEPPO-DI-GRE_320X160-4.jpg",
+      "muestra": "img/customizer/piedrasinterizada/CEPPO_DI_GRE_SILVER_1-e1747297291567-2048x1021.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/CEPPO-DI-GRE_320X160-4.jpg",
+        "img/customizer/piedrasinterizada/CEPPO_DI_GRE_SILVER_1-e1747297291567-2048x1021.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-denver",
+      "nombre": "Denver",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp",
+      "muestra": "img/customizer/piedrasinterizada/AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AS_DENVER_1200X2800_RGB_PZA1_MASCARAS-1-2048x878.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-etna-black",
+      "nombre": "Etna Black",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/etnablackcocina.jpg",
+      "muestra": "img/customizer/piedrasinterizada/etnablack.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/etnablackcocina.jpg",
+        "img/customizer/piedrasinterizada/etnablack.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-foresta-blue",
+      "nombre": "Foresta Blue",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/amb-01-foresta-blue-120x280_1_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/amb-01-foresta-blue-120x280_1_11zon.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-01-foresta-blue-120x280_1_11zon.webp",
+        "img/customizer/piedrasinterizada/FORESTABLUE-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-grum-black",
+      "nombre": "Grum Black",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/Apt-Modelo-Sta-Maria-de-los-Cerros-Cocina-Quadra-Laminada-Gramarston®-Grum-Black-02.webp",
+      "muestra": "img/customizer/piedrasinterizada/cover-grum-black-5120-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Apt-Modelo-Sta-Maria-de-los-Cerros-Cocina-Quadra-Laminada-Gramarston®-Grum-Black-02.webp",
+        "img/customizer/piedrasinterizada/cover-grum-black-5120-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-nebula-brown",
+      "nombre": "Nebula Brown",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/cocinanebulabrown.webp",
+      "muestra": "img/customizer/piedrasinterizada/nebulabrown.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cocinanebulabrown.webp",
+        "img/customizer/piedrasinterizada/nebulabrown.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-paloma-stone",
+      "nombre": "Palomastone",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/cocinapalomastone.webp",
+      "muestra": "img/customizer/piedrasinterizada/palomastone.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cocinapalomastone.webp",
+        "img/customizer/piedrasinterizada/palomastone.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-portland-linen",
+      "nombre": "Portland Linen",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp",
+      "muestra": "img/customizer/piedrasinterizada/PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/PORTLAND_LINEN_1600X3200_RGB_PZA1-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-portland-pearl",
+      "nombre": "Portland Pearl",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/AMB_PORTLAND-PEARL-1.jpg",
+      "muestra": "img/customizer/piedrasinterizada/PORTLAND_PEARL_1600X3200_RGB_PZA1_MASCARAS-copia-1-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/AMB_PORTLAND-PEARL-1.jpg",
+        "img/customizer/piedrasinterizada/PORTLAND_PEARL_1600X3200_RGB_PZA1_MASCARAS-copia-1-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-savanna-terra",
+      "nombre": "Savanna Terra",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/cocinasavannaterra.webp",
+      "muestra": "img/customizer/piedrasinterizada/savannaterra.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/cocinasavannaterra.webp",
+        "img/customizer/piedrasinterizada/savannaterra.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-tivoli-white",
+      "nombre": "Tivoli White",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/tivoliwhitecocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/tivoliwhite.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/tivoliwhitecocina.webp",
+        "img/customizer/piedrasinterizada/tivoliwhite.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-tivoli-white-strata",
+      "nombre": "Tivoli White Strata",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/tivolistratacocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/amb-05-tivoli-strata-100x300-copia.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/tivolistratacocina.webp",
+        "img/customizer/piedrasinterizada/TIVOLI_WHITE-STRATA_1000X3000_RGB_PZA1-1-scaled-e1786957418322-2048x683.webp",
+        "img/customizer/piedrasinterizada/tivoliwhitestrata.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-toffee-brown",
+      "nombre": "Toffee Brown",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/toffeebrowncocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/toffeebrown.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/toffeebrowncocina.webp",
+        "img/customizer/piedrasinterizada/toffeebrown.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-trevi-white",
+      "nombre": "Trevi White",
+      "coleccion": "stone",
+      "imagen": "img/customizer/piedrasinterizada/treviwhitecocina.jpg",
+      "muestra": "img/customizer/piedrasinterizada/treviwhite.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/treviwhitecocina.jpg",
+        "img/customizer/piedrasinterizada/treviwhite.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-brown",
+      "nombre": "Cosmopolita Brown",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-BROWN-DET.jpg",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_BROWN_3200X1600_RGB_PZA2_2_11zon_2_11zon-1-scaled-e1767868643310-2048x1024.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-BROWN-DET.jpg",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_BROWN_3200X1600_RGB_PZA2_2_11zon_2_11zon-1-scaled-e1767868643310-2048x1024.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-dark",
+      "nombre": "Cosmopolita Dark",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-DARK_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-DARK_11zon.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-DARK_11zon.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-gray",
+      "nombre": "Cosmopolita Gray",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/Det_Cosmopolita-Gray.webp",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_GREY_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/Det_Cosmopolita-Gray.webp",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_GREY_3200X1600_PZA1-copia-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-ivory",
+      "nombre": "Cosmopolita Ivory",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp",
+      "muestra": "img/customizer/piedrasinterizada/11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/11zon_COSMOPOLITA_IVORY_1200X2800_RGB_PZA1-scaled-e1789110561249-2048x878.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-light",
+      "nombre": "Cosmopolita Light",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-LIGHT.jpg",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_LIGHT_3200X1600_PZA1_RGB_ALTA_11zon_11zon-1-1-2048x1018.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-LIGHT.jpg",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_LIGHT_3200X1600_PZA1_RGB_ALTA_11zon_11zon-1-1-2048x1018.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-cosmopolita-silver",
+      "nombre": "Cosmopolita Silver",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-SILVER.jpg",
+      "muestra": "img/customizer/piedrasinterizada/COSMOPOLITA_SILVER_3200X1600_PZA1-copia-2048x1024.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/ASCALE_COSMOPOLITA-SILVER.jpg",
+        "img/customizer/piedrasinterizada/COSMOPOLITA_SILVER_3200X1600_PZA1-copia-2048x1024.jpg.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-moon-black",
+      "nombre": "Moon Black",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/moon-black-cocina.webp",
+      "muestra": "img/customizer/piedrasinterizada/moonblack.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/moon-black-cocina.webp",
+        "img/customizer/piedrasinterizada/moonblack.webp"
+      ]
+    },
+    {
+      "id": "sinterizado-urban-white",
+      "nombre": "Urban White",
+      "coleccion": "urbano",
+      "imagen": "img/customizer/piedrasinterizada/amb-15-urban-white_1_11zon.webp",
+      "muestra": "img/customizer/piedrasinterizada/URBAN_WHITE_1200X2800_RGB_PZA3-min-scaled-e1747387097587-2048x878.jpg.webp",
+      "imagenes": [
+        "img/customizer/piedrasinterizada/amb-15-urban-white_1_11zon.webp",
+        "img/customizer/piedrasinterizada/URBAN_WHITE_1200X2800_RGB_PZA3-min-scaled-e1747387097587-2048x878.jpg.webp"
+      ]
+    }
+  ]
+};
+
+var HERRAJE_SECTIONS = [
+  {
+    id:'bisagras', title:'Bisagras',
+    type:'radio', key:'bisagra',
+    optional:false,
+    preselect:'bis-hettich',
+    opts:[
+      {
+        id:'bis-hettich',
+        label:'Bisagra cierre suave',
+        desc:'Bisagra de cazoleta con cierre amortiguado. Apertura 110°. Estándar en todas las líneas.',
+        val:'Bisagra cierre suave',
+        img:'img/customizer/cierresuave.jpg',
+
+      },
+    ],
+  },
+
+  {
+    id:'correderas', title:'Correderas para cajones',
+    type:'radio', key:'corredera',
+    optional:false,
+    opts:[
+      {
+        id:'cor-lb',
+        label:'Línea Básica · Telescópica San José',
+        desc:'Va en puerta. Corredera telescópica lateral de extensión completa. Económica y funcional.',
+        val:'LB Telescópica San José (va en puerta)',
+        img:'img/customizer/telescopica.jpg',
+      },
+      {
+        id:'cor-lm',
+        label:'Línea Media · Telescópica Hettich',
+        desc:'Va abajo de la tarja. Mayor capacidad de carga y deslizamiento más suave.',
+        val:'LM Telescópica Hettich (abajo tarja)',
+        img:'img/customizer/telescopicahettich.jpg',
+      },
+
+      {
+        id:'cor-la',
+        label:'Línea Alta · Oculta cierre suave Hettich',
+        desc:'Módulo completo. Corredera bajo-montada invisible, amortiguación automática al cerrar.',
+        val:'LA Hettich oculta soft-close (módulo completo)',
+        img:'img/customizer/cierresuevaocultahettich.jpg',
+      },
+    ],
+  },
+  {
+    id:'cajones', title:'Cajones',
+    type:'multi', key:'cajones',
+    optional:true,
+    confirmLabel:'Confirmar selección',
+    opts:[
+      { id:'caj-mdf', label:'Con MDF',             desc:'Cajón con estructura interior de MDF, acabado sólido y resistente.',       val:'Con MDF',              img:'img/customizer/cajonmdf.jpg' },
+      { id:'caj-alu', label:'Tiro de aluminio',     desc:'Perfil lateral de aluminio anodizado. Apariencia premium y gran dureza.',  val:'Tiro aluminio',        img:'img/customizer/cajontiraaluminio.webp' },
+      { id:'caj-cri', label:'Laterales de cristal', desc:'Cristal lateral templado con perfil de aluminio. Diseño contemporáneo.',  val:'Laterales de cristal', img:'img/customizer/cajonlateralescristal.webp' },
+    ],
+  },
+  {
+    id:'basureros', title:'Basureros',
+    type:'radio', key:'basurero',
+    optional:true,
+    opts:[
+      {
+        id:'bas-lb',
+        label:'Línea Básica · Va en puerta',
+        desc:'Bote de basura integrado en la puerta del mueble bajo. Solución compacta y económica.',
+        val:'Basurero LB (va en puerta)',
+        img:'img/customizer/basurero_vaenpuerta.jpeg',
+      },
+      {
+        id:'bas-lm',
+        label:'Línea Media · Abajo de la tarja',
+        desc:'Módulo extraíble de basura ubicado debajo de la tarja. Acceso práctico desde el frente.',
+        val:'Basurero LM (abajo tarja)',
+        img:'img/customizer/basurero_abajotarja.jpeg',
+      },
+      {
+        id:'bas-la',
+        label:'Línea Alta · Módulo completo',
+        desc:'Módulo completo con compartimentos de reciclaje integrados y cierre suave.',
+        val:'Basurero LA (módulo completo)',
+        img:'img/customizer/herrajes/basurerocompleto.jpg',
+      },
+    ],
+  },
+  {
+    id:'especias', title:'Especiero',
+    type:'radio', key:'especias',
+    optional:true,
+    opts:[
+      {
+        id:'esp-si',
+        label:'Extraíble de especias',
+        desc:'Módulo angosto extraíble junto a la parrilla para organización de especias y condimentos.',
+        val:'Extraíble especias',
+        img:'img/customizer/herrajes/especiero1.jpg',
+      },
+    ],
+  },
+  {
+    id:'modulos', title:'Módulos especiales',
+    type:'multi', key:'modulos',
+    optional:true,
+    confirmLabel:'Continuar con módulos',
+    opts:[
+      { id:'mod-esq', label:'Esquinero extraíble',       desc:'Sistema giratorio para aprovechar las esquinas ciegas.',  val:'Esquinero extraíble', img:'img/customizer/herrajes/esquineroextraible4.jpg', images:['img/customizer/herrajes/esquineroextraible4.jpg', 'img/customizer/herrajes/esquineroextraible1.jpeg', 'img/customizer/herrajes/esquineroextraible2.jpg', 'img/customizer/herrajes/esquineroextraible3.jpg'] },
+      { id:'mod-hor', label:'Torre de horno',            desc:'Módulo vertical para horno empotrado a la medida.',       val:'Torre de horno',      img:null },
+      { id:'mod-gar', label:'Módulo extraíble garrafón', desc:'Cajón profundo con guías especiales para garrafón.',      val:'Módulo garrafón',     img:'img/customizer/herrajes/modulogarrafon.jpg' },
+    ],
+  },
+];
+
+/* ─── INIT ─── */
+document.addEventListener('DOMContentLoaded', function() {
+  restoreCustomizerDraft();
+  actualizarTarjetasCubierta();
+  buildFrente();
+  buildHerrajeContainer();
+  applyStateToCustomizerUI();
+  bindDraftInputs();
+  renderStep(_currentStep, 0);
+});
+
+/* ─── FRENTE BUILDER ─── */
+function buildFrente() {
+  var container = document.getElementById('frenteList');
+  if (!container) return;
+  var lines = [
+    { key:'economica',  label:'Línea Económica',  tag:'Estándar',  mm:'15 mm', price:'$850 / tablero',   img:'img/customizer/tabintblancofrosty.jpg' },
+    { key:'arauco',     label:'Línea Arauco',      tag:'Popular',   mm:'15 mm', price:'$1,700 / tablero', img:'img/customizer/COLORES ARAUCO/cocinaChardonnay.jpg' },
+    { key:'decorlux',   label:'Línea Decorlux',    tag:'Premium',   mm:'18 mm', price:'$6,500 / tablero', img:'img/customizer/COLORES DECORLUX/Decorlux_Tableros_MDF_1800_Acrilico_High_Gloss_Alto_Brillo_Blanco_Cocina-768x623.webp' },
+    { key:'transformad',label:'Línea Transformad', tag:'Exclusivo', mm:'18 mm', price:'$8,500 / tablero', img:'img/customizer/TMATT/COCINALEGNO.jpg' },
+  ];
+  container.innerHTML = '<div class="frente-line-cards">' + lines.map(function(l) {
+    var isSel = state.frentes && state.frentes[l.key] && state.frentes[l.key].length > 0;
+    var colorCount = isSel ? state.frentes[l.key].length : 0;
+    var badgeText = isSel ? (colorCount + ' color' + (colorCount !== 1 ? 'es' : '')) : 'Seleccionado';
+    var editText = isSel ? 'Cambiar color' : 'Ver colores';
+    return '<div class="frente-line-card' + (isSel ? ' selected' : '') + '" id="fr-' + l.key + '" onclick="openFrenteModal(\'' + l.key + '\')">' +
+      '<img class="frente-line-card-img" src="' + l.img + '" alt="' + l.label + '" loading="lazy" />' +
+      '<div class="frente-line-card-overlay"></div>' +
+      '<div class="frente-line-card-badge">' + badgeText + '</div>' +
+      '<div class="frente-line-card-edit">' + editText + '</div>' +
+      '<div class="frente-line-card-body">' +
+        '<div class="frente-line-card-label">' + l.tag + ' · ' + l.mm + '</div>' +
+        '<div class="frente-line-card-name">' + l.label + '</div>' +
+        '<div class="frente-line-card-price">' + l.price + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function toggleFrente(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var key = el.getAttribute('data-key');
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    if (!state.frentes[key]) state.frentes[key] = [];
+  } else {
+    delete state.frentes[key];
+    el.querySelectorAll('.frente-color-card').forEach(function(c){ c.classList.remove('sel'); });
+    var preview = document.getElementById('preview-' + key);
+    if (preview) preview.style.display = 'none';
+  }
+  updateSidebar();
+}
+
+function toggleFrenteColor(e, key, el) {
+  e.stopPropagation();
+  var container = document.getElementById('fr-' + key);
+  if (!container) return;
+  
+  var isSel = el.classList.contains('sel');
+  
+  if (isSel) {
+    el.classList.remove('sel');
+    if (container.querySelectorAll('.frente-color-card.sel').length === 0) {
+      document.getElementById('zone-panel-' + key).classList.remove('active');
+    }
+  } else {
+    el.classList.add('sel');
+    
+    var zonePanel = document.getElementById('zone-panel-' + key);
+    if (zonePanel) zonePanel.classList.add('active');
+    
+    var cname = el.getAttribute('data-cname');
+    var kImage = el.getAttribute('data-kitchen');
+    
+    var zoneStatus = document.getElementById('zone-status-' + key);
+    var lineLabel = {economica:'Económica',arauco:'Arauco',decorlux:'Decorlux',transformad:'Transformad'}[key]||key;
+    if (zoneStatus) zoneStatus.innerHTML = 'Color aplicado a: Toda la cocina (Línea ' + lineLabel + ', ' + cname + ')';
+    
+    var previewArea = document.getElementById('preview-' + key);
+    if (previewArea) {
+      if (kImage) {
+        previewArea.style.display = 'block';
+        var imgEl = document.getElementById('preview-img-' + key);
+        if (imgEl) {
+          imgEl.src = kImage;
+          imgEl.style.display = 'block';
+        }
+        var nameEl = document.getElementById('preview-name-' + key);
+        if (nameEl) nameEl.textContent = 'Vista previa: ' + cname;
+      } else {
+        previewArea.style.display = 'none';
+      }
+    }
+  }
+  
+  var selected = [];
+  container.querySelectorAll('.frente-color-card.sel').forEach(function(c){
+    selected.push(c.getAttribute('data-cname'));
+  });
+  if (selected.length > 0) {
+    state.frentes[key] = selected;
+    container.classList.add('selected');
+  } else {
+    delete state.frentes[key];
+    container.classList.remove('selected');
+  }
+  updateSidebar();
+}
+
+/* ─── HERRAJE BUILDER ─── */
+// Keep legacy img-only options compatible; the gallery is presentation state only.
+function herrajeImagenes(option) {
+  return [option.img].concat(option.images || []).filter(function(src, index, all) {
+    return typeof src === 'string' && src.length > 0 && all.indexOf(src) === index;
+  });
+}
+
+function prepararGaleriaHerraje(photo, option) {
+  var images = herrajeImagenes(option);
+  var img = photo.querySelector('img');
+  if (!img || !images.length) return;
+  var active = 0;
+  var button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'herr-ampliar photo-ampliar';
+  button.textContent = 'Ampliar ↗';
+  button.setAttribute('aria-label', 'Ampliar ' + option.label);
+  button.addEventListener('click', function(event) {
+    event.stopPropagation();
+    if (typeof window.openLightbox === 'function') window.openLightbox(images.slice(), option.label, active);
+  });
+  img.addEventListener('error', function() { button.hidden = true; });
+  img.addEventListener('load', function() { button.hidden = false; });
+  photo.appendChild(button);
+  if (images.length < 2) return;
+  var strip = document.createElement('div');
+  strip.className = 'herr-gallery';
+  strip.setAttribute('aria-label', 'Fotografías de ' + option.label);
+  var count = document.createElement('span');
+  count.className = 'herr-gallery-count';
+  count.textContent = images.length + ' fotos';
+  strip.appendChild(count);
+  images.forEach(function(src, index) {
+    var thumb = document.createElement('button');
+    thumb.type = 'button';
+    thumb.setAttribute('aria-label', 'Ver foto ' + (index + 1) + ' de ' + option.label);
+    thumb.setAttribute('aria-pressed', String(index === active));
+    var small = document.createElement('img');
+    small.src = src;
+    small.alt = '';
+    small.loading = 'lazy';
+    thumb.appendChild(small);
+    thumb.addEventListener('click', function(event) {
+      event.stopPropagation();
+      active = index;
+      img.src = src;
+      strip.querySelectorAll('button').forEach(function(b, i) { b.setAttribute('aria-pressed', String(i === active)); });
+    });
+    strip.appendChild(thumb);
+  });
+  photo.appendChild(strip);
+}
+
+function herrajeSeccionCompleta(section) {
+  if (!section || !state.herrajesAtendidos[section.id]) return false;
+  if (state.herrajesNoAplica[section.id]) return section.optional === true;
+  return section.type === 'multi'
+    ? Array.isArray(state[section.key]) && state[section.key].length > 0
+    : Boolean(state[section.key]);
+}
+
+function herrajesCompletos() {
+  return HERRAJE_SECTIONS.every(herrajeSeccionCompleta);
+}
+
+function herrajeResumen(section) {
+  if (state.herrajesNoAplica[section.id]) return 'No aplica';
+  var value = state[section.key];
+  return Array.isArray(value) ? (value.join(', ') || '—') : (value || '—');
+}
+
+function actualizarEstadoSeccionesHerrajes() {
+  var section = HERRAJE_SECTIONS[state.herrajeStepIndex];
+  var element = section && document.getElementById('sec-' + section.id);
+  if (!element) return;
+  var complete = herrajeSeccionCompleta(section);
+  element.classList.toggle('completed', complete);
+  element.setAttribute('data-status', complete ? 'completed' : 'current');
+  var next = element.querySelector('.herraje-multi-continue');
+  if (next) next.disabled = !(Array.isArray(state[section.key]) && state[section.key].length > 0);
+  var progress = document.getElementById('hardwareProgressFill');
+  if (progress) progress.style.width = ((state.herrajeStepIndex + 1) / HERRAJE_SECTIONS.length * 100) + '%';
+}
+
+function abrirSeccionHerrajes(id, scroll, direction) {
+  var sectionId = id.slice(4);
+  var index = HERRAJE_SECTIONS.findIndex(function(section) { return section.id === sectionId; });
+  if (index < 0) return;
+  var previous = state.herrajeStepIndex;
+  state.herrajeOpenId = sectionId;
+  state.herrajeStepIndex = index;
+  buildHerrajeContainer(direction || (index >= previous ? 1 : -1));
+  if (scroll) focusHardwareHeading();
+  scheduleDraftSave();
+}
+
+function avanzarHerrajesDespuesDe(section) {
+  var index = HERRAJE_SECTIONS.indexOf(section);
+  state.herrajeNextIndex = Math.max(state.herrajeNextIndex, index + 1);
+  while (state.herrajeNextIndex < HERRAJE_SECTIONS.length && herrajeSeccionCompleta(HERRAJE_SECTIONS[state.herrajeNextIndex])) state.herrajeNextIndex++;
+  if (index < HERRAJE_SECTIONS.length - 1) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[index + 1].id, true, 1);
+  else {
+    actualizarEstadoSeccionesHerrajes();
+    showHardwareValidation('Herrajes completos. Continuamos a Cubierta.', false);
+    saveCustomizerDraft();
+    if (_currentStep === 3 && herrajesCompletos()) navigateToStep(4);
+  }
+  updateSidebar();
+  scheduleDraftSave();
+}
+
+function resolverHerraje(section, noAplica, withFeedback) {
+  if (!section || (noAplica && !section.optional)) return false;
+  var sectionElement = document.getElementById('sec-' + section.id);
+  var noAplicaButton = sectionElement && sectionElement.querySelector('.herraje-no-aplica');
+  if (noAplica) {
+    state.herrajesNoAplica[section.id] = true;
+    state[section.key] = section.type === 'multi' ? [] : null;
+    if (sectionElement) sectionElement.querySelectorAll('.herr-card, .herr-opt').forEach(function(option) { option.classList.remove('selected'); option.setAttribute('aria-pressed', 'false'); });
+    if (noAplicaButton) { noAplicaButton.classList.add('selected'); noAplicaButton.setAttribute('aria-pressed', 'true'); }
+  } else {
+    delete state.herrajesNoAplica[section.id];
+    if (section.type === 'multi' && !Array.isArray(state[section.key])) state[section.key] = [];
+    if (noAplicaButton) { noAplicaButton.classList.remove('selected'); noAplicaButton.setAttribute('aria-pressed', 'false'); }
+  }
+  state.herrajesAtendidos[section.id] = true;
+  actualizarEstadoSeccionesHerrajes();
+  updateSidebar();
+  saveCustomizerDraft();
+  if (withFeedback) return queueSelectionAdvance(function() { avanzarHerrajesDespuesDe(section); });
+  avanzarHerrajesDespuesDe(section);
+  return true;
+}
+
+function resolverHerrajeOpcional(id) {
+  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
+  resolverHerraje(section, true, true);
+}
+
+function seleccionarHerrajeRadio(id, val) {
+  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id && item.type === 'radio'; });
+  if (!section || !section.opts.some(function(option) { return option.val === val; })) return false;
+  delete state.herrajesNoAplica[section.id];
+  state[section.key] = val;
+  state.herrajesAtendidos[section.id] = true;
+  var sectionElement = document.getElementById('sec-' + section.id);
+  if (sectionElement) {
+    sectionElement.querySelectorAll('.herr-card, .herr-opt').forEach(function(option) {
+      option.classList.toggle('selected', option.id === section.opts.find(function(item) { return item.val === val; }).id);
+      option.setAttribute('aria-pressed', String(option.id === section.opts.find(function(item) { return item.val === val; }).id));
+    });
+    var noAplicaButton = sectionElement.querySelector('.herraje-no-aplica');
+    if (noAplicaButton) { noAplicaButton.classList.remove('selected'); noAplicaButton.setAttribute('aria-pressed', 'false'); }
+  }
+  actualizarEstadoSeccionesHerrajes();
+  showHardwareValidation('Selección guardada. Continuamos al siguiente subpaso.', false);
+  updateSidebar();
+  saveCustomizerDraft();
+  return queueSelectionAdvance(function() { avanzarHerrajesDespuesDe(section); });
+}
+
+function continuarHerrajeMultiple(id) {
+  var section = HERRAJE_SECTIONS.find(function(item) { return item.id === id; });
+  if (!section || section.type !== 'multi' || !state[section.key].length) return;
+  resolverHerraje(section, false, true);
+}
+
+function buildHerrajeContainer() {
+  var container = document.getElementById('herrajeContainer');
+  if (!container) return;
+  var direction = arguments.length ? arguments[0] : 0;
+  var index = Math.max(0, Math.min(HERRAJE_SECTIONS.length - 1, state.herrajeStepIndex || 0));
+  var sec = HERRAJE_SECTIONS[index];
+  state.herrajeStepIndex = index;
+  state.herrajeOpenId = sec.id;
+  var panelHTML = (function() {
+    var noAplica = state.herrajesNoAplica[sec.id];
+    var optsHTML;
+
+    if (sec.type === 'radio') {
+      optsHTML = '<div class="herr-cards">' +
+        sec.opts.map(function(o) {
+          var isPresel = !noAplica && sec.preselect && sec.preselect === o.id;
+          var selCls = isPresel ? ' selected' : '';
+          var currentSelected = !noAplica && state[sec.key] === o.val;
+          if (herrajeImagenes(o).length) {
+            return '<div class="herr-card' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(!!(selCls || currentSelected)) + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
+              '<div class="herr-card-photo"><img src="' + herrajeImagenes(o)[0] + '" alt="' + o.label + '" loading="eager" fetchpriority="high" />' +
+              '<div class="herr-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div></div>' +
+              '<div class="herr-card-body"><div class="herr-card-name">' + o.label + '</div><div class="herr-card-desc">' + o.desc + '</div></div>' +
+            '</div>';
+          } else {
+            return '<div class="herr-opt' + (selCls || currentSelected ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(!!(selCls || currentSelected)) + '" onclick="selectHerrajeOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
+              '<div class="herr-radio"></div>' +
+              '<div><div class="herr-opt-name">' + o.label + '</div><div class="herr-opt-desc">' + o.desc + '</div></div>' +
+            '</div>';
+          }
+        }).join('') +
+      '</div>';
+    } else {
+      optsHTML = '<div class="herr-cards">' +
+        sec.opts.map(function(o) {
+          if (herrajeImagenes(o).length) {
+            var selected = !noAplica && state[sec.key].indexOf(o.val) >= 0;
+            return '<div class="herr-card multi' + (selected ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(selected) + '" onclick="toggleMultiOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
+              '<div class="herr-card-photo"><img src="' + herrajeImagenes(o)[0] + '" alt="' + o.label + '" loading="eager" fetchpriority="high" />' +
+              '<div class="herr-card-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div></div>' +
+              '<div class="herr-card-body"><div class="herr-card-name">' + o.label + '</div><div class="herr-card-desc">' + o.desc + '</div></div>' +
+            '</div>';
+          } else {
+            var selectedText = !noAplica && state[sec.key].indexOf(o.val) >= 0;
+            return '<div class="herr-opt multi-cb-row' + (selectedText ? ' selected' : '') + '" id="' + o.id + '" role="button" tabindex="0" aria-pressed="' + String(selectedText) + '" onclick="toggleMultiOpt(this,\'' + sec.key + '\',\'' + escQ(o.val) + '\')" onkeydown="activateHardwareCard(event,this)">' +
+              '<div class="herr-cb"></div>' +
+              '<div><div class="herr-opt-name">' + o.label + '</div><div class="herr-opt-desc">' + o.desc + '</div></div>' +
+            '</div>';
+          }
+        }).join('') +
+      '</div>';
+    }
+
+    if (sec.optional) optsHTML += '<button type="button" class="herraje-no-aplica' + (noAplica ? ' selected' : '') + '" aria-pressed="' + String(!!noAplica) + '" onclick="resolverHerrajeOpcional(\'' + sec.id + '\')">No aplica</button>';
+    if (sec.type === 'multi') optsHTML += '<button type="button" class="herraje-multi-continue" onclick="continuarHerrajeMultiple(\'' + sec.id + '\')"' + (state[sec.key].length && !noAplica ? '' : ' disabled') + '>' + sec.confirmLabel + '</button>';
+    var complete = herrajeSeccionCompleta(sec);
+    return '<article class="herraje-section open' + (complete ? ' completed' : '') + '" id="sec-' + sec.id + '" data-status="' + (complete ? 'completed' : 'current') + '">' +
+      '<h3 class="hardware-step-title" id="hardwareStepTitle" tabindex="-1">' + sec.title + '</h3>' +
+      '<p class="hardware-step-help">' + (sec.type === 'multi' ? 'Elige las opciones que necesites y confirma cuando termines, o marca No aplica.' : (sec.optional ? 'Elige una opción o marca No aplica.' : 'Elige una opción para continuar.')) + '</p>' +
+      '<div class="herraje-section-body">' + optsHTML + '</div>' +
+    '</article>';
+  })();
+  container.innerHTML = '<div class="hardware-wizard">' +
+    '<header class="hardware-progress"><div><span>Herrajes · ' + (index + 1) + ' de ' + HERRAJE_SECTIONS.length + '</span><strong>' + sec.title + '</strong></div>' +
+    '<div class="hardware-progress-track" aria-hidden="true"><span id="hardwareProgressFill" style="width:' + ((index + 1) / HERRAJE_SECTIONS.length * 100) + '%"></span></div></header>' +
+    '<div class="hardware-panel hardware-enter-' + (direction < 0 ? 'back' : 'forward') + '">' + panelHTML + '</div>' +
+    '<p class="hardware-validation" id="hardwareValidation" role="status" aria-live="polite"></p>' +
+    '<footer class="hardware-nav"><button type="button" class="nav-btn" onclick="previousHardwareStep()"' + (index === 0 ? ' disabled' : '') + '>Anterior</button>' +
+    '<span>' + HERRAJE_SECTIONS.map(function(item, itemIndex) { return '<button type="button" class="hardware-dot' + (itemIndex === index ? ' active' : '') + (herrajeSeccionCompleta(item) ? ' complete' : '') + '" aria-label="Editar ' + item.title + '" onclick="abrirSeccionHerrajes(\'sec-' + item.id + '\',true)"></button>'; }).join('') + '</span></footer></div>';
+  sec.opts.forEach(function(option) {
+    var card = document.getElementById(option.id);
+    var photo = card && card.querySelector('.herr-card-photo');
+    if (photo) prepararGaleriaHerraje(photo, option);
+  });
+  actualizarEstadoSeccionesHerrajes();
+  preloadNextHardwareImages();
+}
+
+
+function escQ(s) { return s.replace(/'/g, "\\'"); }
+
+function toggleHerrajeSection(id) {
+  abrirSeccionHerrajes(id, false);
+}
+
+function previousHardwareStep() {
+  if (!_selectionFeedbackPending && state.herrajeStepIndex > 0) abrirSeccionHerrajes('sec-' + HERRAJE_SECTIONS[state.herrajeStepIndex - 1].id, true, -1);
+}
+
+function focusHardwareHeading() {
+  var heading = document.getElementById('hardwareStepTitle');
+  if (heading && typeof heading.focus === 'function') heading.focus({ preventScroll: true });
+}
+
+function showHardwareValidation(message, error) {
+  var node = document.getElementById('hardwareValidation');
+  if (!node) return;
+  node.textContent = message || '';
+  node.classList.toggle('error', error === true);
+}
+
+function activateHardwareCard(event, element) {
+  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); element.click(); }
+}
+
+function preloadNextHardwareImages() {
+  var next = HERRAJE_SECTIONS[state.herrajeStepIndex + 1];
+  if (!next) return;
+  preloadImageSources(next.opts.map(function(option) { return herrajeImagenes(option)[0]; }).filter(Boolean).slice(0, 4));
+}
+
+function selectHerrajeOpt(el, key, val) {
+  if (_selectionFeedbackPending) return;
+  var sectionElement = el.closest('.herraje-section');
+  var section = sectionElement && HERRAJE_SECTIONS.find(function(item) { return 'sec-' + item.id === sectionElement.id; });
+  if (!section || section.type !== 'radio') return;
+  var body = el.closest('.herraje-section-body');
+  if (body) body.querySelectorAll('.herr-card, .herr-opt').forEach(function(o){ o.classList.remove('selected'); o.setAttribute('aria-pressed', 'false'); });
+  seleccionarHerrajeRadio(section.id, val);
+  el.setAttribute('aria-pressed', 'true');
+}
+
+function toggleMultiOpt(el, key, val) {
+  if (_selectionFeedbackPending) return;
+  var sectionElement = el.closest('.herraje-section');
+  var section = sectionElement && HERRAJE_SECTIONS.find(function(item) { return 'sec-' + item.id === sectionElement.id; });
+  if (!section) return;
+  delete state.herrajesNoAplica[section.id];
+  state.herrajesAtendidos[section.id] = false;
+  var noAplica = sectionElement.querySelector('.herraje-no-aplica');
+  if (noAplica) { noAplica.classList.remove('selected'); noAplica.setAttribute('aria-pressed', 'false'); }
+  el.classList.toggle('selected');
+  el.setAttribute('aria-pressed', String(el.classList.contains('selected')));
+  if (el.classList.contains('selected')) {
+    if (state[key].indexOf(val) === -1) state[key].push(val);
+  } else {
+    state[key] = state[key].filter(function(v){ return v !== val; });
+  }
+  actualizarEstadoSeccionesHerrajes();
+  showHardwareValidation(state[key].length ? 'Selección guardada. Pulsa Continuar cuando termines.' : 'Selecciona al menos una opción o marca No aplica.', !state[key].length);
+  updateSidebar();
+  scheduleDraftSave();
+}
+
+/* ─── SELECTIONS ─── */
+function selectSituation(el, val) {
+  if (_selectionFeedbackPending) return;
+  document.querySelectorAll('.option-card').forEach(function(c){ c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
+  el.classList.add('selected');
+  el.setAttribute('aria-pressed', 'true');
+  state.situacion = val;
+  updateSidebar();
+  saveCustomizerDraft();
+  queueSelectionAdvance(function() { navigateToStep(1); });
+}
+
+function selectInterior(el, val) {
+  if (_selectionFeedbackPending) return;
+  document.querySelectorAll('.material-card').forEach(function(c){ c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
+  el.classList.add('selected');
+  el.setAttribute('aria-pressed', 'true');
+  state.interior = val;
+  updateSidebar();
+  saveCustomizerDraft();
+  queueSelectionAdvance(function() { navigateToStep(2); });
+}
+
+function activateChoiceCard(event, element) {
+  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); element.click(); }
+}
+
+function cubiertaPrecioTexto(key) {
+  return '$' + CUBIERTA_INFO[key].precioBase.toLocaleString('en-US') + ' / m lineal';
+}
+
+function actualizarTarjetasCubierta() {
+  Object.keys(CUBIERTA_INFO).forEach(function(key) {
+    var card = document.getElementById('cub-' + key);
+    if (!card) return;
+    card.querySelector('.cubierta-name').textContent = CUBIERTA_INFO[key].titulo;
+    card.querySelector('.cubierta-price').textContent = cubiertaPrecioTexto(key);
+  });
+}
+
+var CUBIERTA_COLECCIONES = {
+  luxury: { nombre: 'Luxury', descripcion: 'Piedras exóticas y ónices' },
+  marmol: { nombre: 'Mármol', descripcion: 'Vetas clásicas y contemporáneas' },
+  stone: { nombre: 'Piedra / Stone', descripcion: 'Calizas, pizarras, granitos y acabados minerales' },
+  urbano: { nombre: 'Cemento & Urbano', descripcion: 'Industrial y metálicos' }
+};
+var cubiertaColeccionActiva = null;
+
+function selectCubiertaColeccion(key) {
+  if (state.cubiertaCategoria !== 'sinterizado' || !CUBIERTA_COLECCIONES[key]) return;
+  cubiertaColeccionActiva = key;
+  if (state.cubiertaVariante && state.cubiertaVariante.coleccion !== key) state.cubiertaVariante = null;
+  renderCubiertaVariantes();
+  updateSidebar();
+  var active = document.querySelector('.cubierta-coleccion[aria-pressed="true"]');
+  if (active) active.focus({ preventScroll: true });
+}
+
+function cubiertaVarianteTexto() {
+  if (!state.cubierta) return '—';
+  return state.cubiertaVariante ? state.cubiertaVariante.nombre : 'Acabado por definir';
+}
+
+// Return a new array: the approved catalogue and its original paths stay intact.
+function cubiertaImagenes(variant) {
+  if (variant.coleccion) return variant.imagenes.slice();
+  var images = variant.imagenes && variant.imagenes.length ? variant.imagenes : [variant.imagen];
+  return images.slice().sort(function(a, b) {
+    return Number(/cocina/i.test(b)) - Number(/cocina/i.test(a));
+  });
+}
+
+// Prefer an explicitly named sample/detail for the compact swatch.
+function cubiertaMuestra(variant) {
+  if (variant.muestra) return variant.muestra;
+  var images = variant.imagenes || [variant.imagen];
+  return images.find(function(path) { return !/cocina/i.test(path) && /detalle|placa/i.test(path); }) || variant.imagen;
+}
+
+function cubiertaElemento(tag, className, text) {
+  var el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+function actualizarCubiertaVisual() {
+  var visual = document.getElementById('cubiertaVisual');
+  if (!visual) return;
+  visual.replaceChildren();
+  var info = CUBIERTA_INFO[state.cubiertaCategoria];
+  var variant = (CUBIERTA_VARIANTES[state.cubiertaCategoria] || []).find(function(v) {
+    return state.cubiertaVariante && v.id === state.cubiertaVariante.id;
+  });
+  var images = variant ? cubiertaImagenes(variant) : [info.imagen];
+  var caption = variant ? variant.nombre : 'Acabado por definir';
+  var heroButton = cubiertaElemento('button', 'cubierta-hero');
+  heroButton.type = 'button';
+  heroButton.setAttribute('aria-label', 'Ampliar imagen de ' + (variant ? caption : info.titulo));
+  var hero = cubiertaElemento('img');
+  hero.src = images[0];
+  hero.alt = variant ? info.titulo + ' · ' + caption : info.titulo + ' · Imagen general';
+  heroButton.appendChild(hero);
+  heroButton.appendChild(cubiertaElemento('span', 'cubierta-zoom-hint', 'Ampliar imagen ↗'));
+  heroButton.addEventListener('click', function() { window.openLightbox(images, info.titulo + ' · ' + caption, images.indexOf(hero.getAttribute('src'))); });
+  visual.appendChild(heroButton);
+  if (images.length > 1) {
+    var thumbs = cubiertaElemento('div', 'cubierta-thumbnails');
+    thumbs.setAttribute('aria-label', 'Fotografías del acabado');
+    images.forEach(function(path, index) {
+      var button = cubiertaElemento('button', 'cubierta-thumbnail');
+      button.type = 'button';
+      var label = /cocina/i.test(path) ? 'Cocina' : 'Muestra / detalle';
+      button.setAttribute('aria-label', label + ', foto ' + (index + 1));
+      button.setAttribute('aria-pressed', String(index === 0));
+      var img = cubiertaElemento('img');
+      img.src = path;
+      img.alt = '';
+      img.loading = 'lazy';
+      button.appendChild(img);
+      button.title = label;
+      button.addEventListener('click', function() {
+        hero.src = path;
+        thumbs.querySelectorAll('button').forEach(function(b) {
+          b.setAttribute('aria-pressed', String(b === button));
+        });
+      });
+      thumbs.appendChild(button);
+    });
+    visual.appendChild(thumbs);
+  }
+  var status = document.getElementById('cubiertaAcabadoActual');
+  if (status) status.textContent = caption;
+  var pageStatus = document.getElementById('cubiertaSelectionStatus');
+  if (pageStatus) pageStatus.textContent = info.titulo + ' · ' + caption;
+}
+
+function renderCubiertaVariantes() {
+  var panel = document.getElementById('cubiertaVariantes');
+  if (!panel) return;
+  panel.replaceChildren();
+  var info = CUBIERTA_INFO[state.cubiertaCategoria];
+  panel.hidden = !info;
+  if (!info) return;
+  var layout = cubiertaElemento('div', 'cubierta-config-layout');
+  var visual = cubiertaElemento('div', 'cubierta-visual');
+  visual.id = 'cubiertaVisual';
+  layout.appendChild(visual);
+  var controls = cubiertaElemento('div', 'cubierta-config-controls');
+  controls.appendChild(cubiertaElemento('p', 'cubierta-eyebrow', 'Material y acabado'));
+  controls.appendChild(cubiertaElemento('h3', 'cubierta-config-title', info.titulo));
+  controls.appendChild(cubiertaElemento('p', 'cubierta-config-description', info.descripcion));
+  if (info.aclaracion) controls.appendChild(cubiertaElemento('p', 'cubierta-material-note', info.aclaracion));
+  controls.appendChild(cubiertaElemento('p', 'cubierta-config-price', state.cubPrecio));
+  controls.appendChild(cubiertaElemento('h4', 'cubierta-section-title', state.cubiertaCategoria === 'sinterizado' && !cubiertaColeccionActiva ? 'Elige una colección' : 'Elige tu acabado'));
+  var status = cubiertaElemento('p', 'cubierta-current-finish', cubiertaVarianteTexto());
+  status.id = 'cubiertaAcabadoActual';
+  status.setAttribute('role', 'status');
+  controls.appendChild(status);
+  var variants = CUBIERTA_VARIANTES[state.cubiertaCategoria] || [];
+  if (state.cubiertaCategoria === 'sinterizado') {
+    var collections = cubiertaElemento('div', 'cubierta-colecciones');
+    collections.setAttribute('aria-label', 'Colecciones de Piedra sinterizada');
+    Object.keys(CUBIERTA_COLECCIONES).forEach(function(key) {
+      var collection = CUBIERTA_COLECCIONES[key];
+      var button = cubiertaElemento('button', 'cubierta-coleccion');
+      button.type = 'button';
+      button.setAttribute('aria-pressed', String(cubiertaColeccionActiva === key));
+      button.appendChild(cubiertaElemento('strong', '', collection.nombre));
+      button.appendChild(cubiertaElemento('span', '', collection.descripcion));
+      button.addEventListener('click', function() { selectCubiertaColeccion(key); });
+      collections.appendChild(button);
+    });
+    controls.appendChild(collections);
+    variants = variants.filter(function(v) { return v.coleccion === cubiertaColeccionActiva; });
+  }
+  if (variants.length) {
+    controls.appendChild(cubiertaElemento('p', 'cubierta-material-note', 'Selección opcional · ' + variants.length + ' acabados'));
+    var grid = cubiertaElemento('div', 'cubierta-swatches');
+    grid.setAttribute('role', 'group');
+    grid.setAttribute('aria-label', 'Acabados de ' + info.titulo);
+    variants.forEach(function(v) {
+      var button = cubiertaElemento('button', 'cubierta-variante-select');
+      button.type = 'button';
+      button.dataset.varianteId = v.id;
+      button.setAttribute('aria-pressed', String(!!state.cubiertaVariante && state.cubiertaVariante.id === v.id));
+      var photo = cubiertaElemento('img');
+      photo.src = cubiertaMuestra(v);
+      photo.alt = '';
+      photo.loading = 'lazy';
+      button.appendChild(photo);
+      button.appendChild(cubiertaElemento('span', '', v.nombre));
+      button.addEventListener('click', function() { selectCubiertaVariante(v.id); });
+      grid.appendChild(button);
+    });
+    controls.appendChild(grid);
+    var clear = cubiertaElemento('button', 'cubierta-variante-clear', 'Dejar acabado por definir');
+    clear.type = 'button';
+    clear.addEventListener('click', function() { selectCubiertaVariante(null); });
+    controls.appendChild(clear);
+  } else if (state.cubiertaCategoria !== 'sinterizado' || cubiertaColeccionActiva) {
+    controls.appendChild(cubiertaElemento('p', 'cubierta-material-note', 'Puedes continuar sin elegir acabado. No hay variantes disponibles en esta categoría.'));
+  }
+  var technical = cubiertaElemento('details', 'cubierta-information');
+  technical.appendChild(cubiertaElemento('summary', '', 'Características generales del material'));
+  technical.appendChild(cubiertaElemento('p', 'cubierta-material-note', 'Orientativas de la categoría, no de un acabado específico.'));
+  var metrics = cubiertaElemento('div', 'cubierta-metrics');
+  Object.keys(info.caracteristicas).forEach(function(key) {
+    var c = info.caracteristicas[key];
+    var card = cubiertaElemento('details', 'cubierta-metric');
+    var summary = cubiertaElemento('summary');
+    summary.appendChild(cubiertaElemento('span', 'cubierta-metric-label', c.titulo));
+    summary.appendChild(cubiertaElemento('strong', '', c.nivel));
+    card.appendChild(summary);
+    card.appendChild(cubiertaElemento('p', '', c.detalle || c.nivel));
+    metrics.appendChild(card);
+  });
+  technical.appendChild(metrics);
+  controls.appendChild(technical);
+  controls.appendChild(cubiertaElemento('p', 'cubierta-highlight', info.destacada));
+  var advantages = cubiertaElemento('details', 'cubierta-information');
+  advantages.appendChild(cubiertaElemento('summary', '', 'Ventajas principales'));
+  var list = cubiertaElemento('ul');
+  info.ventajas.forEach(function(text) { list.appendChild(cubiertaElemento('li', '', text)); });
+  advantages.appendChild(list);
+  controls.appendChild(advantages);
+  var care = cubiertaElemento('details', 'cubierta-information');
+  care.appendChild(cubiertaElemento('summary', '', 'Cuidados y mantenimiento'));
+  var careList = cubiertaElemento('ul');
+  // Reuse category guidance rather than duplicate it in the data or variants.
+  ['manchas', 'calor', 'rayaduras', 'mantenimiento', 'sellado'].forEach(function(key) {
+    var c = info.caracteristicas[key];
+    careList.appendChild(cubiertaElemento('li', '', c.detalle || c.nivel));
+  });
+  care.appendChild(careList);
+  controls.appendChild(care);
+  controls.appendChild(cubiertaElemento('p', 'cubierta-material-note', 'Las características pueden variar según el fabricante, acabado y modelo específico.'));
+  layout.appendChild(controls);
+  panel.appendChild(layout);
+  actualizarCubiertaVisual();
+}
+
+function selectCubiertaVariante(id) {
+  var variant = (CUBIERTA_VARIANTES[state.cubiertaCategoria] || []).find(function(v) { return v.id === id; });
+  if (id !== null && (!variant || (variant.coleccion && variant.coleccion !== cubiertaColeccionActiva))) return;
+  state.cubiertaVariante = variant ? { id: variant.id, nombre: variant.nombre, coleccion: variant.coleccion || null, imagen: cubiertaImagenes(variant)[0] } : null;
+  document.querySelectorAll('.cubierta-variante-select').forEach(function(button) {
+    button.setAttribute('aria-pressed', String(!!variant && button.dataset.varianteId === variant.id));
+  });
+  actualizarCubiertaVisual();
+  updateSidebar();
+}
+
+var cubiertaModalReturnFocus = null;
+var cubiertaModalOverflow = '';
+var cubiertaModalBackground = [];
+var cubiertaModalCloseTimer = null;
+
+function openCubiertaModal(trigger) {
+  var modal = document.getElementById('cubiertaModal');
+  if (!modal || !CUBIERTA_INFO[state.cubiertaCategoria]) return;
+  if (cubiertaModalCloseTimer) { clearTimeout(cubiertaModalCloseTimer); cubiertaModalCloseTimer = null; modal.classList.remove('is-closing'); }
+  document.getElementById('cubiertaModalTitle').textContent = state.cubierta;
+  if (modal.hidden) {
+    cubiertaModalReturnFocus = trigger || document.activeElement;
+    cubiertaModalOverflow = document.body.style.overflow;
+    cubiertaModalBackground = Array.from(document.body.children).filter(function(el) {
+      return el !== modal && el.id !== 'lightbox' && !/^(SCRIPT|STYLE)$/.test(el.tagName);
+    }).map(function(el) {
+      var previous = el.inert;
+      el.inert = true;
+      return { element: el, inert: previous };
+    });
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  document.getElementById('cubiertaModalClose').focus({ preventScroll: true });
+}
+
+function closeCubiertaModal() {
+  var modal = document.getElementById('cubiertaModal');
+  if (!modal || modal.hidden || cubiertaModalCloseTimer) return;
+  var lb = document.getElementById('lightbox');
+  if (lb && lb.style.display === 'flex') window.closeLightbox();
+  modal.classList.add('is-closing');
+  cubiertaModalCloseTimer = setTimeout(function() {
+    modal.hidden = true;
+    modal.classList.remove('is-closing');
+    document.body.style.overflow = cubiertaModalOverflow;
+    cubiertaModalBackground.forEach(function(item) { item.element.inert = item.inert; });
+    cubiertaModalBackground = [];
+    if (cubiertaModalReturnFocus && cubiertaModalReturnFocus.isConnected) cubiertaModalReturnFocus.focus({ preventScroll: true });
+    cubiertaModalReturnFocus = null;
+    cubiertaModalCloseTimer = null;
+  }, 190);
+}
+
+function handleCubiertaModalKeydown(event) {
+  var modal = document.getElementById('cubiertaModal');
+  if (!modal || modal.hidden) return;
+  var lb = document.getElementById('lightbox');
+  if (lb && lb.style.display === 'flex') return; // Escape closes only the top layer.
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeCubiertaModal();
+  } else if (event.key === 'Tab') {
+    var focusable = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, summary, [tabindex]')).filter(function(el) {
+      return !el.disabled && el.tabIndex >= 0 && el.getClientRects().length > 0;
+    });
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+      event.preventDefault();
+      if (last) last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) {
+      event.preventDefault();
+      if (first) first.focus();
+    }
+  }
+}
+document.addEventListener('keydown', handleCubiertaModalKeydown);
+
+function selectCubierta(el, key) {
+  if (!CUBIERTA_INFO[key]) return;
+  document.querySelectorAll('.cubierta-item').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+  if (state.cubiertaCategoria !== key) state.cubiertaVariante = null;
+  state.cubiertaCategoria = key;
+  state.cubierta = CUBIERTA_INFO[key].titulo;
+  state.cubPrecio = cubiertaPrecioTexto(key);
+  cubiertaColeccionActiva = null;
+  renderCubiertaVariantes();
+  updateSidebar();
+  openCubiertaModal(el);
+}
+
+function toggleExtra(el, key, label) {
+  el.classList.toggle('active');
+  if (el.classList.contains('active')) {
+    if (state.extras.indexOf(label) === -1) state.extras.push(label);
+  } else {
+    state.extras = state.extras.filter(function(e){ return e !== label; });
+  }
+  updateSidebar();
+}
+
+/* ─── NAVIGATION / RENDER ─── */
+var _currentStep = 0;
+var _stepTransitioning = false;
+var _selectionFeedbackPending = false;
+var SELECTION_FEEDBACK_MS = 180;
+var STEP_TRANSITION_MS = 380;
+
+function queueSelectionAdvance(callback) {
+  if (_stepTransitioning || _selectionFeedbackPending || typeof callback !== 'function') return false;
+  _selectionFeedbackPending = true;
+  saveCustomizerDraft();
+  setNavigationLocked(true);
+  if (document.body) document.body.classList.add('selection-feedback');
+  window.setTimeout(function() {
+    _selectionFeedbackPending = false;
+    if (document.body) document.body.classList.remove('selection-feedback');
+    callback();
+  }, reducedMotionPreferred() ? 0 : SELECTION_FEEDBACK_MS);
+  return true;
+}
+
+function captureClientDraft() {
+  var fields = { nombre:'c-nombre', tel:'c-tel', email:'c-email', fecha:'c-fecha', hora:'c-hora', asesor:'c-asesor', dir:'c-dir', obs:'c-obs' };
+  Object.keys(fields).forEach(function(key) {
+    var input = document.getElementById(fields[key]);
+    if (input) state.cliente[key] = String(input.value || '').trim();
+  });
+  var branch = document.getElementById('c-sucursal');
+  if (branch) state.cliente.sucursal = branch.selectedIndex > 0 ? branch.options[branch.selectedIndex].text : '';
+  scheduleDraftSave();
+}
+
+function bindDraftInputs() {
+  document.querySelectorAll('#panel-6 input, #panel-6 select, #panel-6 textarea').forEach(function(input) {
+    input.addEventListener('input', captureClientDraft);
+    input.addEventListener('change', captureClientDraft);
+  });
+}
+
+function setDraftField(id, value) {
+  var input = document.getElementById(id);
+  if (input) input.value = value || '';
+}
+
+function applyStateToCustomizerUI() {
+  document.querySelectorAll('.option-card.selected, .material-card.selected, .extra-card.active').forEach(function(element) {
+    element.classList.remove('selected', 'active');
+    if (element.hasAttribute('aria-pressed')) element.setAttribute('aria-pressed', 'false');
+  });
+  var situationIds = {'sin-cocina':'sit-0','barra-concreto':'sit-1','remodelacion':'sit-2'};
+  var situation = document.getElementById(situationIds[state.situacion]);
+  if (situation) { situation.classList.add('selected'); situation.setAttribute('aria-pressed', 'true'); }
+  var interior = document.getElementById(state.interior === 'blanco-frosty' ? 'int-0' : state.interior === 'gris-oxford' ? 'int-1' : '');
+  if (interior) { interior.classList.add('selected'); interior.setAttribute('aria-pressed', 'true'); }
+  document.querySelectorAll('.cubierta-item').forEach(function(card) { card.classList.remove('selected'); });
+  var countertop = document.getElementById(state.cubiertaCategoria ? 'cub-' + state.cubiertaCategoria : '');
+  if (countertop) countertop.classList.add('selected');
+  [['Iluminación LED','ext-led'],['Isla / Barra','ext-isla'],['Alacena','ext-alacena'],['Torre de contactos','ext-contactos']].forEach(function(item) {
+    var card = document.getElementById(item[1]);
+    if (card) card.classList.toggle('active', state.extras.indexOf(item[0]) >= 0);
+  });
+  setDraftField('c-nombre', state.cliente.nombre);
+  setDraftField('c-tel', state.cliente.tel);
+  setDraftField('c-email', state.cliente.email);
+  setDraftField('c-fecha', state.cliente.fecha);
+  setDraftField('c-hora', state.cliente.hora || '10:00');
+  setDraftField('c-asesor', state.cliente.asesor);
+  setDraftField('c-dir', state.cliente.dir);
+  setDraftField('c-obs', state.cliente.obs);
+  var branch = document.getElementById('c-sucursal');
+  if (branch) {
+    Array.from(branch.options).some(function(option, index) {
+      if (option.text === state.cliente.sucursal || option.value === state.cliente.sucursal) { branch.selectedIndex = index; return true; }
+      return false;
+    });
+  }
+  var location = document.getElementById('locationSelectionStatus');
+  if (location) location.textContent = state.cliente.lat != null && state.cliente.lng != null ? 'Pin guardado' : 'Sin pin guardado';
+}
+
+function startNewConfiguration() {
+  clearCustomizerDraft();
+  state = initialCustomizerState();
+  _submissionIdentity = null;
+  _submissionReceipt = null;
+  _submissionStatus = 'idle';
+  _submissionRequest = null;
+  _locationSelection = null;
+  if (_locationMarker && _locationMap) { _locationMap.removeLayer(_locationMarker); _locationMarker = null; }
+  buildFrente();
+  buildHerrajeContainer();
+  applyStateToCustomizerUI();
+  renderStep(0, -1);
+  clearCustomizerDraft();
+}
+
+function reducedMotionPreferred() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+function setNavigationLocked(locked) {
+  ['btnPrev','btnNext'].forEach(function(id) {
+    var button = document.getElementById(id);
+    if (button) button.disabled = locked || (id === 'btnPrev' && _currentStep === 0);
+  });
+  document.querySelectorAll('.sidebar-step').forEach(function(button) { button.disabled = locked; });
+}
+
+function renderStep(step, direction) {
+  if (_stepTransitioning || _selectionFeedbackPending || !Number.isInteger(step) || step < 0 || step >= STEPS.length) return false;
+  var previousStep = _currentStep;
+  var previousPanel = document.getElementById('panel-' + previousStep);
+  var nextPanel = document.getElementById('panel-' + step);
+  _currentStep = step;
+  if (step === 3) buildHerrajeContainer(direction || (step >= previousStep ? 1 : -1));
+  var total = STEPS.length;
+
+  function finishTransition() {
+    document.querySelectorAll('.step-panel').forEach(function(panel) {
+      panel.classList.toggle('active', panel === nextPanel);
+      panel.classList.remove('step-exit-forward', 'step-exit-back', 'step-enter-forward', 'step-enter-back');
+      panel.setAttribute('aria-hidden', String(panel !== nextPanel));
+    });
+    _stepTransitioning = false;
+    setNavigationLocked(false);
+    var titleNode = document.getElementById('contentTitle');
+    if (titleNode && typeof titleNode.focus === 'function') titleNode.focus({ preventScroll: true });
+  }
+
+  if (previousPanel && nextPanel && previousPanel !== nextPanel) {
+    var forward = direction === undefined ? step > previousStep : direction >= 0;
+    _stepTransitioning = true;
+    setNavigationLocked(true);
+    previousPanel.classList.add('active', forward ? 'step-exit-forward' : 'step-exit-back');
+    nextPanel.classList.add('active', forward ? 'step-enter-forward' : 'step-enter-back');
+    if (reducedMotionPreferred()) finishTransition();
+    else window.setTimeout(finishTransition, STEP_TRANSITION_MS);
+  } else {
+    finishTransition();
+  }
+
+  var h = STEP_HEADERS[step];
+  var eyebrow = document.getElementById('contentEyebrow');
+  var title   = document.getElementById('contentTitle');
+  var sub     = document.getElementById('contentSubtitle');
+  if (eyebrow) eyebrow.textContent = h.eyebrow;
+  if (title)   title.innerHTML = h.title;
+  if (sub)     sub.textContent = h.sub;
+
+  var fill = document.getElementById('topProgressFill');
+  var ctr  = document.getElementById('counterCurrent');
+  if (fill) fill.style.width = ((step + 1) / total * 100) + '%';
+  if (ctr)  ctr.textContent = step + 1;
+
+  var ind = document.getElementById('stepIndicator');
+  if (ind) ind.textContent = 'Paso ' + (step + 1) + ' de ' + total;
+
+  var prev = document.getElementById('btnPrev');
+  var next = document.getElementById('btnNext');
+  if (prev) prev.disabled = step === 0;
+  if (next) {
+    if (step === total - 1 || step === 3) {
+      next.style.display = 'none';
+    } else {
+      next.style.display = '';
+      next.innerHTML = 'Siguiente <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    }
+  }
+
+  if (step === total - 1) {
+    buildSummary();
+    submitKitchenConfiguration(false);
+  }
+  updateSidebar();
+  if (_stepTransitioning) setNavigationLocked(true);
+  clearValidation();
+  if (step === 6) prepareLocationMapResources();
+  preloadNextStepImages(step);
+  scheduleDraftSave();
+  window.scrollTo({ top: 0, behavior: reducedMotionPreferred() ? 'auto' : 'smooth' });
+  return true;
+}
+
+function updateSidebar() {
+  var sb = document.getElementById('sidebarSteps');
+  if (!sb) return;
+  sb.innerHTML = STEPS.map(function(s, i) {
+    var active = i === _currentStep;
+    var done   = stepIsComplete(i);
+    var cls = 'sidebar-step' + (active?' active':'') + (done?' done':'');
+    var bullet = done
+      ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>'
+      : (i + 1);
+    var short = s.short();
+    return '<button type="button" class="' + cls + '" data-step="' + i + '" aria-current="' + (active?'step':'false') + '" onclick="navigateToStep(' + i + ')">' +
+      '<span class="step-bullet">' + bullet + '</span>' +
+      '<span class="step-text">' +
+        '<span class="step-text-label">' + s.label + '</span>' +
+        (short ? '<span class="step-text-val">' + escapeHTML(short) + '</span>' : '') +
+      '</span>' +
+    '</button>';
+  }).join('');
+  scheduleDraftSave();
+}
+
+function stepIsComplete(step) {
+  if (step === 0) return !!state.situacion;
+  if (step === 1) return !!state.interior;
+  if (step === 2) return Object.keys(state.frentes).some(function(key){ return state.frentes[key] && state.frentes[key].length; });
+  if (step === 3) return herrajesCompletos();
+  if (step === 6) return !!(state.cliente.nombre && state.cliente.tel && state.cliente.dir && state.cliente.fecha && state.cliente.hora && state.cliente.sucursal && window.MHGAdvisorCatalog && window.MHGAdvisorCatalog.isValid(state.cliente.asesor));
+  return step < _currentStep;
+}
+
+function showValidation(message, focusTarget) {
+  var node = document.getElementById('stepValidation');
+  if (node) {
+    node.textContent = message || '';
+    node.hidden = !message;
+    if (message && typeof node.focus === 'function') node.focus({ preventScroll: true });
+  }
+  if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus({ preventScroll: true });
+}
+
+function clearValidation() {
+  var node = document.getElementById('stepValidation');
+  if (node) { node.textContent = ''; node.hidden = true; }
+}
+
+function validateStep(step) {
+  var ok = true;
+
+  if (step === 6) {
+    var n  = (document.getElementById('c-nombre') || {}).value || '';
+    var t  = (document.getElementById('c-tel')    || {}).value || '';
+    var e  = (document.getElementById('c-email')  || {}).value || '';
+    var d  = (document.getElementById('c-dir')    || {}).value || '';
+    var f  = (document.getElementById('c-fecha')  || {}).value || '';
+    var h  = (document.getElementById('c-hora')   || {}).value || '';
+    var advisorEl = document.getElementById('c-asesor');
+    var advisor = advisorEl ? advisorEl.value : '';
+    var sEl = document.getElementById('c-sucursal');
+    var s  = sEl ? sEl.value : '';
+    var emailField = document.getElementById('c-email');
+    if (emailField && e && !emailField.checkValidity()) {
+      showValidation('Ingresa un correo electrónico válido o deja el campo vacío.', emailField);
+      ok = false;
+    } else if (!n.trim()||!t.trim()||!d.trim()||!f||!h||!s) {
+      var requiredFields = [
+        document.getElementById('c-nombre'), document.getElementById('c-tel'), document.getElementById('c-dir'),
+        document.getElementById('c-fecha'), document.getElementById('c-hora'), document.getElementById('c-sucursal')
+      ];
+      showValidation('Completa nombre, teléfono, dirección, fecha, hora y sucursal.', requiredFields.find(function(field) { return field && !field.value; }));
+      ok = false;
+    } else if (!window.MHGAdvisorCatalog || !window.MHGAdvisorCatalog.isValid(advisor)) {
+      showValidation('Selecciona quién te atendió.', advisorEl);
+      ok = false;
+    } else {
+      state.cliente = {
+        nombre:   n.trim(),
+        tel:      t.trim(),
+        email:    e.trim(),
+        dir:      d.trim(),
+        fecha:    f,
+        hora:     h,
+        sucursal: sEl.options[sEl.selectedIndex].text,
+        asesor:   advisor,
+        obs:      ((document.getElementById('c-obs') || {}).value || '').trim(),
+        lat:      state.cliente.lat,
+        lng:      state.cliente.lng,
+      };
+      scheduleDraftSave();
+    }
+  }
+  if (step === 0 && !state.situacion) { showValidation('Selecciona una opción de situación actual.'); ok = false; }
+  if (step === 1 && !state.interior) { showValidation('Selecciona el tablero interior.'); ok = false; }
+  if (step === 2) {
+    var lineas = Object.keys(state.frentes);
+    if (lineas.length === 0) {
+      showValidation('Selecciona al menos una línea de frentes.');
+      ok = false;
+    } else {
+      var hasColor = false;
+      for (var i = 0; i < lineas.length; i++) {
+        if (state.frentes[lineas[i]].length > 0) {
+          hasColor = true;
+          break;
+        }
+      }
+      if (!hasColor) {
+        showValidation('Selecciona al menos un color dentro de la línea elegida.');
+        ok = false;
+      }
+    }
+  }
+
+  if (step === 3 && !herrajesCompletos()) {
+    var pending = HERRAJE_SECTIONS.find(function(section) { return !herrajeSeccionCompleta(section); });
+    if (pending) {
+      abrirSeccionHerrajes('sec-' + pending.id, true);
+      showHardwareValidation('Completa este subpaso antes de avanzar a Cubierta.', true);
+    }
+    showValidation('Completa Herrajes. Te llevamos al primer subpaso pendiente.');
+    ok = false;
+  }
+  if (ok) clearValidation();
+  return ok;
+}
+
+function navigateToStep(target) {
+  if (_stepTransitioning || _selectionFeedbackPending || !Number.isInteger(target) || target < 0 || target >= STEPS.length) return false;
+  if (target > _currentStep) {
+    for (var step = _currentStep; step < target; step++) {
+      if (!validateStep(step)) return false;
+    }
+  }
+  return renderStep(target, target >= _currentStep ? 1 : -1);
+}
+
+function nextStep() {
+  if (!_stepTransitioning && _currentStep < STEPS.length - 1) navigateToStep(_currentStep + 1);
+}
+
+function prevStep() {
+  if (!_stepTransitioning && _currentStep > 0) navigateToStep(_currentStep - 1);
+}
+
+function preloadImageSources(sources) {
+  if (!sources.length || typeof window.Image !== 'function') return;
+  var work = function() {
+    sources.forEach(function(src) { if (src) { var image = new window.Image(); image.decoding = 'async'; image.src = src; } });
+  };
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(work, { timeout: 1200 });
+  else window.setTimeout(work, 180);
+}
+
+function preloadNextStepImages(step) {
+  var current = document.getElementById('panel-' + step);
+  if (current) current.querySelectorAll('img').forEach(function(image, index) {
+    image.loading = index < 4 ? 'eager' : 'lazy';
+    if (index === 0) image.fetchPriority = 'high';
+  });
+  var next = document.getElementById('panel-' + (step + 1));
+  if (!next) return;
+  var sources = Array.from(next.querySelectorAll('img')).slice(0, 4).map(function(image) { return image.currentSrc || image.getAttribute('src'); });
+  preloadImageSources(sources.filter(Boolean));
+}
+
+/* ─── LEAFLET + OPENSTREETMAP LOCATION PICKER ─── */
+var _locationMap = null;
+var _locationTileLayer = null;
+var _locationMarker = null;
+var _locationPreviousOverflow = '';
+var _locationReturnFocus = null;
+var _locationEscapeHandler = null;
+var _locationRequestPending = false;
+
+function prepareLocationMapResources() {
+  /* Leaflet is loaded by the document and OSM is preconnected in <head>.
+     Do not construct or measure a full map while its modal is hidden. */
+  return !!window.L;
+}
+
+function openLocationMap() {
+  var modal = document.getElementById('locationMapModal');
+  var status = document.getElementById('locationMapStatus');
+  if (!modal) return;
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+  _locationPreviousOverflow = document.body.style.overflow;
+  _locationReturnFocus = document.activeElement;
+  document.body.style.overflow = 'hidden';
+  if (_locationEscapeHandler) document.removeEventListener('keydown', _locationEscapeHandler);
+  _locationEscapeHandler = function(event) { if (event.key === 'Escape') closeLocationMap(); };
+  document.addEventListener('keydown', _locationEscapeHandler);
+  var closeButton = modal.querySelector('button[aria-label="Cerrar mapa"]');
+  if (closeButton) closeButton.focus({ preventScroll: true });
+  if (!_locationSelection && state.cliente.lat != null && state.cliente.lng != null) {
+    _locationSelection = { lat: state.cliente.lat, lng: state.cliente.lng };
+  }
+  if (!window.L) {
+    if (status) status.textContent = 'No se pudo cargar el mapa. Puedes escribir la dirección manualmente.';
+    return;
+  }
+  /* Wait until the modal has participated in layout before Leaflet measures it. */
+  window.requestAnimationFrame(function() {
+    window.requestAnimationFrame(initializeLocationMap);
+  });
+}
+
+function initializeLocationMap() {
+  var node = document.getElementById('locationMap');
+  var status = document.getElementById('locationMapStatus');
+  if (!node || !window.L) return;
+  window.L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  });
+  var center = _locationSelection || { lat: 18.90, lng: -96.97 };
+  if (!_locationMap) {
+    _locationMap = window.L.map(node, {
+      zoomControl: true,
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+    }).setView([center.lat, center.lng], 15);
+    _locationTileLayer = window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      updateWhenIdle: true,
+      keepBuffer: 2,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    });
+    _locationTileLayer.addTo(_locationMap);
+    _locationMap.on('click', function(event) { setLocationMarker(event.latlng); });
+  }
+  _locationMap.setView([center.lat, center.lng], _locationSelection ? 17 : 15);
+  if (_locationSelection) setLocationMarker(_locationSelection, false);
+  else if (_locationMarker) { _locationMap.removeLayer(_locationMarker); _locationMarker = null; }
+  _locationMap.invalidateSize({ pan: false, animate: false });
+  if (status) status.textContent = _locationSelection ? 'Puedes mover el pin y confirmar la ubicación.' : 'Haz clic en el mapa para colocar el pin.';
+}
+
+function setLocationMarker(position, updateStatus) {
+  var lat = typeof position.lat === 'function' ? position.lat() : Number(position.lat);
+  var lng = typeof position.lng === 'function' ? position.lng() : Number(position.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  _locationSelection = { lat: lat, lng: lng };
+  saveCustomizerDraft();
+  if (!_locationMap || !window.L) return;
+  if (!_locationMarker) {
+    _locationMarker = window.L.marker([lat, lng], { draggable: true, autoPan: true, title: 'Ubicación de instalación' }).addTo(_locationMap);
+    _locationMarker.on('dragend', function(event) { setLocationMarker(event.target.getLatLng()); });
+  } else {
+    _locationMarker.setLatLng([lat, lng]);
+  }
+  var status = document.getElementById('locationMapStatus');
+  if (status && updateStatus !== false) status.textContent = 'Pin colocado. La dirección escrita seguirá siendo editable.';
+}
+
+function useCurrentLocation() {
+  var status = document.getElementById('locationMapStatus');
+  var button = document.getElementById('useCurrentLocationButton');
+  if (!navigator.geolocation) {
+    if (status) status.textContent = 'Tu navegador no permite obtener la ubicación. Coloca el pin manualmente.';
+    return;
+  }
+  if (_locationRequestPending) return;
+  _locationRequestPending = true;
+  if (button) button.disabled = true;
+  if (status) status.textContent = 'Obteniendo tu ubicación…';
+  navigator.geolocation.getCurrentPosition(function(position) {
+    var point = { lat: position.coords.latitude, lng: position.coords.longitude };
+    setLocationMarker(point);
+    if (_locationMap) _locationMap.setView([point.lat, point.lng], 17);
+    _locationRequestPending = false;
+    if (button) button.disabled = false;
+    if (status) status.textContent = 'Ubicación obtenida. Puedes ajustar el pin y confirmar.';
+  }, function(error) {
+    _locationRequestPending = false;
+    if (button) button.disabled = false;
+    var messages = {
+      1: 'El permiso de ubicación está bloqueado. Permítelo en la configuración del sitio o coloca el pin manualmente.',
+      2: 'Tu dispositivo no pudo determinar la ubicación. Intenta de nuevo o coloca el pin manualmente.',
+      3: 'La solicitud de ubicación tardó demasiado. Intenta de nuevo o coloca el pin manualmente.',
+    };
+    if (status) status.textContent = messages[error && error.code] || 'No fue posible obtener tu ubicación. Coloca el pin manualmente.';
+  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+}
+
+function confirmLocationMap() {
+  if (!_locationSelection) {
+    var status = document.getElementById('locationMapStatus');
+    if (status) status.textContent = 'Primero coloca un pin en el mapa.';
+    return;
+  }
+  state.cliente.lat = _locationSelection.lat;
+  state.cliente.lng = _locationSelection.lng;
+  var saved = document.getElementById('locationSelectionStatus');
+  if (saved) saved.textContent = 'Pin guardado';
+  saveCustomizerDraft();
+  closeLocationMap();
+}
+
+function closeLocationMap() {
+  var modal = document.getElementById('locationMapModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = _locationPreviousOverflow;
+  if (_locationEscapeHandler) document.removeEventListener('keydown', _locationEscapeHandler);
+  _locationEscapeHandler = null;
+  if (_locationReturnFocus && _locationReturnFocus.isConnected) _locationReturnFocus.focus({ preventScroll: true });
+  _locationReturnFocus = null;
+}
+
+/* ─── SUMMARY ─── */
+function escapeHTML(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildSummary() {
+  var grid = document.getElementById('summaryGrid');
+  if (!grid) return;
+
+  var situacionLabel = {'sin-cocina':'Sin cocina','barra-concreto':'Base de concreto','remodelacion':'Remodelación'};
+  var frentesText = Object.keys(state.frentes).map(function(k) {
+    var lbl = {economica:'Económica', arauco:'Arauco', decorlux:'Decorlux', transformad:'Transformad'}[k] || k;
+    var c   = state.frentes[k];
+    return lbl + (c && c.length ? ' (' + c.join(', ') + ')' : '');
+  }).join(' | ') || '—';
+
+  var boxes = [
+    {
+      title: 'Situación, interiores y frentes',
+      rows: [
+        {label:'Situación', val: situacionLabel[state.situacion] || '—'},
+        {label:'Interior',  val: state.interior==='blanco-frosty' ? 'Blanco Frosty 15mm Arauco' : 'Gris Oxford 15mm Arauco'},
+        {label:'Frentes',   val: frentesText},
+      ]
+    },
+    {
+      title: 'Herrajes',
+      rows: [
+        {label:'Bisagras',    val: herrajeResumen(HERRAJE_SECTIONS[0])},
+        {label:'Correderas',  val: herrajeResumen(HERRAJE_SECTIONS[1])},
+        {label:'Cajones',     val: herrajeResumen(HERRAJE_SECTIONS[2])},
+        {label:'Basurero',    val: herrajeResumen(HERRAJE_SECTIONS[3])},
+        {label:'Especiero',    val: herrajeResumen(HERRAJE_SECTIONS[4])},
+        {label:'Módulos esp.',val: herrajeResumen(HERRAJE_SECTIONS[5])},
+      ]
+    },
+    {
+      title: 'Cubierta',
+      rows: [
+        {label:'Material', val: (state.cubierta||'—') + (state.cubPrecio ? ' — ' + state.cubPrecio : '')},
+        {label:'Variante', val: cubiertaVarianteTexto()},
+      ]
+    },
+    {
+      title: 'Extras',
+      rows: state.extras.length
+        ? state.extras.map(function(e){ return {label: e, val: 'Incluido'}; })
+        : [{label: 'Sin extras adicionales', val: ''}]
+    },
+    {
+      title: 'Datos del cliente',
+      rows: [
+        {label:'Nombre',        val: state.cliente.nombre},
+        {label:'Teléfono',      val: state.cliente.tel},
+        {label:'Email',         val: state.cliente.email || 'No proporcionado'},
+        {label:'Dirección',     val: state.cliente.dir},
+        {label:'Ubicación',     val: locationCoordinatesText()},
+        {label:'Levantamiento', val: state.cliente.fecha + '  ' + state.cliente.hora},
+        {label:'Sucursal',      val: state.cliente.sucursal},
+        {label:'Atendido por',  val: state.cliente.asesor},
+      ]
+    },
+  ];
+
+  grid.innerHTML = boxes.map(function(b) {
+    return '<div class="summary-box">' +
+      '<div class="summary-box-title">' + escapeHTML(b.title) + '</div>' +
+      b.rows.map(function(r){
+        return '<div class="summary-row">' +
+          '<span class="summary-row-label">' + escapeHTML(r.label) + '</span>' +
+          '<span class="summary-row-val">' + escapeHTML(r.val || '—') + '</span>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }).join('');
+
+  if (state.cubiertaVariante) {
+    var preview = document.createElement('img');
+    preview.className = 'cubierta-summary-img';
+    preview.src = state.cubiertaVariante.imagen;
+    preview.alt = state.cubiertaVariante.nombre;
+    grid.children[3].appendChild(preview);
+  }
+
+}
+
+function renderSubmissionStatus(message) {
+  var node = document.getElementById('submissionStatus');
+  if (!node) return;
+  node.dataset.state = _submissionStatus;
+  while (node.firstChild) node.removeChild(node.firstChild);
+  var text = document.createElement('p');
+  text.textContent = message;
+  node.appendChild(text);
+  if (_submissionStatus === 'success' && _submissionReceipt) {
+    var folio = document.createElement('p');
+    folio.className = 'submission-folio';
+    folio.textContent = 'Folio: ' + _submissionReceipt.folio;
+    node.appendChild(folio);
+  }
+  if (_submissionStatus === 'error') {
+    var retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'action-btn green';
+    retry.textContent = 'Reintentar';
+    retry.addEventListener('click', function() { submitKitchenConfiguration(true); });
+    node.appendChild(retry);
+  }
+}
+
+function submitKitchenConfiguration(forceRetry) {
+  if (!window.MHGKitchenSubmission) {
+    _submissionStatus = 'error';
+    renderSubmissionStatus('No pudimos preparar tu solicitud. Recarga la página e inténtalo nuevamente.');
+    return Promise.resolve(null);
+  }
+  var payload;
+  try {
+    payload = window.MHGKitchenSubmission.buildPayload(state);
+    var nextIdentity = window.MHGKitchenSubmission.identityFor(_submissionIdentity, payload, window.crypto);
+    if (!_submissionIdentity || nextIdentity.fingerprint !== _submissionIdentity.fingerprint) {
+      _submissionReceipt = null;
+      _submissionStatus = 'idle';
+    }
+    _submissionIdentity = nextIdentity;
+    saveCustomizerDraft();
+  } catch (error) {
+    _submissionStatus = 'error';
+    renderSubmissionStatus(error.message || 'No pudimos preparar tu solicitud.');
+    return Promise.resolve(null);
+  }
+  if (_submissionReceipt) {
+    _submissionStatus = 'success';
+    renderSubmissionStatus('Solicitud recibida correctamente.');
+    return Promise.resolve(_submissionReceipt);
+  }
+  if (_submissionRequest && _submissionRequest.fingerprint === _submissionIdentity.fingerprint) return _submissionRequest.promise;
+  if (_submissionStatus === 'error' && !forceRetry) return Promise.resolve(null);
+  _submissionStatus = 'sending';
+  renderSubmissionStatus('Enviando solicitud…');
+  var config = window.MHG_CUSTOMIZER_CONFIG || {};
+  var fingerprint = _submissionIdentity.fingerprint;
+  var request = window.MHGKitchenSubmission.send(config.apiBaseUrl || '', payload, _submissionIdentity, window.fetch.bind(window))
+    .then(function(receipt) {
+      if (_submissionIdentity && _submissionIdentity.fingerprint === fingerprint) {
+        _submissionReceipt = receipt;
+        _submissionStatus = 'success';
+        renderSubmissionStatus('Solicitud recibida correctamente.');
+        saveCustomizerDraft();
+      }
+      return receipt;
+    })
+    .catch(function(error) {
+      if (_submissionIdentity && _submissionIdentity.fingerprint === fingerprint) {
+        _submissionStatus = 'error';
+        renderSubmissionStatus((error && error.message) || 'No pudimos enviar tu solicitud.');
+      }
+      return null;
+    })
+    .finally(function() {
+      if (_submissionRequest && _submissionRequest.fingerprint === fingerprint) _submissionRequest = null;
+    });
+  _submissionRequest = { fingerprint: fingerprint, promise: request };
+  return request;
+}
+
+/* ─── PDF ─── */
+function locationCoordinatesText() {
+  return state.cliente.lat == null || state.cliente.lng == null
+    ? 'Sin pin seleccionado'
+    : state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6) + ' · ' + locationMapUrl();
+}
+
+function locationMapUrl() {
+  return state.cliente.lat == null || state.cliente.lng == null
+    ? ''
+    : window.MHGKitchenSubmission.openStreetMapUrl(state.cliente.lat, state.cliente.lng);
+}
+
+function downloadPDF() {
+  var logoEl = new Image();
+  logoEl.crossOrigin = 'anonymous';
+  logoEl.onload = function() {
+    var c = document.createElement('canvas');
+    c.width  = logoEl.naturalWidth  || 120;
+    c.height = logoEl.naturalHeight || 120;
+    c.getContext('2d').drawImage(logoEl, 0, 0);
+    _buildPDF(c.toDataURL('image/jpeg', 0.9));
+  };
+  logoEl.onerror = function() { _buildPDF(null); };
+  logoEl.src = '/img/logo.jpg';
+}
+
+function _buildPDF(logoDataURL) {
+  var jsPDF  = window.jspdf.jsPDF;
+  var doc    = new jsPDF({ unit:'mm', format:'a4' });
+  var W      = 210;
+  var M      = 16;
+  var GREEN  = [26,  79,  46];
+  var GREEN2 = [38, 110,  64];
+  var CREAM  = [248, 246, 240];
+  var DARK   = [22,  26,  23];
+  var MUTED  = [110, 122, 116];
+  var BORDER = [220, 226, 222];
+  var GOLD   = [180, 148, 80];
+
+  var folio = _submissionReceipt ? _submissionReceipt.folio : 'COT-' + Date.now().toString().slice(-6);
+  var fecha = new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'});
+  var y = 0;
+
+  /* HEADER */
+  doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
+  doc.rect(0, 0, W, 46, 'F');
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.rect(0, 44, W, 1.2, 'F');
+
+  if (logoDataURL) {
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(M, 7, 28, 28, 3, 3, 'F');
+    doc.addImage(logoDataURL, 'JPEG', M+1, 8, 26, 26);
+  } else {
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(M, 7, 28, 28, 3, 3, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,79,46);
+    doc.text('MHG', M+14, 24, {align:'center'});
+  }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(255,255,255);
+  doc.text('MHG COCINAS', M+34, 19);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(200,230,210);
+  doc.text('Configuración de Cocina Integral', M+34, 26);
+  doc.setDrawColor(GREEN2[0],GREEN2[1],GREEN2[2]); doc.setLineWidth(0.3);
+  doc.line(M+34, 29, W-M, 29);
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(200,230,210);
+  doc.text('Folio:', W-M-34, 20);
+  doc.setFont('helvetica','normal');
+  doc.text(folio, W-M, 20, {align:'right'});
+  doc.text(fecha, W-M, 27, {align:'right'});
+
+  y = 56;
+  var rowAlt = false;
+
+  var section = function(txt, yy) {
+    if (yy + 23 > 240) { doc.addPage(); yy = 20; }
+    doc.setFillColor(CREAM[0],CREAM[1],CREAM[2]);
+    doc.rect(M, yy, W-M*2, 9, 'F');
+    doc.setFillColor(GREEN[0],GREEN[1],GREEN[2]);
+    doc.rect(M, yy, 3, 9, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(GREEN[0],GREEN[1],GREEN[2]);
+    doc.text(txt.toUpperCase(), M+7, yy+6);
+    doc.setDrawColor(BORDER[0],BORDER[1],BORDER[2]); doc.setLineWidth(0.2);
+    doc.line(M, yy+9, W-M, yy+9);
+    rowAlt = false;
+    return yy + 15;
+  };
+
+  var row = function(label, value, yy) {
+    if (yy + 8 > 240) { doc.addPage(); yy = 20; }
+    if (rowAlt) { doc.setFillColor(245,247,245); doc.rect(M, yy-5, W-M*2, 8,'F'); }
+    rowAlt = !rowAlt;
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text(label, M+4, yy);
+    doc.setFont('helvetica','normal'); doc.setTextColor(DARK[0],DARK[1],DARK[2]);
+    var val = value || '—';
+    if (val.length > 62) val = val.substring(0,59) + '...';
+    doc.text(val, M+56, yy);
+    doc.setDrawColor(BORDER[0],BORDER[1],BORDER[2]); doc.setLineWidth(0.1);
+    doc.line(M, yy+2.5, W-M, yy+2.5);
+    return yy + 8;
+  };
+
+  var situacionLabel = {'sin-cocina':'Sin cocina','barra-concreto':'Base de concreto','remodelacion':'Remodelación'};
+  var frentesText = Object.keys(state.frentes).map(function(k){
+    var lbl = {economica:'Económica',arauco:'Arauco',decorlux:'Decorlux',transformad:'Transformad'}[k]||k;
+    var c   = state.frentes[k];
+    return lbl + (c&&c.length?' ('+c.join(', ')+')':'');
+  }).join(' | ') || '—';
+
+  // Situation, interiors and fronts (steps 1–3)
+  y = section('Situación, interiores y frentes', y);
+  y = row('Situación:', situacionLabel[state.situacion]||'—', y);
+  y = row('Interior:',  state.interior==='blanco-frosty'?'Blanco Frosty 15mm Arauco':'Gris Oxford 15mm Arauco', y);
+  y = row('Frentes:',   frentesText, y);
+  y += 6;
+
+  // Hardware (step 4)
+  y = section('Herrajes', y);
+  y = row('Bisagras:',    herrajeResumen(HERRAJE_SECTIONS[0]), y);
+  y = row('Correderas:',  herrajeResumen(HERRAJE_SECTIONS[1]), y);
+  y = row('Cajones:',     herrajeResumen(HERRAJE_SECTIONS[2]), y);
+  y = row('Basurero:',    herrajeResumen(HERRAJE_SECTIONS[3]), y);
+  y = row('Especiero:',    herrajeResumen(HERRAJE_SECTIONS[4]), y);
+  y = row('Módulos esp.:', herrajeResumen(HERRAJE_SECTIONS[5]), y);
+  y += 6;
+
+  // Countertop (step 5)
+  y = section('Cubierta', y);
+  y = row('Material:', (state.cubierta||'—') + (state.cubPrecio?' — '+state.cubPrecio:''), y);
+  y = row('Variante:', cubiertaVarianteTexto(), y);
+  y += 6;
+
+  // Extras (step 6)
+  if (state.extras.length) {
+    y = section('Elementos adicionales', y);
+    state.extras.forEach(function(e){ y = row(e + ':', 'Incluido', y); });
+    y += 6;
+  }
+
+  // Customer data (step 7)
+  y = section('Datos del cliente', y);
+  y = row('Nombre:',        state.cliente.nombre, y);
+  y = row('Teléfono:',      state.cliente.tel, y);
+  if (state.cliente.email) y = row('Email:', state.cliente.email, y);
+  y = row('Dirección:',     state.cliente.dir, y);
+  if (state.cliente.lat != null && state.cliente.lng != null) {
+    y = row('Ubicación (lat, lng):', state.cliente.lat.toFixed(6) + ', ' + state.cliente.lng.toFixed(6), y);
+    y = row('Mapa:', locationMapUrl(), y);
+  }
+  y = row('Levantamiento:', state.cliente.fecha + '  ' + state.cliente.hora, y);
+  y = row('Sucursal:',      state.cliente.sucursal, y);
+  y = row('Atendido por:',  state.cliente.asesor, y);
+  if (state.cliente.obs) y = row('Observaciones:', state.cliente.obs, y);
+  y += 6;
+
+  // Note
+  if (y > 240) { doc.addPage(); }
+  var noteY = 248;
+  doc.setFillColor(CREAM[0],CREAM[1],CREAM[2]);
+  doc.roundedRect(M, noteY, W-M*2, 12, 2, 2, 'F');
+  doc.setDrawColor(BORDER[0],BORDER[1],BORDER[2]); doc.setLineWidth(0.3);
+  doc.roundedRect(M, noteY, W-M*2, 12, 2, 2, 'S');
+  doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+  doc.text('Este documento es una preconfiguración orientativa. La cotización formal se entregará tras el levantamiento en sitio.', W/2, noteY+7.5, {align:'center'});
+
+  // Footer
+  doc.setFillColor(GREEN[0],GREEN[1],GREEN[2]);
+  doc.rect(0, 272, W, 25, 'F');
+  doc.setFillColor(GOLD[0],GOLD[1],GOLD[2]);
+  doc.rect(0, 272, W, 1.2, 'F');
+  if (logoDataURL) doc.addImage(logoDataURL, 'JPEG', M, 276, 13, 13);
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
+  doc.text('MHG Arquitectos', M+16, 281);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(200,230,210);
+  doc.text('Cocinas Integrales · Mobiliario · Interiorismo', M+16, 287);
+  doc.text('mhgarquitectos.com', W-M, 281, {align:'right'});
+  doc.text('Folio: ' + folio, W-M, 287, {align:'right'});
+
+  /* FILENAME: MHG_Cocinas_<cliente>_<sucursal>_<folio> */
+  var clean = function(s){ return (s||'').replace(/\s+/g,'_').replace(/[^A-Za-z0-9_áéíóúÁÉÍÓÚñÑ]/g,''); };
+  var filename = 'MHG_Cocinas_' + clean(state.cliente.nombre) + '_' + clean(state.cliente.sucursal) + '_' + folio + '.pdf';
+  doc.save(filename);
+}
+
+/* ─── WHATSAPP ─── */
+function sendWhatsApp() {
+  var situacionLabel = {'sin-cocina':'Sin cocina','barra-concreto':'Base de concreto','remodelacion':'Remodelación'};
+  var frentesText = Object.keys(state.frentes).map(function(k){
+    var lbl = {economica:'Económica',arauco:'Arauco',decorlux:'Decorlux',transformad:'Transformad'}[k]||k;
+    var c   = state.frentes[k];
+    return '  • ' + lbl + (c&&c.length?' ('+c.join(', ')+')':'');
+  }).join('\n') || '  • —';
+
+  var msg = '🏡 *SOLICITUD DE COCINA · MHG ARQUITECTOS*\n\n' +
+    '👤 *CLIENTE*\n' +
+    '*Nombre:* '        + state.cliente.nombre + '\n' +
+    '*Teléfono:* '      + state.cliente.tel + '\n' +
+    (state.cliente.email ? '*Correo:* ' + state.cliente.email + '\n' : '') +
+    (_submissionReceipt ? '*Folio:* ' + _submissionReceipt.folio + '\n' : '') +
+    '\n📅 *VISITA / LEVANTAMIENTO*\n' +
+    '*Fecha y hora:* '  + state.cliente.fecha + ' · ' + state.cliente.hora + '\n' +
+    '*Sucursal:* '      + state.cliente.sucursal + '\n' +
+    '*Dirección:* '     + state.cliente.dir + '\n' +
+    (state.cliente.lat != null && state.cliente.lng != null ? '*Mapa:* ' + locationMapUrl() + '\n' : '') +
+    '\n🧰 *CONFIGURACIÓN*\n' +
+    '*Situación:* '   + (situacionLabel[state.situacion]||'—') + '\n' +
+    '*Tablero interior:* ' + (state.interior==='blanco-frosty'?'Blanco Frosty 15 mm':'Gris Oxford 15 mm') + '\n' +
+    '*Frentes:*\n'    + frentesText + '\n' +
+    '*Herrajes:*\n' +
+    '  • Bisagras: '   + herrajeResumen(HERRAJE_SECTIONS[0]) + '\n' +
+    '  • Correderas: ' + herrajeResumen(HERRAJE_SECTIONS[1]) + '\n' +
+    '  • Cajones: '    + herrajeResumen(HERRAJE_SECTIONS[2]) + '\n' +
+    '  • Basurero: '   + herrajeResumen(HERRAJE_SECTIONS[3]) + '\n' +
+    '  • Especiero: '   + herrajeResumen(HERRAJE_SECTIONS[4]) + '\n' +
+    '  • Módulos: '    + herrajeResumen(HERRAJE_SECTIONS[5]) + '\n' +
+    '*Cubierta:* '    + (state.cubierta||'—') + '\n' +
+    '*Variante:* '    + cubiertaVarianteTexto() + '\n' +
+    '*Extras:* '       + (state.extras.join(', ')||'Ninguno') + '\n' +
+    (state.cliente.asesor ? '\n*Atendido por:* ' + state.cliente.asesor + '\n' : '') +
+    (state.cliente.obs ? '\n📝 *OBSERVACIONES*\n' + state.cliente.obs + '\n' : '') +
+    '\n' +
+    '_Configuración enviada desde mhgarquitectos.com_';
+
+  var whatsappNumber = (window.MHG_CUSTOMIZER_CONFIG || {}).whatsappNumber;
+  if (!whatsappNumber) {
+    alert('El contacto por WhatsApp no está configurado. Tu solicitud recibida permanece guardada.');
+    return;
+  }
+  window.open('https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+}
+
+function selectFrenteZone(btn) { var p = btn.parentElement; p.querySelectorAll('.frente-zone-btn').forEach(function(b){ b.classList.remove('sel'); }); btn.classList.add('sel'); }
+
+// FRENTE MODAL LOGIC
+var currentModalLineKey = null;
+var currentModalSelection = []; // temporary selection array of objects {cname, zone}
+var frenteModalPreviousOverflow = '';
+var frenteModalReturnFocus = null;
+
+function updateFrenteModalPreview(cObj, label, previewOnly) {
+  var imgWrap = document.querySelector('.modal-preview-img-wrap');
+  var img = document.getElementById('modalPreviewImg');
+  var placeholder = document.getElementById('modalPreviewPlaceholder');
+  var status = document.getElementById('modalZoneStatus');
+  if (!cObj || !img || !imgWrap) return;
+
+  var previewImages = [cObj.kitchen, cObj.swatch].filter(function(src, index, all) { return src && all.indexOf(src) === index; });
+  var newSrc = previewImages[0] || null;
+  var zoom = document.getElementById('frentePreviewZoom');
+  if (zoom) {
+    zoom.hidden = !newSrc;
+    zoom.onclick = function(event) { event.stopPropagation(); window.openLightbox(previewImages, label); };
+  }
+  img.onclick = function(event) { event.stopPropagation(); if (newSrc) window.openLightbox(previewImages, label); };
+  img.alt = label;
+  imgWrap.style.background = cObj.hex || '';
+  if (newSrc) {
+    if (placeholder) placeholder.style.display = 'none';
+    img.style.display = 'block';
+    img.style.opacity = '0';
+    img.src = newSrc;
+    requestAnimationFrame(function() { img.style.opacity = '1'; });
+  } else {
+    img.style.display = 'none';
+    img.removeAttribute('src');
+    img.style.opacity = '0';
+    if (placeholder) placeholder.style.display = cObj.hex ? 'none' : 'flex';
+  }
+  if (status) status.textContent = (previewOnly ? 'Vista previa · ' : '') + label;
+}
+
+function openFrenteModal(lineKey) {
+  try {
+    currentModalLineKey = lineKey;
+    var lineLabel = {economica:'Económica', arauco:'Arauco', decorlux:'Decorlux', transformad:'Transformad'}[lineKey] || lineKey;
+
+    document.getElementById('frenteModalTitle').textContent = 'Frentes exteriores';
+    document.getElementById('frenteModalLineTitle').textContent = 'Línea ' + lineLabel;
+    
+    currentModalSelection = [];
+    if (state.frentes && state.frentes[lineKey]) {
+       state.frentes[lineKey].forEach(function(c) { currentModalSelection.push({ cname: c, zone: 'Toda la cocina' }); });
+    }
+    
+    var palette = PALETTES[lineKey] || [];
+    var lastGroup = null;
+    var colorsHTML = palette.map(function(c) {
+      var isSel = currentModalSelection.find(function(s) { return s.cname === c.name; });
+      var selClass = isSel ? 'sel' : '';
+
+      // Group label logic (for decorlux: HG·, Mate·, SM·)
+      var groupPrefix = null;
+      var m = c.name.match(/^([A-Z]{2,}(?:\s[A-Za-z]+)?)\s·\s/);
+      if (m) groupPrefix = m[1];
+      var labelHTML = '';
+      if (groupPrefix && groupPrefix !== lastGroup) {
+        lastGroup = groupPrefix;
+        var groupLabels = {'HG':'Alto Brillo (High Gloss)', 'Mate':'Acrílico Mate', 'SM':'Supramatte'};
+        labelHTML = '<div class="frente-modal-grid-label">' + (groupLabels[groupPrefix] || groupPrefix) + '</div>';
+      }
+      // Display name: strip "XX · " prefix
+      var displayName = c.name.replace(/^[A-Z]{2,}(?:\s[A-Za-z]+)?\s·\s/, '');
+
+      var cardHTML;
+      if (c.swatch) {
+        cardHTML = '<div class="frente-color-card ' + selClass + '" role="button" tabindex="0" aria-pressed="' + String(!!isSel) + '" onclick="toggleModalColor(this, \'' + c.name + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}">' +
+          '<div class="frente-color-card-img">' +
+            '<img src="' + c.swatch + '" alt="' + displayName + '" loading="lazy" />' +
+            '<div class="frente-color-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+          '</div>' +
+          '<div class="frente-color-card-name">' + displayName + '</div>' +
+        '</div>';
+      } else {
+        var lightBg = ['#FFFFFF','#FAFAFA','#F8F8F6','#F5F4F0','#F5EDD6','#F2EBD8'].indexOf(c.hex) !== -1;
+        cardHTML = '<div class="frente-color-card ' + selClass + '" role="button" tabindex="0" aria-pressed="' + String(!!isSel) + '" onclick="toggleModalColor(this, \'' + c.name + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}">' +
+          '<div class="frente-color-card-img" style="background:' + c.hex + ';' + (lightBg ? 'box-shadow:inset 0 0 0 1px #ccc;' : '') + '">' +
+            '<div class="frente-color-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+          '</div>' +
+          '<div class="frente-color-card-name">' + displayName + '</div>' +
+        '</div>';
+      }
+      return labelHTML + cardHTML;
+    }).join('');
+
+    var grid = document.getElementById('frenteModalGrid');
+    grid.innerHTML = colorsHTML;
+
+    // Reset and initialize the large preview without changing temporary state.
+    var img = document.getElementById('modalPreviewImg');
+    var ph  = document.getElementById('modalPreviewPlaceholder');
+    if (img) {
+      img.style.display = 'none';
+      img.removeAttribute('src');
+      img.style.opacity = '1';
+      img.onclick = function(event) {
+        event.stopPropagation();
+        if (img.src) window.openLightbox(img.src, document.getElementById('modalZoneStatus').textContent);
+      };
+    }
+    if (ph)  { ph.style.display = 'flex'; }
+    var status = document.getElementById('modalZoneStatus');
+    if (status) status.textContent = 'Selecciona un acabado';
+
+    var selectedName = currentModalSelection.length ? currentModalSelection[0].cname : null;
+    var previewColor = palette.find(function(c) { return c.name === selectedName; }) || palette[0];
+    if (previewColor) updateFrenteModalPreview(previewColor, previewColor.name, !selectedName);
+
+
+    var modal = document.getElementById('frenteColorModal');
+    if (modal) {
+      frenteModalReturnFocus = document.activeElement;
+      frenteModalPreviousOverflow = document.body.style.overflow;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('frenteModalClose').focus({ preventScroll: true });
+    } else {
+      console.error("Modal element not found!");
+      alert("Error: El modal no se encontró en la página.");
+    }
+  } catch (err) {
+    console.error("Error in openFrenteModal:", err);
+    alert("Hubo un error al abrir la selección: " + err.message);
+  }
+}
+
+function closeFrenteModal() {
+  var modal = document.getElementById('frenteColorModal');
+  if (!modal || !modal.classList.contains('active')) return;
+  modal.classList.remove('active');
+  document.body.style.overflow = frenteModalPreviousOverflow;
+  if (frenteModalReturnFocus && frenteModalReturnFocus.isConnected) frenteModalReturnFocus.focus({ preventScroll: true });
+  frenteModalReturnFocus = null;
+}
+
+function toggleModalColor(el, cname) {
+  var isSel = el.classList.contains('sel');
+  var p = el.parentElement;
+  var imgWrap     = document.getElementById('modalPreviewImg').parentElement;
+  var img         = document.getElementById('modalPreviewImg');
+  var placeholder = document.getElementById('modalPreviewPlaceholder');
+  var status      = document.getElementById('modalZoneStatus');
+
+  if (isSel) {
+    el.classList.remove('sel');
+    el.setAttribute('aria-pressed', 'false');
+    currentModalSelection = currentModalSelection.filter(function(s) { return s.cname !== cname; });
+    var firstColor = (PALETTES[currentModalLineKey] || [])[0];
+    if (firstColor) updateFrenteModalPreview(firstColor, firstColor.name, true);
+    else if (status) status.textContent = 'Selecciona un acabado';
+  } else {
+    // Deselect all others
+    p.querySelectorAll('.frente-color-card').forEach(function(c){ c.classList.remove('sel'); c.setAttribute('aria-pressed', 'false'); });
+    el.classList.add('sel');
+    el.setAttribute('aria-pressed', 'true');
+    currentModalSelection = [{ cname: cname, zone: 'Toda la cocina' }];
+
+    var cObj = (PALETTES[currentModalLineKey]||[]).find(function(c){ return c.name === cname; });
+    if (cObj) updateFrenteModalPreview(cObj, cname, false);
+  }
+}
+
+document.addEventListener('keydown', function(event) {
+  var modal = document.getElementById('frenteColorModal');
+  var lightbox = document.getElementById('lightbox');
+  if (!modal || !modal.classList.contains('active') || (lightbox && lightbox.style.display === 'flex')) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeFrenteModal();
+  }
+});
+
+function applyFrenteModal() {
+  var cnames = currentModalSelection.map(function(s){ return s.cname; });
+  if (cnames.length > 0) {
+    state.frentes[currentModalLineKey] = cnames; 
+  } else {
+    delete state.frentes[currentModalLineKey];
+  }
+  closeFrenteModal();
+  buildFrente(); 
+  updateSidebar();
+}
